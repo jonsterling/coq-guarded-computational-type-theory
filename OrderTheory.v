@@ -19,7 +19,7 @@ Module Poset.
       order : A -> A -> Prop;
       order_proper : Proper (equiv ==> (equiv ==> iff)) order;
       refl : ∀ x y,  x==y -> order x y;
-      antisym : ∀ x y, order x y -> order y x -> x==y;
+      antisym : ∀ x y, order x y -> order y x -> x == y;
       trans : ∀ x y z, order x y -> order y z -> order x z
     }.
 End Poset.
