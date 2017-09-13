@@ -20,27 +20,8 @@ Definition behavior := ℘ (Tm.t 0 * Tm.t 0).
 (* A 'refinement matrix' (called 'type system' by Allen) is a relation between terms and behaviors. *)
 Definition matrix := ℘ (Tm.t 0 * behavior).
 
-Definition eq_mem (τ : matrix) (e1 e2 A : Tm.t 0) :=
-  exists R,
-    τ (A, R)
-    /\ R (e1, e2).
-
-Notation "τ ⊧ e1 ≐ e2 ∈ A" := (eq_mem τ e1 e2 A) (at level 1).
-
-Theorem eq_mem_map : forall (τ1 τ2 : matrix) e1 e2 A, (∀ X, τ1 X -> τ2 X) -> τ1 ⊧ e1 ≐ e2 ∈ A -> τ2 ⊧ e1 ≐ e2 ∈ A.
-Proof.
-  move=> τ1 τ2 e1 e2 A F e1e2.
-  elim: e1e2 => R [Aτ1R e1Re2].
-  exists R.
-  split.
-  + by [apply: F].
-  + by [].
-Qed.
-
-Hint Resolve eq_mem_map.
 
 Module Close.
-  Print Tm.t.
   Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 /\ e2 ⇓ e3) (at level 0).
 
   Definition unit A R :=
@@ -58,9 +39,6 @@ Module Close.
       A ⇓ Tm.ltr κ B
       /\ ▷[ κ ] (τ (B, R)).
 
-  (* Note: it may seem like a simpler definition that uses τ ⊧ e ≐ e' ∈ A is possible,
-       but that is only a correct definition for a *functional* refinement matrix afaict.
-       Because we don't want to assume that just yet, we need this definition. *)
   Definition prod (τ : matrix) A R :=
     exists B C R1 R2,
       A ⇓ Tm.prod B C
