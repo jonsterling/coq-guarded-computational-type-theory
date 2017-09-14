@@ -21,62 +21,98 @@ Definition behavior := ℘ (Tm.t 0 * Tm.t 0).
 Definition matrix := ℘ (Tm.t 0 * behavior).
 
 
+Ltac make_morphism :=
+  unshelve refine {| mon_func := _ |}.
+
+Ltac morphism_monotone f :=
+  apply: (@mon_prop _ _ _ _ f).
+
+
+
 Module Close.
   Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 /\ e2 ⇓ e3) (at level 0).
 
-  Definition unit A R :=
-    A ⇓ Tm.unit
-    /\ forall e1 e2,
-      R (e1, e2) <-> [e1, e2] ⇓ Tm.ax.
+  Definition unit : monotone matrix matrix.
+  Proof.
+    make_morphism.
+    + move=> τ [A R].
+      exact
+        (A ⇓ Tm.unit
+         /\ forall e1 e2,
+            R (e1, e2) <-> [e1, e2] ⇓ Tm.ax).
+    + firstorder.
+  Defined.
 
-  Definition bool A R :=
-    A ⇓ Tm.bool
-    /\ forall e1 e2,
-      R (e1, e2) <-> ([e1, e2] ⇓ Tm.tt \/ [e1, e2] ⇓ Tm.ff).
+  Definition bool : monotone matrix matrix.
+  Proof.
+    make_morphism.
+    + move=> τ [A R].
+      exact
+       (A ⇓ Tm.bool
+        /\ forall e1 e2,
+           R (e1, e2) <-> ([e1, e2] ⇓ Tm.tt \/ [e1, e2] ⇓ Tm.ff)).
+    + firstorder.
+  Defined.
 
-  Definition later (τ : matrix) A R :=
-    exists κ B,
-      A ⇓ Tm.ltr κ B
-      /\ ▷[ κ ] (τ (B, R)).
+  Definition later : monotone matrix matrix.
+  Proof.
+    make_morphism.
+    + move=> τ [A R].
+      exact
+        (exists κ B,
+            A ⇓ Tm.ltr κ B
+            /\ ▷[ κ ] (τ (B, R))).
+    + move=> τ1 τ2 τ1τ2 [A R] [κ [B [A_eval Q]]].
+      econstructor; eauto.
+  Defined.
 
-  Definition prod (τ : matrix) A R :=
-    exists B C R1 R2,
-      A ⇓ Tm.prod B C
-      /\ τ (B, R1)
-      /\ τ (C, R2)
-      /\ forall e1 e2,
-          R (e1, e2) <-> exists e11 e12 e21 e22,
-            (e1 ⇓ Tm.pair e11 e12)
-            /\ (e2 ⇓ Tm.pair e21 e22)
-            /\ R1 (e11, e21)
-            /\ R2 (e12, e22).
+  Definition prod : monotone matrix matrix.
+  Proof.
+    make_morphism.
+    + move=> τ [A R].
+      exact
+        (exists B C R1 R2,
+            A ⇓ Tm.prod B C
+            /\ τ (B, R1)
+            /\ τ (C, R2)
+            /\ forall e1 e2,
+                R (e1, e2) <-> exists e11 e12 e21 e22,
+                  (e1 ⇓ Tm.pair e11 e12)
+                  /\ (e2 ⇓ Tm.pair e21 e22)
+                  /\ R1 (e11, e21)
+                  /\ R2 (e12, e22)).
+    + move=> τ1 τ2 P [A R].
+      firstorder.
+      do 4 eexists.
+      split; eauto.
+  Defined.
 End Close.
 
 Module TyF.
   (* For each refinement matrix σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/behaviors. *)
-  Inductive t (σ τ : matrix) (A : Tm.t 0) (R : behavior) : Prop :=
-  | init of σ (A, R)
-  | unit of Close.unit A R
-  | bool of Close.bool A R
-  | prod of Close.prod τ A R
-  | later of Close.later τ A R.
-
-  Definition fn σ τ X :=
-    t σ τ (fst X) (snd X).
-
+  Inductive t (σ τ : matrix) (X : Tm.t 0 * behavior) : Prop :=
+  | init of σ X
+  | unit of Close.unit τ X
+  | bool of Close.bool τ X
+  | prod of Close.prod τ X
+  | later of Close.later τ X.
 
   (* The map defined above really is monotone. *)
   Definition mono (σ : matrix) : monotone matrix matrix.
   Proof.
-    refine {| mon_func := fn σ |}.
-    move=> τ1 τ2 P [A R] [Q|Q|Q|Q|Q].
-    + by [apply: init].
-    + by [apply: unit].
-    + by [apply: bool].
-    + apply: prod; firstorder; do 4 eexists; split; eauto.
-    + apply: later; firstorder; econstructor; eauto.
+    make_morphism.
+    + exact (t σ).
+    + move=> τ1 τ2 P X [Q|Q|Q|Q|Q].
+      ++ by [apply: init].
+      ++ apply: unit.
+         morphism_monotone Close.unit; eauto.
+      ++ by [apply: bool].
+      ++ apply: prod.
+         morphism_monotone Close.prod; eauto.
+      ++ apply: later.
+         morphism_monotone Close.later; eauto.
   Defined.
 End TyF.
 

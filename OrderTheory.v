@@ -104,7 +104,6 @@ Hint Resolve @mon_prop.
 Coercion mon_prop : monotone >-> Funclass.
 Arguments Build_monotone [A H B H0].
 
-
 Program Definition PostFix {L P} `(f:@monotone L P L P) : subset L :=
   {| carrier := (fun a:L => (f a) ⊑ a) |}.
 Next Obligation.
