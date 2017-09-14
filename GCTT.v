@@ -106,7 +106,7 @@ Module TyF.
   Proof.
     make_morphism.
     + exact (t σ).
-    + move=> τ1 τ2 P X [Q|Q|Q|Q|Q];
+    + move=> τ1 τ2 P X tQ; case tQ => Q;
       [ apply: init; eauto
       | apply: unit
       | apply: bool
