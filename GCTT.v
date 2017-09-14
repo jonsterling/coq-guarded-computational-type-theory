@@ -24,10 +24,12 @@ Definition matrix := ℘ (Tm.t 0 * behavior).
 Ltac make_morphism :=
   unshelve refine {| mon_func := _ |}.
 
-Ltac morphism_monotone f :=
-  apply: (@mon_prop _ _ _ _ f).
-
-
+Ltac morphism_monotone :=
+  match goal with
+  | |- @mon_func _ _ _ _ ?m _ _ =>
+    apply: (@mon_prop _ _ _ _ m);
+    eauto
+  end.
 
 Module Close.
   Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 /\ e2 ⇓ e3) (at level 0).
@@ -104,15 +106,13 @@ Module TyF.
   Proof.
     make_morphism.
     + exact (t σ).
-    + move=> τ1 τ2 P X [Q|Q|Q|Q|Q].
-      ++ by [apply: init].
-      ++ apply: unit.
-         morphism_monotone Close.unit; eauto.
-      ++ by [apply: bool].
-      ++ apply: prod.
-         morphism_monotone Close.prod; eauto.
-      ++ apply: later.
-         morphism_monotone Close.later; eauto.
+    + move=> τ1 τ2 P X [Q|Q|Q|Q|Q];
+      [ apply: init; eauto
+      | apply: unit
+      | apply: bool
+      | apply: prod
+      | apply: later
+      ]; morphism_monotone.
   Defined.
 End TyF.
 
