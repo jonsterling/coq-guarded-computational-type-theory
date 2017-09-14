@@ -41,7 +41,7 @@ Module Close.
       exact
         (A ⇓ Tm.unit
          ∧ ∀ e1 e2,
-            R (e1, e2) <-> [e1, e2] ⇓ Tm.ax).
+            R (e1, e2) ↔ [e1, e2] ⇓ Tm.ax).
     + firstorder.
   Defined.
 
@@ -52,7 +52,7 @@ Module Close.
       exact
        (A ⇓ Tm.bool
         ∧ ∀ e1 e2,
-           R (e1, e2) <-> ([e1, e2] ⇓ Tm.tt \/ [e1, e2] ⇓ Tm.ff)).
+           R (e1, e2) ↔ ([e1, e2] ⇓ Tm.tt \/ [e1, e2] ⇓ Tm.ff)).
     + firstorder.
   Defined.
 
@@ -78,7 +78,7 @@ Module Close.
             ∧ τ (B, R1)
             ∧ τ (C, R2)
             ∧ ∀ e1 e2,
-                R (e1, e2) <-> ∃ e11 e12 e21 e22,
+                R (e1, e2) ↔ ∃ e11 e12 e21 e22,
                   (e1 ⇓ Tm.pair e11 e12)
                   ∧ (e2 ⇓ Tm.pair e21 e22)
                   ∧ R1 (e11, e21)
