@@ -32,7 +32,7 @@ Ltac morphism_monotone :=
   end.
 
 Module Close.
-  Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 /\ e2 ⇓ e3) (at level 0).
+  Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 ∧ e2 ⇓ e3) (at level 0).
 
   Definition unit : monotone matrix matrix.
   Proof.
@@ -40,7 +40,7 @@ Module Close.
     + move=> τ [A R].
       exact
         (A ⇓ Tm.unit
-         /\ forall e1 e2,
+         ∧ ∀ e1 e2,
             R (e1, e2) <-> [e1, e2] ⇓ Tm.ax).
     + firstorder.
   Defined.
@@ -51,7 +51,7 @@ Module Close.
     + move=> τ [A R].
       exact
        (A ⇓ Tm.bool
-        /\ forall e1 e2,
+        ∧ ∀ e1 e2,
            R (e1, e2) <-> ([e1, e2] ⇓ Tm.tt \/ [e1, e2] ⇓ Tm.ff)).
     + firstorder.
   Defined.
@@ -61,9 +61,9 @@ Module Close.
     make_morphism.
     + move=> τ [A R].
       exact
-        (exists κ B,
+        (∃ κ B,
             A ⇓ Tm.ltr κ B
-            /\ ▷[ κ ] (τ (B, R))).
+            ∧ ▷[ κ ] (τ (B, R))).
     + move=> τ1 τ2 τ1τ2 [A R] [κ [B [A_eval Q]]].
       econstructor; eauto.
   Defined.
@@ -73,16 +73,16 @@ Module Close.
     make_morphism.
     + move=> τ [A R].
       exact
-        (exists B C R1 R2,
+        (∃ B C R1 R2,
             A ⇓ Tm.prod B C
-            /\ τ (B, R1)
-            /\ τ (C, R2)
-            /\ forall e1 e2,
-                R (e1, e2) <-> exists e11 e12 e21 e22,
+            ∧ τ (B, R1)
+            ∧ τ (C, R2)
+            ∧ ∀ e1 e2,
+                R (e1, e2) <-> ∃ e11 e12 e21 e22,
                   (e1 ⇓ Tm.pair e11 e12)
-                  /\ (e2 ⇓ Tm.pair e21 e22)
-                  /\ R1 (e11, e21)
-                  /\ R2 (e12, e22)).
+                  ∧ (e2 ⇓ Tm.pair e21 e22)
+                  ∧ R1 (e11, e21)
+                  ∧ R2 (e12, e22)).
     + move=> τ1 τ2 P [A R].
       firstorder.
       do 4 eexists.
