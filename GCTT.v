@@ -52,7 +52,7 @@ Module Close.
       exact
        (A ⇓ Tm.bool
         ∧ ∀ e1 e2,
-           R (e1, e2) ↔ ([e1, e2] ⇓ Tm.tt \/ [e1, e2] ⇓ Tm.ff)).
+           R (e1, e2) ↔ ([e1, e2] ⇓ Tm.tt ∨ [e1, e2] ⇓ Tm.ff)).
     + firstorder.
   Defined.
 
