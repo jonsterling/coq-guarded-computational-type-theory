@@ -121,10 +121,7 @@ Definition lfp {L} `{CompleteLattice.t L} (f:monotone L L) : L :=
   CompleteLattice.meet (PostFix f).
 
 Section KnasterTarski.
-  Context {L : Type} `{CompleteLattice.t L}.
-  Variable f : monotone L L.
-
-  Lemma lfp_fixed_point : f (lfp f) == lfp f.
+  Lemma lfp_fixed_point (L : Type) (_ : CompleteLattice.t L) (f : monotone L L): f (lfp f) == lfp f.
   Proof.
     have into : f (lfp f) ⊑ lfp f.
     + apply: CompleteLattice.meet_glb.

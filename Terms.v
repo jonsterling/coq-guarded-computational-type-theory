@@ -22,7 +22,14 @@ Module Tm.
   Arguments ax [n].
   Arguments tt [n].
   Arguments ff [n].
+  Arguments univ [n] i.
 End Tm.
+
 
 Axiom eval : Tm.t 0 -> Tm.t 0 -> Prop.
 Notation "e ⇓ e'" := (eval e e') (at level 50).
+
+Axiom eval_prod : forall {A B}, Tm.prod A B ⇓ Tm.prod A B.
+Axiom eval_unit : Tm.unit ⇓ Tm.unit.
+Hint Resolve eval_prod.
+Hint Resolve eval_unit.

@@ -8,6 +8,12 @@ Require Import OrderTheory.
 Require Import Axioms.
 Require Import Terms.
 
+Require Import Coq.Program.Tactics.
+Require Import Coq.Setoids.Setoid.
+Require Import Classes.SetoidClass.
+Require Import Classes.Morphisms.
+
+
 Set Implicit Arguments.
 
 
@@ -119,3 +125,73 @@ End TyF.
 (* Because the map is monotone, we can take its least fixed point to
    get a closure operator on refinement matrices.*)
 Definition CTyF (σ : matrix) := lfp (TyF.mono σ).
+
+Theorem CTyFUnroll (σ : matrix) : CTyF σ == TyF.mono σ (CTyF σ).
+  rewrite /CTyF.
+  symmetry.
+  refine (lfp_fixed_point matrix _ (TyF.mono σ)).
+Qed.
+
+
+Module Univ.
+  Print nat.
+
+  Definition Empty : matrix :=
+    fun _ => False.
+
+  Definition Spine (i : nat) : matrix.
+  Proof.
+    elim: i => [|i'].
+    + exact (CTyF Empty).
+    + move=> τ [A R].
+      exact
+        (exists j,
+            j <= i'
+            ∧ A ⇓ Tm.univ j
+            /\ forall e1 e2,
+                R (e1, e2) ↔
+                  exists S, CTyF τ (e1, S) ∧ CTyF τ (e2, S)).
+  Defined.
+
+  Definition Nuprl (i : nat) : matrix :=
+    CTyF (Spine i).
+
+  Definition Nuprlω : matrix :=
+    fun X => ∃ n, Nuprl n X.
+
+  Ltac roll_matrix :=
+    rewrite /Nuprl /CTyF;
+    match goal with
+    | |- lfp ?m ?x =>
+      case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x)
+    end.
+
+  Ltac prove_is_type :=
+    match goal with
+    | |- exists R, Nuprl ?i (?A, R) =>
+      have: exists R, TyF.t (Spine i) (Nuprl i) (A, R);
+      last (move=> [R T]; exists R; roll_matrix)
+    end.
+
+  Theorem test : ∃ R, Nuprl 1 (Tm.prod Tm.unit (Tm.univ 0), R).
+  Proof.
+    prove_is_type.
+    + econstructor.
+      apply: TyF.prod.
+      simpl.
+      do 4 eexists.
+      repeat split.
+      ++ eauto.
+      ++ have: exists R, Nuprl 1 (Tm.unit, R).
+         +++ prove_is_type.
+             ++++ econstructor.
+                  apply: TyF.unit.
+                  simpl.
+apply: eval_prod.
+
+    + auto.
+  Admitted.
+
+
+
+End Univ.
