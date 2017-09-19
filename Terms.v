@@ -31,5 +31,5 @@ Notation "e ⇓ e'" := (eval e e') (at level 50).
 
 Axiom eval_prod : forall {A B}, Tm.prod A B ⇓ Tm.prod A B.
 Axiom eval_unit : Tm.unit ⇓ Tm.unit.
-Hint Resolve eval_prod.
-Hint Resolve eval_unit.
+Axiom eval_univ : forall {n}, Tm.univ n ⇓ Tm.univ n.
+Hint Resolve eval_prod eval_unit eval_univ.

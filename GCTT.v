@@ -12,6 +12,7 @@ Require Import Coq.Program.Tactics.
 Require Import Coq.Setoids.Setoid.
 Require Import Classes.SetoidClass.
 Require Import Classes.Morphisms.
+Require Import Coq.omega.Omega.
 
 
 Set Implicit Arguments.
@@ -166,32 +167,89 @@ Module Univ.
       case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x)
     end.
 
+  Ltac equate M N :=
+    let dummy := constr:(eq_refl M : M = N) 
+    in idtac.
+
+  Definition is_type (n : nat) (A : Tm.t 0) : Prop :=
+    exists R, Nuprl n (A, R).
+
   Ltac prove_is_type :=
+    let R := fresh "R" in
     match goal with
     | |- exists R, Nuprl ?i (?A, R) =>
       have: exists R, TyF.t (Spine i) (Nuprl i) (A, R);
-      last (move=> [R T]; exists R; roll_matrix)
+      [econstructor | move=> [R T]; exists R; roll_matrix; last eauto]
     end.
 
-  Theorem test : ∃ R, Nuprl 1 (Tm.prod Tm.unit (Tm.univ 0), R).
-  Proof.
-    prove_is_type.
-    + econstructor.
+  Ltac instantiate_rel :=
+    match goal with
+    | |- ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 =>
+      equate R (fun e12 => S (fst e12) (snd e12))
+    end.
+
+  Notation "n ⊩ A type" := (exists R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "ω⊩ A type" := (exists R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
+
+  Module ClosedRules.
+
+    Theorem unit_formation {n : nat} : n ⊩ Tm.unit type.
+    Proof.
+      prove_is_type.
+      apply: TyF.unit; split; auto.
+      instantiate_rel.
+      firstorder.
+    Qed.
+
+    Lemma univ_formation_S {n : nat}
+      : (S n) ⊩ (Tm.univ n) type.
+    Proof.
+      prove_is_type.
+      apply: TyF.init.
+      eexists.
+      do 2 try split; auto.
+      instantiate_rel.
+      intros; split; auto.
+    Qed.
+
+    Theorem univ_formation {n i : nat}
+      : i < n
+        -> n ⊩ (Tm.univ i) type.
+    Proof.
+      move=> p.
+      elim: p => [| j q [R N]].
+      + apply: univ_formation_S.
+      + prove_is_type.
+        apply: TyF.init.
+        exists i; split; [omega | split; auto].
+        instantiate_rel.
+        intros; split; auto.
+    Qed.
+        
+    Theorem prod_formation {n : nat} :
+      forall A B, 
+        n ⊩ A type 
+        -> n ⊩ B type
+        -> n ⊩ (Tm.prod A B) type.
+    Proof.
+      move=> A B [R1 D] [R2 E].
+      prove_is_type.
       apply: TyF.prod.
-      simpl.
-      do 4 eexists.
-      repeat split.
-      ++ eauto.
-      ++ have: exists R, Nuprl 1 (Tm.unit, R).
-         +++ prove_is_type.
-             ++++ econstructor.
-                  apply: TyF.unit.
-                  simpl.
-apply: eval_prod.
+      do 4 eexists; do 3 try split; eauto.
+      instantiate_rel.
+      intros; split; auto.
+    Qed.
 
-    + auto.
-  Admitted.
+    Hint Resolve unit_formation univ_formation prod_formation.
+  End ClosedRules.
 
+  Lemma CommuteExists {A B : Type} {P : A -> B -> Prop} : (exists (a : A) (b : B), P a b) -> exists (b : B) (a : A), P a b.
+    firstorder.
+  Qed.
 
-
+  Theorem test : ω⊩ (Tm.prod Tm.unit (Tm.univ 0)) type.
+  Proof.
+    apply: CommuteExists;
+    eauto.
+  Qed.
 End Univ.
