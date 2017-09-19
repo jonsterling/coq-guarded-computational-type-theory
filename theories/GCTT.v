@@ -4,9 +4,9 @@ From mathcomp Require Import ssreflect.
 
 Set Bullet Behavior "Strict Subproofs".
 
-Require Import OrderTheory.
-Require Import Axioms.
-Require Import Terms.
+From gctt Require Import OrderTheory.
+From gctt Require Import Axioms.
+From gctt Require Import Terms.
 
 Require Import Coq.Program.Tactics.
 Require Import Coq.Setoids.Setoid.
@@ -187,10 +187,10 @@ Module Univ.
 
   Module ClosedRules.
 
-    (* A nice hack from Adam Chlipala Theory, to force the resolution of 
+    (* A nice hack from Adam Chlipala Theory, to force the resolution of
        some existential variables. *)
     Ltac equate M N :=
-      let r := constr:(eq_refl M : M = N) 
+      let r := constr:(eq_refl M : M = N)
       in idtac.
 
     Ltac simplify :=
@@ -212,7 +212,7 @@ Module Univ.
          | |- ?P ↔ ?Q => split
          end); eauto.
 
-    (* A tactic to prove a rule by appealing to one of the 
+    (* A tactic to prove a rule by appealing to one of the
        constructors of the refinement matrix closure operator. *)
     Ltac prove_rule con :=
       match goal with
@@ -245,8 +245,8 @@ Module Univ.
     Qed.
 
     Theorem prod_formation {n : nat} :
-      ∀ A B, 
-        n ⊩ A type 
+      ∀ A B,
+        n ⊩ A type
         → n ⊩ B type
         → n ⊩ (Tm.prod A B) type.
     Proof.
@@ -258,7 +258,7 @@ Module Univ.
   End ClosedRules.
 
 
-  Lemma CommuteExists {A B : Type} {P : A → B → Prop} 
+  Lemma CommuteExists {A B : Type} {P : A → B → Prop}
     : (∃ (a : A) (b : B), P a b)
       → ∃ (b : B) (a : A), P a b.
     firstorder.
