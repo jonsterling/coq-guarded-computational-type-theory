@@ -42,6 +42,15 @@ Ltac morphism_monotone :=
 Module Close.
   Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 ∧ e2 ⇓ e3) (at level 0).
 
+  Ltac prove_monotone :=
+    simpl; intros; destruct_conjs;
+    repeat
+      match goal with
+      | |- ?P ∧ ?Q => split
+      | |- ∃ (x : ?A), ?P => esplit
+      end;
+    eauto.
+
   Definition unit : monotone matrix matrix.
   Proof.
     make_morphism.
@@ -50,7 +59,7 @@ Module Close.
         (A ⇓ Tm.unit
          ∧ ∀ e1 e2,
             R (e1, e2) ↔ [e1, e2] ⇓ Tm.ax).
-    + firstorder.
+    + prove_monotone.
   Defined.
 
   Definition bool : monotone matrix matrix.
@@ -61,7 +70,7 @@ Module Close.
        (A ⇓ Tm.bool
         ∧ ∀ e1 e2,
            R (e1, e2) ↔ ([e1, e2] ⇓ Tm.tt ∨ [e1, e2] ⇓ Tm.ff)).
-    + firstorder.
+    + prove_monotone.
   Defined.
 
   Definition later : monotone matrix matrix.
@@ -72,8 +81,7 @@ Module Close.
         (∃ κ B,
             A ⇓ Tm.ltr κ B
             ∧ ▷[ κ ] (τ (B, R))).
-    + move=> τ1 τ2 τ1τ2 [A R] [κ [B [A_eval Q]]].
-      econstructor; eauto.
+    + prove_monotone.
   Defined.
 
   Definition prod : monotone matrix matrix.
@@ -91,10 +99,7 @@ Module Close.
                   ∧ (e2 ⇓ Tm.pair e21 e22)
                   ∧ R1 (e11, e21)
                   ∧ R2 (e12, e22)).
-    + move=> τ1 τ2 P [A R].
-      firstorder.
-      do 4 eexists.
-      split; eauto.
+    + prove_monotone.
   Defined.
 
   Definition isect : monotone matrix matrix.
@@ -106,9 +111,7 @@ Module Close.
             A ⇓ Tm.isect B
             ∧ (∀ κ, τ (B κ, S κ))
             ∧ ∀ e1 e2, R (e1, e2) ↔ ∀ κ, S κ (e1, e2)).
-    + simpl.
-      move=> τ1 τ2 P [A R].
-      firstorder.
+    + prove_monotone.
   Defined.
 End Close.
 
