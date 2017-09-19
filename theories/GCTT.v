@@ -271,7 +271,7 @@ Module Univ.
       prove_rule TyF.prod.
     Qed.
 
-    (* TODO: This is certainly true. *)
+    (* TODO: This is certainly true, assuming propositional extensionality. *)
     Axiom NuprlFunctional :
       ∀ n A S S',
         Nuprl n (A, S)
