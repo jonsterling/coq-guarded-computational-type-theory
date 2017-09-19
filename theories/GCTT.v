@@ -271,6 +271,7 @@ Module Univ.
       prove_rule TyF.prod.
     Qed.
 
+
     (* TODO: This is certainly true, assuming propositional extensionality. *)
     Axiom NuprlFunctional :
       ∀ n A S S',
@@ -300,8 +301,7 @@ Module Univ.
         → n ⊩ (Tm.isect B) type.
     Proof.
       move=> B Q.
-      have := (Choice Q) => Q'.
-      case: Q' => S Q''.
+      case: (Choice Q) => S Q'.
       prove_rule TyF.isect.
     Qed.
 
