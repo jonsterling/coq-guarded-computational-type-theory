@@ -5,14 +5,11 @@ Require Import Classes.SetoidClass.
 Require Import Classes.Morphisms.
 From mathcomp Require Import ssreflect.
 
-Print Setoid.
-Print Equivalence.
 Set Bullet Behavior "Strict Subproofs".
 
 (* Order-theory stuff drawn from Pichardie and Cachera, but partly
  rewritten by me to use ssreflect and setoids.*)
 
-Print Basics.
 Module Poset.
   Class t A : Type :=
     { eq :> Setoid A;
@@ -65,7 +62,6 @@ Module CompleteLattice.
   Qed.
 End CompleteLattice.
 
-Print Equivalence.
 Hint Resolve
      @Equivalence_Reflexive @Equivalence_Symmetric @Equivalence_Transitive
      @Poset.refl @Poset.antisym @Poset.trans

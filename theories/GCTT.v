@@ -96,6 +96,20 @@ Module Close.
       do 4 eexists.
       split; eauto.
   Defined.
+
+  Definition isect : monotone matrix matrix.
+  Proof.
+    make_morphism.
+    + move=> τ [A R].
+      exact
+        (∃ B S,
+            A ⇓ Tm.isect B
+            ∧ (∀ κ, τ (B κ, S κ))
+            ∧ ∀ e1 e2, R (e1, e2) ↔ ∀ κ, S κ (e1, e2)).
+    + simpl.
+      move=> τ1 τ2 P [A R].
+      firstorder.
+  Defined.
 End Close.
 
 Module TyF.
@@ -107,6 +121,7 @@ Module TyF.
   | unit of Close.unit τ X
   | bool of Close.bool τ X
   | prod of Close.prod τ X
+  | isect of Close.isect τ X
   | later of Close.later τ X.
 
   (* The map defined above really is monotone. *)
@@ -119,6 +134,7 @@ Module TyF.
       | apply: unit
       | apply: bool
       | apply: prod
+      | apply: isect
       | apply: later
       ]; morphism_monotone.
   Defined.
@@ -136,8 +152,6 @@ Qed.
 
 
 Module Univ.
-  Print nat.
-
   Definition Empty : matrix :=
     fun _ => False.
 
@@ -230,9 +244,9 @@ Module Univ.
       prove_rule TyF.init.
     Qed.
 
-    Theorem univ_formation {n i : nat}
-      : i < n
-        → n ⊩ (Tm.univ i) type.
+    Theorem univ_formation {n i : nat} :
+      i < n
+      → n ⊩ (Tm.univ i) type.
     Proof.
       move=> p.
       elim: p => [| j q [R N]].
@@ -252,6 +266,40 @@ Module Univ.
     Proof.
       move=> A B [R1 D] [R2 E].
       prove_rule TyF.prod.
+    Qed.
+
+    (* TODO: This is certainly true. *)
+    Axiom NuprlFunctional :
+      ∀ n A S S',
+        Nuprl n (A, S)
+        -> Nuprl n (A, S')
+        → S = S'.
+
+    (* TODO: this should follow from the fact that the Nuprl type system is functional,
+     i.e. that unique behaviors are assigned to type codes. *)
+    Lemma Choice {n : nat} {A : CLK → Tm.t 0} :
+      (∀ κ, ∃ Rκ, Nuprl n (A κ, Rκ))
+      → ∃ S, ∀ κ, Nuprl n (A κ, S κ).
+    Proof.
+      move=> X.
+      apply: (unique_choice (fun κ R => Nuprl n (A κ, R))).
+      move=> κ.
+      case: (X κ) => S T.
+      exists S.
+      split; auto.
+      move=> S' T'.
+      apply: NuprlFunctional; eauto.
+    Qed.
+
+    Theorem isect_formation {n : nat} :
+      forall B,
+        (∀ κ, n ⊩ (B κ) type)
+        → n ⊩ (Tm.isect B) type.
+    Proof.
+      move=> B Q.
+      have := (Choice Q) => Q'.
+      case: Q' => S Q''.
+      prove_rule TyF.isect.
     Qed.
 
     Hint Resolve unit_formation univ_formation prod_formation.
