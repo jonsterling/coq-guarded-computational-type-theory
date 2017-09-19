@@ -184,11 +184,14 @@ Module Univ.
   Qed.
 
 
-  Ltac equate M N :=
-    let dummy := constr:(eq_refl M : M = N) 
-    in idtac.
 
   Module ClosedRules.
+
+    (* A nice hack from Adam Chlipala Theory, to force the resolution of 
+       some existential variables. *)
+    Ltac equate M N :=
+      let r := constr:(eq_refl M : M = N) 
+      in idtac.
 
     Ltac simplify :=
       simpl;
@@ -198,12 +201,19 @@ Module Univ.
          | |- ?i ≤ ?j => omega
          | |- ∃ (x : ?A), ?P => eexists
          | |- ?P ∧ ?Q => split
+
+         (* We will often encounter a semantic specification for a relation
+            before we have even filled it in (i.e. it is an existential variable).
+            So, we can force it to be instantiated to exactly the right thing. *)
          | |- ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 =>
            equate R (fun e12 => S (fst e12) (snd e12));
            intros
+
          | |- ?P ↔ ?Q => split
          end); eauto.
 
+    (* A tactic to prove a rule by appealing to one of the 
+       constructors of the refinement matrix closure operator. *)
     Ltac prove_rule con :=
       match goal with
       | |- ?n ⊩ ?A type => eexists; apply: Roll; apply: con; simplify
