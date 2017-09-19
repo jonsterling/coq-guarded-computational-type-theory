@@ -193,12 +193,24 @@ Module Univ.
 
   Module ClosedRules.
 
+    Ltac simplify :=
+      simpl;
+      repeat
+        (match goal with
+         | |- ?i ≤ ?j => omega
+         | |- exists (x : ?A), ?P => eexists
+         | |- ?P ∧ ?Q => split
+         | |- ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 =>
+           equate R (fun e12 => S (fst e12) (snd e12));
+           intros
+         | |- ?P ↔ ?Q => split
+         end); eauto.
+
     Theorem unit_formation {n : nat} : n ⊩ Tm.unit type.
     Proof.
       prove_is_type.
-      apply: TyF.unit; split; auto.
-      instantiate_rel.
-      firstorder.
+      apply: TyF.unit.
+      simplify; firstorder.
     Qed.
 
     Lemma univ_formation_S {n : nat}
@@ -206,10 +218,7 @@ Module Univ.
     Proof.
       prove_is_type.
       apply: TyF.init.
-      eexists.
-      do 2 try split; auto.
-      instantiate_rel.
-      intros; split; auto.
+      simplify.
     Qed.
 
     Theorem univ_formation {n i : nat}
@@ -221,11 +230,10 @@ Module Univ.
       + apply: univ_formation_S.
       + prove_is_type.
         apply: TyF.init.
-        exists i; split; [omega | split; auto].
-        instantiate_rel.
-        intros; split; auto.
+        exists i.
+        simplify.
     Qed.
-        
+
     Theorem prod_formation {n : nat} :
       forall A B, 
         n ⊩ A type 
@@ -235,9 +243,7 @@ Module Univ.
       move=> A B [R1 D] [R2 E].
       prove_is_type.
       apply: TyF.prod.
-      do 4 eexists; do 3 try split; eauto.
-      instantiate_rel.
-      intros; split; auto.
+      simplify.
     Qed.
 
     Hint Resolve unit_formation univ_formation prod_formation.
