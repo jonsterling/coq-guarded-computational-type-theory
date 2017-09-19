@@ -18,6 +18,7 @@ Require Import Coq.omega.Omega.
 Set Implicit Arguments.
 
 
+
 Hint Resolve Later.map.
 
 (* A behavior is a binary relations on terms; later we will show this to be symmetric
@@ -146,12 +147,12 @@ Module Univ.
     + exact (CTyF Empty).
     + move=> τ [A R].
       exact
-        (exists j,
+        (∃ j,
             j <= i'
             ∧ A ⇓ Tm.univ j
-            /\ forall e1 e2,
+            ∧ ∀ e1 e2,
                 R (e1, e2) ↔
-                  exists S, CTyF τ (e1, S) ∧ CTyF τ (e2, S)).
+                  ∃ S, CTyF τ (e1, S) ∧ CTyF τ (e2, S)).
   Defined.
 
   Definition Nuprl (i : nat) : matrix :=
@@ -161,8 +162,8 @@ Module Univ.
     fun X => ∃ n, Nuprl n X.
 
 
-  Notation "n ⊩ A type" := (exists R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
-  Notation "ω⊩ A type" := (exists R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
 
 
   Ltac roll_matrix :=
@@ -175,7 +176,7 @@ Module Univ.
   Theorem Roll {i : nat} :
     ∀ A R,
       TyF.t (Spine i) (Nuprl i) (A, R)
-      -> Nuprl i (A, R).
+      → Nuprl i (A, R).
   Proof.
     move=> A R X.
     roll_matrix.
@@ -193,9 +194,9 @@ Module Univ.
       simpl;
       repeat
         (match goal with
-         | |- exists (R : behavior), Nuprl ?n ?X => eexists; apply: Roll
+         | |- ∃ (R : behavior), Nuprl ?n ?X => eexists; apply: Roll
          | |- ?i ≤ ?j => omega
-         | |- exists (x : ?A), ?P => eexists
+         | |- ∃ (x : ?A), ?P => eexists
          | |- ?P ∧ ?Q => split
          | |- ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 =>
            equate R (fun e12 => S (fst e12) (snd e12));
@@ -221,7 +222,7 @@ Module Univ.
 
     Theorem univ_formation {n i : nat}
       : i < n
-        -> n ⊩ (Tm.univ i) type.
+        → n ⊩ (Tm.univ i) type.
     Proof.
       move=> p.
       elim: p => [| j q [R N]].
@@ -234,10 +235,10 @@ Module Univ.
     Qed.
 
     Theorem prod_formation {n : nat} :
-      forall A B, 
+      ∀ A B, 
         n ⊩ A type 
-        -> n ⊩ B type
-        -> n ⊩ (Tm.prod A B) type.
+        → n ⊩ B type
+        → n ⊩ (Tm.prod A B) type.
     Proof.
       move=> A B [R1 D] [R2 E].
       prove_rule TyF.prod.
@@ -247,7 +248,9 @@ Module Univ.
   End ClosedRules.
 
 
-  Lemma CommuteExists {A B : Type} {P : A -> B -> Prop} : (exists (a : A) (b : B), P a b) -> exists (b : B) (a : A), P a b.
+  Lemma CommuteExists {A B : Type} {P : A → B → Prop} 
+    : (∃ (a : A) (b : B), P a b)
+      → ∃ (b : B) (a : A), P a b.
     firstorder.
   Qed.
 
