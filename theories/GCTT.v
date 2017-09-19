@@ -305,7 +305,7 @@ Module Univ.
       prove_rule TyF.isect.
     Qed.
 
-    Hint Resolve unit_formation univ_formation prod_formation.
+    Hint Resolve unit_formation univ_formation prod_formation isect_formation.
   End ClosedRules.
 
 
