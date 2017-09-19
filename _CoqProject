@@ -1,0 +1,6 @@
+-Q theories gctt
+-arg -w -arg -notation-overridden,-redundant-canonical-projection,-several-object-files
+theories/OrderTheory.v
+theories/Axioms.v
+theories/Terms.v
+theories/GCTT.v
