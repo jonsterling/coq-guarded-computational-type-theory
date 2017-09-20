@@ -182,21 +182,32 @@ Module Univ.
   Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
   Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
 
-
-  Ltac roll_matrix :=
-    rewrite /Nuprl /CTyF;
-    match goal with
-    | |- lfp ?m ?x =>
-      case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x)
-    end.
-
   Theorem Roll {i : nat} :
     ∀ A R,
       TyF.t (Spine i) (Nuprl i) (A, R)
       → Nuprl i (A, R).
   Proof.
     move=> A R X.
-    roll_matrix.
+    rewrite /Nuprl /CTyF.
+    match goal with
+    | |- lfp ?m ?x =>
+      case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x)
+    end.
+    eauto.
+  Qed.
+
+  Theorem Unroll {i : nat} :
+    ∀ A R,
+      Nuprl i (A, R)
+      → TyF.t (Spine i) (Nuprl i) (A, R).
+  Proof.
+    move=> A R X.
+    rewrite /Nuprl /CTyF in X.
+    match goal with
+    | H : lfp ?m ?x |- _ =>
+      case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x) => _ Q'
+    end.
+    apply: Q'.
     eauto.
   Qed.
 
