@@ -6,6 +6,7 @@ From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 Axiom CLK : Type.
+Axiom LocalClock : ∃ κ : CLK, True.
 
 Module Later.
   Axiom t : CLK -> Prop -> Prop.
