@@ -180,6 +180,7 @@ Module Univ.
 
 
   Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "n ⊩ A ~ B type" := (∃ R, Nuprl n (A, R) ∧ Nuprl n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
   Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
 
   Theorem Roll {i : nat} :
@@ -316,7 +317,25 @@ Module Univ.
       prove_rule TyF.isect.
     Qed.
 
-    Hint Resolve unit_formation univ_formation prod_formation isect_formation.
+    Theorem isect_irrelevance :
+      forall n A,
+        n ⊩ A type
+        → n ⊩ A ~ (Tm.isect (fun _ => A)) type.
+    Proof.
+      move=> n A [R AR].
+      exists R.
+      split; auto.
+      rewrite /Nuprl /CTyF.
+      apply: Roll.
+      apply: TyF.isect.
+      exists (fun _ => A), (fun _ => R).
+      repeat split; auto.
+      case: LocalClock.
+      auto.
+    Qed.
+
+
+    Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance.
   End ClosedRules.
 
 
@@ -327,9 +346,12 @@ Module Univ.
   Qed.
 
 
-  Theorem test : ω⊩ (Tm.prod Tm.unit (Tm.univ 0)) type.
+  Theorem test : ∃ n, n ⊩ (Tm.prod Tm.unit (Tm.univ 0)) type.
   Proof.
-    apply: CommuteExists.
+    eauto.
+  Qed.
+
+  Theorem test2 : exists n, n ⊩ (Tm.univ 0) ~ (Tm.isect (fun _ => Tm.univ 0)) type.
     eauto.
   Qed.
 
