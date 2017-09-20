@@ -338,14 +338,6 @@ Module Univ.
     Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance.
   End ClosedRules.
 
-
-  Lemma CommuteExists {A B : Type} {P : A → B → Prop}
-    : (∃ (a : A) (b : B), P a b)
-      → ∃ (b : B) (a : A), P a b.
-    firstorder.
-  Qed.
-
-
   Theorem test : ∃ n, n ⊩ (Tm.prod Tm.unit (Tm.univ 0)) type.
   Proof.
     eauto.
