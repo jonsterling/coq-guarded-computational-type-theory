@@ -325,7 +325,6 @@ Module Univ.
       move=> n A [R AR].
       exists R.
       split; auto.
-      rewrite /Nuprl /CTyF.
       apply: Roll.
       apply: TyF.isect.
       exists (fun _ => A), (fun _ => R).
@@ -333,7 +332,6 @@ Module Univ.
       case: LocalClock.
       auto.
     Qed.
-
 
     Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance.
   End ClosedRules.
