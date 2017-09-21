@@ -1,4 +1,5 @@
 From gctt Require Import Axioms.
+Require Import Unicode.Utf8.
 
 Set Implicit Arguments.
 
@@ -25,12 +26,14 @@ Module Tm.
   Arguments univ [n] i.
 End Tm.
 
+Inductive eval : Tm.t 0 → Tm.t 0 → Prop :=
+| eval_prod : ∀ {A B}, eval (Tm.prod A B) (Tm.prod A B)
+| eval_unit : eval Tm.unit Tm.unit
+| eval_univ : ∀ {n}, eval (Tm.univ n) (Tm.univ n)
+| eval_isect : ∀ {n}, eval (Tm.isect n) (Tm.isect n)
+| eval_tt : eval Tm.tt Tm.tt
+| eval_ff : eval Tm.ff Tm.ff
+| eval_ax : eval Tm.ax Tm.ax.
 
-Axiom eval : Tm.t 0 -> Tm.t 0 -> Prop.
 Notation "e ⇓ e'" := (eval e e') (at level 50).
-
-Axiom eval_prod : forall {A B}, Tm.prod A B ⇓ Tm.prod A B.
-Axiom eval_unit : Tm.unit ⇓ Tm.unit.
-Axiom eval_univ : forall {n}, Tm.univ n ⇓ Tm.univ n.
-Axiom eval_isect : forall {A}, Tm.isect A ⇓ Tm.isect A.
-Hint Resolve eval_prod eval_unit eval_univ eval_isect.
+Hint Resolve eval_prod eval_unit eval_univ eval_isect eval_tt eval_ff eval_ax.
