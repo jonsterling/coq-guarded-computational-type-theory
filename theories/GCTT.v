@@ -118,6 +118,18 @@ Module Close.
 End Close.
 
 Module TyF.
+
+  Definition addprod (τ : matrix) (A : Tm.t 0) (R : behavior) : Prop :=
+          (∃ B C R1 R2,
+            A ⇓ Tm.prod B C
+            ∧ τ (B, R1)
+            ∧ τ (C, R2)
+            ∧ ∀ e1 e2,
+                R (e1, e2) ↔ ∃ e11 e12 e21 e22,
+                  (e1 ⇓ Tm.pair e11 e12)
+                  ∧ (e2 ⇓ Tm.pair e21 e22)
+                  ∧ R1 (e11, e21)
+                  ∧ R2 (e12, e22)).
   (* For each refinement matrix σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/behaviors. *)
@@ -145,15 +157,20 @@ Module TyF.
   Defined.
 End TyF.
 
+
 (* Because the map is monotone, we can take its least fixed point to
    get a closure operator on refinement matrices.*)
 Definition CTyF (σ : matrix) := lfp (TyF.mono σ).
 
-Definition matrix_functional (σ : matrix) : Prop :=
-  ∀ A R1 R2,
+Definition based_matrix_functional (σ : matrix) (A : Tm.t 0) : Prop :=
+  ∀ R1 R2,
     σ (A, R1)
     → σ (A, R2)
     → R1 = R2.
+
+Definition matrix_functional (σ : matrix) : Prop :=
+  ∀ A, based_matrix_functional σ A.
+
 
 Axiom propositional_extensionality :
   ∀ (P Q : Prop),
@@ -186,6 +203,23 @@ Proof.
 Qed.
 
 
+Theorem CTyF_ind :
+  ∀ (σ : matrix) (X : Tm.t 0 * behavior) (P : Prop),
+    CTyF σ X
+    → (σ X → P)
+    → (Close.unit (CTyF σ) X → P)
+    → (Close.bool (CTyF σ) X → P)
+    → (Close.prod (CTyF σ) X → P)
+    → (Close.isect (CTyF σ) X → P)
+    → (Close.later (CTyF σ) X → P)
+    → P.
+Proof.
+  move=> σ [A R] P C init unit bool prod isect later.
+  rewrite -CTyF_Roll in C.
+  case: C; auto.
+Qed.
+
+
 Definition Empty : matrix :=
   fun _ => False.
 
@@ -193,36 +227,59 @@ Definition Empty : matrix :=
    a semantic least fixed point, Coq doesn't automatically have the induction principle.
    So, I would have to prove this induction principle myself to make the inductive cases
    go through. *)
-Theorem CTyF_Empty_functional : matrix_functional (CTyF (Empty)).
-Proof.
-  move=> A R1 R2 AR1 AR2.
-  rewrite -CTyF_Roll in AR1, AR2.
-  (elim: AR1; elim: AR2) => H1 H2;
-    simpl in H1, H2;
-    try contradiction;
-    apply: functional_extensionality => es;
-    apply: propositional_extensionality;
-    destruct_conjs;
-    split => esH;
-    repeat progress match goal with
-    | H : ∀ x1 x2 : Tm.t 0, ?R (x1, x2) ↔ @?Q x1 x2 |- ?R (?e1, ?e2) =>
-      case (H e1 e2); clear H
-    | H : ?A ⇓ ?B |- _ => dependent destruction H
-    end; eauto.
-  + firstorder.
-  + firstorder.
-  + move=> _; apply.
-    destruct (H7 t t0).
-    destruct (H esH).
-    destruct_conjs.
-    repeat esplit; eauto.
-    ++ admit. (* need IH *)
-    ++ admit. (* need IH *)
-  + admit.
-  + admit.
-  + admit.
-Admitted.
 
+Ltac mytac :=
+  match goal with
+  | T1 : CTyF _ _, T2 : CTyF _ _ |- _ =>
+    let C1 := fresh in
+    let C2 := fresh in
+    apply (CTyF_ind T1) => C1; apply (CTyF_ind T2) => C2;
+    try contradiction;
+    simpl in *; destruct_conjs;
+    apply: functional_extensionality;
+    move=> [e1 e2];
+     repeat
+       match goal with
+       | H : ∀ e1 e2, @?P e1 e2 |- _ => case: (H e1 e2); clear H
+       | H : ?A ⇓ ?B |- _ => solve [dependent destruction H]
+       end
+  end.
+
+Ltac destruct_evals :=
+  repeat
+    match goal with
+      | H : ?A ⇓ ?B |- _ => dependent destruction H
+    end.
+
+(* HORRIBLE PROOF: improve this. But at least it's true ;-) *)
+Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
+Proof.
+  move=> A.
+  elim: A; unfold based_matrix_functional; try by [intros; mytac];
+  intros; mytac; intros;
+  apply: propositional_extensionality;
+  auto; destruct_evals; intros.
+  + split; auto.
+  + split; intros;
+    repeat
+      lazymatch goal with
+      | H' : ?P → ?Q, H'' : ?Q → ?P |- ?Q => apply: H'; clear H''
+      | H' : ?P, H'' : ?P → ?Q |- _ => case: (H'' H'); clear H''
+      end;
+    intros;
+    destruct_conjs;
+    repeat esplit; eauto; destruct_evals.
+  + split; intros;
+    lazymatch goal with
+    | H' : ?P → ?Q, H'' : ?Q → ?P |- ?Q => apply: H'; clear H''
+    end;
+    move=> κ;
+    lazymatch goal with
+    | H' :  ∀ (c : CLK) (R1 R2 : behavior), ?C1 → ?C2 → R1 = R2, _ : ∀ c, ?R → ?Q _ _  |- ?P _ _ =>
+       rewrite (H' κ (P κ) (Q κ) _ _)
+    end;
+    eauto.
+Qed.
 
 
 Module Univ.
