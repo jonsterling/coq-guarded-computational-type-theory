@@ -228,6 +228,12 @@ Definition Empty : matrix :=
    So, I would have to prove this induction principle myself to make the inductive cases
    go through. *)
 
+Ltac destruct_CTyF :=
+  repeat match goal with
+  | T : CTyF _ _ |- _ =>
+    apply: (CTyF_ind T); clear T
+  end.
+
 Ltac mytac :=
   match goal with
   | T1 : CTyF _ _, T2 : CTyF _ _ |- _ =>
@@ -251,11 +257,27 @@ Ltac destruct_evals :=
       | H : ?A ⇓ ?B |- _ => dependent destruction H
     end.
 
+Ltac noconfusion :=
+  try by [contradiction];
+  intros; simpl in *;
+  destruct_conjs;
+  destruct_evals.
+
 (* HORRIBLE PROOF: improve this. But at least it's true ;-) *)
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   move=> A.
-  elim: A; unfold based_matrix_functional; try by [intros; mytac];
+  elim: A; unfold based_matrix_functional;
+  intros;
+  destruct_CTyF => C1 C2;
+  try by [noconfusion].
+  + noconfusion.
+    destruct_CTyF => C;
+    noconfusion.
+
+(* CONTINUE WIP *)
+
+ try by [intros; mytac];
   intros; mytac; intros;
   apply: propositional_extensionality;
   auto; destruct_evals; intros.
