@@ -316,20 +316,20 @@ Module Univ.
 
   Theorem Spine_functional : ∀ i, matrix_functional (Spine i).
   Proof.
-    elim.
+    case.
     + apply: CTyF_Empty_functional.
-    + move=> n spF A.
-      specialize (spF A).
+    + move=> n A.
       move=> R1 R2 AR1 AR2.
       rewrite //= in AR1, AR2.
       apply: functional_extensionality.
       move=> [e1 e2].
       apply: propositional_extensionality.
       destruct_conjs;
-      specialize (H4 e1 e2);
-      specialize (H1 e1 e2);
-      destruct H1, H4.
-      split => e1e2; [ specialize (H4 e1e2) | specialize (H1 e1e2) ];
+      split => e1e2;
+      repeat match goal with
+      | H : _ |- _ => specialize (H e1 e2); destruct H
+      | H : _ |- _ => specialize (H e1e2)
+      end;
       backthruhyp; destruct_conjs; eexists; split; eauto.
   Qed.
 
