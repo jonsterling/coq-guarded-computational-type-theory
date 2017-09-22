@@ -274,7 +274,6 @@ Ltac use_matrix_functionality_ih :=
       by rewrite (IH R R'); auto
   end.
 
-(* horrible PROOF: improve this. But at least it's true ;-) *)
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   move=> A.
