@@ -234,28 +234,19 @@ Ltac destruct_CTyF :=
     apply: (CTyF_ind T); clear T
   end.
 
-Ltac mytac :=
-  match goal with
-  | T1 : CTyF _ _, T2 : CTyF _ _ |- _ =>
-    let C1 := fresh in
-    let C2 := fresh in
-    apply (CTyF_ind T1) => C1; apply (CTyF_ind T2) => C2;
-    try contradiction;
-    simpl in *; destruct_conjs;
-    apply: functional_extensionality;
-    move=> [e1 e2];
-     repeat
-       match goal with
-       | H : ∀ e1 e2, @?P e1 e2 |- _ => case: (H e1 e2); clear H
-       | H : ?A ⇓ ?B |- _ => solve [dependent destruction H]
-       end
-  end.
-
 Ltac destruct_evals :=
   repeat
     match goal with
       | H : ?A ⇓ ?B |- _ => dependent destruction H
     end.
+
+Ltac destruct_rel_spec :=
+  match goal with
+  | H : ∀ e1 e2, ?P (e1, e2) ↔ _ |- _ =>
+    case: (H e1 e2);
+    clear H
+  end.
+    
 
 Ltac noconfusion :=
   try by [contradiction];
@@ -263,44 +254,45 @@ Ltac noconfusion :=
   destruct_conjs;
   destruct_evals.
 
-(* HORRIBLE PROOF: improve this. But at least it's true ;-) *)
+
+Ltac backthruhyp := 
+  let H := fresh in
+  match goal with
+  | H : _ → ?P |- ?P => apply H
+  end.
+
+Ltac specialize_hyps :=
+  repeat 
+    match goal with
+    | H : ∀ κ : CLK, ?P, κ : CLK |- _ => specialize (H κ)
+    | H : ?R (?e1, ?e2) -> ?P, H' : ?R (?e1, ?e2) |- _ => specialize (H H')
+    end.
+
+Ltac use_matrix_functionality_ih := 
+  match goal with
+  | IH : ∀ R1 R2 : behavior, CTyF _ (?A, R1) → CTyF _ (?A, R2) → R1 = R2, U : ?R' (?e1, ?e2) |- ?R (?e1, ?e2) =>
+      by rewrite (IH R R'); auto
+  end.
+
+(* horrible PROOF: improve this. But at least it's true ;-) *)
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   move=> A.
   elim: A; unfold based_matrix_functional;
   intros;
   destruct_CTyF => C1 C2;
-  try by [noconfusion].
-  + noconfusion.
-    destruct_CTyF => C;
-    noconfusion.
-
-(* CONTINUE WIP *)
-
- try by [intros; mytac];
-  intros; mytac; intros;
+  noconfusion;
+  apply: functional_extensionality;
+  move=> [e1 e2];
   apply: propositional_extensionality;
-  auto; destruct_evals; intros.
-  + split; auto.
-  + split; intros;
-    repeat
-      lazymatch goal with
-      | H' : ?P → ?Q, H'' : ?Q → ?P |- ?Q => apply: H'; clear H''
-      | H' : ?P, H'' : ?P → ?Q |- _ => case: (H'' H'); clear H''
-      end;
-    intros;
-    destruct_conjs;
-    repeat esplit; eauto; destruct_evals.
-  + split; intros;
-    lazymatch goal with
-    | H' : ?P → ?Q, H'' : ?Q → ?P |- ?Q => apply: H'; clear H''
-    end;
-    move=> κ;
-    lazymatch goal with
-    | H' :  ∀ (c : CLK) (R1 R2 : behavior), ?C1 → ?C2 → R1 = R2, _ : ∀ c, ?R → ?Q _ _  |- ?P _ _ =>
-       rewrite (H' κ (P κ) (Q κ) _ _)
-    end;
-    eauto.
+  repeat destruct_rel_spec;
+  first firstorder;
+  intros;
+  split; intros;
+  backthruhyp; intros;
+  specialize_hyps; destruct_conjs;
+  repeat esplit; eauto;
+  use_matrix_functionality_ih.
 Qed.
 
 
