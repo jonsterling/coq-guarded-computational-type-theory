@@ -251,7 +251,6 @@ Ltac destruct_evals :=
       | H : ?A ⇓ ?B |- _ => dependent destruction H
     end.
 
-
 Ltac noconfusion :=
   try by [contradiction];
   intros; simpl in *;
@@ -368,13 +367,10 @@ Module Univ.
       unfold based_matrix_functional, Nuprl; intros;
       destruct_CTyF => C1 C2;
       noconfusion;
-      apply: functional_extensionality;
-      move=> [e1 e2];
-      apply: propositional_extensionality;
-
+      apply: binrel_extensionality => e1 e2;
       repeat
         match goal with
-        | H : ∀ (e1 e2 : Tm.t 0), ?P |- ?R (?e1, ?e2) ↔ _ => specialize (H e1 e2); destruct H
+        | H : ∀ (e1 e2 : Tm.t 0), ?P |- _ => specialize (H e1 e2); destruct H
         end;
 
       intros;
@@ -409,8 +405,7 @@ Module Univ.
 
   Theorem Roll {i : nat} : TyF.t (Spine i) (Nuprl i) = Nuprl i.
   Proof.
-    apply: functional_extensionality => X.
-    apply: propositional_extensionality.
+    apply: binrel_extensionality => A R.
     split => H. 
     + rewrite /Nuprl /CTyF.
       match goal with
