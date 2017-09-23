@@ -165,7 +165,7 @@ Axiom propositional_extensionality :
     (P ↔ Q)
     -> P = Q.
 
-Theorem binrel_extensionality : 
+Theorem binrel_extensionality :
   ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Prop),
     (∀ x y, R1 (x, y) ↔ R2 (x, y))
     → R1 = R2.
@@ -241,20 +241,20 @@ Ltac noconfusion :=
   destruct_evals.
 
 
-Ltac backthruhyp := 
+Ltac backthruhyp :=
   let H := fresh in
   match goal with
   | H : _ → ?P |- ?P => apply H
   end.
 
 Ltac specialize_hyps :=
-  repeat 
+  repeat
     match goal with
     | H : ∀ κ : CLK, ?P, κ : CLK |- _ => specialize (H κ)
     | H : ?R (?e1, ?e2) -> ?P, H' : ?R (?e1, ?e2) |- _ => specialize (H H')
     end.
 
-Ltac use_matrix_functionality_ih := 
+Ltac use_matrix_functionality_ih :=
   match goal with
   | IH : ∀ R1 R2 : behavior, CTyF _ (?A, R1) → CTyF _ (?A, R2) → R1 = R2, U : ?R' (?e1, ?e2) |- ?R (?e1, ?e2) =>
       by rewrite (IH R R'); auto
@@ -268,14 +268,14 @@ Proof.
   noconfusion;
   apply: binrel_extensionality; intros;
   split; intros;
-  
+
   repeat
     match goal with
     | H : ∀ (e1 e2 : Tm.t 0), ?P |- ?R (?e1, ?e2) => specialize (H e1 e2); destruct H
     end;
 
   first by [firstorder];
-  first by [firstorder]; 
+  first by [firstorder];
 
   backthruhyp; intros;
   specialize_hyps;
@@ -314,7 +314,7 @@ Module Univ.
     rewrite -CTyF_Roll;
 
     match goal with
-    | |- TyF.t _ _ (?A, _) => 
+    | |- TyF.t _ _ (?A, _) =>
       match A with
       | Tm.unit =>
         apply: TyF.unit;
@@ -329,10 +329,20 @@ Module Univ.
       end
     end;
 
-    repeat match goal with 
-    | H1 : (∀ R : behavior, ?A = ?B), H2 : CTyF _ _ |- _ => (rewrite H1 in H2 || rewrite -H1 in H2); clear H1
-    | H : ∀ e1 e2 : Tm.t 0, ?P |- _ => specialize (H e1 e2); destruct H
-    | κ : CLK, H : ∀ κ : CLK, ?P |- _ => specialize (H κ)
+    intros;
+
+    repeat match goal with
+    | H1 : (∀ R : behavior, ?A = ?B), H2 : CTyF _ _ |- _ =>
+      (rewrite H1 in H2 || rewrite -H1 in H2);
+      clear H1
+    | H : ∀ e1 e2 : Tm.t 0, ?P |- ?R (?e1, ?e2) =>
+      specialize (H e1 e2);
+      destruct H
+    | H : ∀ e1 e2 : Tm.t 0, ?P, _ : ?R (?e1, ?e2) |- _ =>
+      specialize (H e1 e2);
+      destruct H
+    | κ : CLK, H : ∀ κ : CLK, ?P |- _ =>
+      specialize (H κ)
     end;
     eauto.
   Qed.
@@ -385,7 +395,7 @@ Module Univ.
   Theorem Roll {i : nat} : TyF.t (Spine i) (Nuprl i) = Nuprl i.
   Proof.
     apply: binrel_extensionality => A R.
-    split => H. 
+    split => H.
     + rewrite /Nuprl /CTyF.
       match goal with
       | |- lfp ?m ?x =>
@@ -426,7 +436,7 @@ Module Univ.
       elim j; firstorder.
   Qed.
 
-  Theorem nat_max_commutative : 
+  Theorem nat_max_commutative :
     ∀ i j,
       max i j = max j i.
   Proof.
