@@ -8,7 +8,10 @@ otherwise (they may work, but I have no way to double check).
     opam install coq.8.6
 
 
-Next, we need to install `ssreflect`. This should also be done through OPAM.
+Next, we need to install `ssreflect`; we use the `ssreflect` plugin because it
+provides generally superior tacticals, but we don't use any of the
+`ssreflect`-related mathematical libraries at this point. This plugin should
+also be installed through OPAM.
 
 
     opam repo add coq-released https://coq.inria.fr/opam/released
