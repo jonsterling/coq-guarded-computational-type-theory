@@ -118,18 +118,6 @@ Module Close.
 End Close.
 
 Module TyF.
-
-  Definition addprod (τ : matrix) (A : Tm.t 0) (R : behavior) : Prop :=
-          (∃ B C R1 R2,
-            A ⇓ Tm.prod B C
-            ∧ τ (B, R1)
-            ∧ τ (C, R2)
-            ∧ ∀ e1 e2,
-                R (e1, e2) ↔ ∃ e11 e12 e21 e22,
-                  (e1 ⇓ Tm.pair e11 e12)
-                  ∧ (e2 ⇓ Tm.pair e21 e22)
-                  ∧ R1 (e11, e21)
-                  ∧ R2 (e12, e22)).
   (* For each refinement matrix σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/behaviors. *)
