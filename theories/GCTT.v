@@ -516,8 +516,9 @@ Module Univ.
       + eexists.
         rewrite -Roll.
         apply: TyF.init.
-        exists i.
-        simplify.
+        eexists.
+        split; [ idtac | simplify ].
+        omega.
     Qed.
 
     Theorem prod_formation {n : nat} :
@@ -535,12 +536,9 @@ Module Univ.
       → ∃ S, ∀ κ, Nuprl n (A κ, S κ).
     Proof.
       move=> X.
-      apply: (unique_choice (fun κ R => Nuprl n (A κ, R))).
-      move=> κ.
+      apply: (unique_choice (fun κ R => Nuprl n (A κ, R))) => κ.
       case: (X κ) => S T.
-      exists S.
-      split; auto.
-      move=> S' T'.
+      eexists; split; eauto => S' T'.
       apply: Nuprl_functional; eauto.
     Qed.
 
@@ -560,11 +558,14 @@ Module Univ.
         → n ⊩ A ∼ (Tm.isect (fun _ => A)) type.
     Proof.
       move=> n A [R AR].
-      exists R; split; auto.
-      rewrite -Roll; apply TyF.isect.
-      exists (fun _ => A), (fun _ => R).
-      repeat split; auto.
-      case: LocalClock; auto.
+      eexists; split; eauto.
+      rewrite -Roll; apply: TyF.isect.
+      do 2 eexists; repeat split;
+      first by [constructor];
+      intros.
+      + exact AR.
+      + assumption.
+      + case: LocalClock; auto.
     Qed.
 
     Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance.
@@ -575,7 +576,7 @@ Module Univ.
     eauto.
   Qed.
 
-  Theorem test2 : exists n, n ⊩ (Tm.univ 0) ∼ (Tm.isect (fun _ => Tm.univ 0)) type.
+  Theorem test2 : ∃ n, n ⊩ (Tm.univ 0) ∼ (Tm.isect (fun _ => Tm.univ 0)) type.
     eauto.
   Qed.
 
