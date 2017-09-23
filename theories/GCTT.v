@@ -395,14 +395,14 @@ Module Univ.
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
-    elim.
+    case.
     + move=> A.
       rewrite /Nuprl.
       rewrite /Spine //=.
       unfold based_matrix_functional; intros.
       rewrite Welp in H, H0.
       apply: CTyF_Empty_functional; eauto.
-    + move=> n F A;
+    + move=> n A;
       elim: A;
       unfold based_matrix_functional, Nuprl; intros;
       destruct_CTyF => C1 C2;
@@ -531,14 +531,6 @@ Module Univ.
       prove_rule TyF.prod.
     Qed.
 
-
-    (* TODO: This is certainly true, assuming propositional extensionality. *)
-    Axiom NuprlFunctional :
-      ∀ n A S S',
-        Nuprl n (A, S)
-        -> Nuprl n (A, S')
-        → S = S'.
-
     (* TODO: this should follow from the fact that the Nuprl type system is functional,
      i.e. that unique behaviors are assigned to type codes. *)
     Lemma Choice {n : nat} {A : CLK → Tm.t 0} :
@@ -552,7 +544,7 @@ Module Univ.
       exists S.
       split; auto.
       move=> S' T'.
-      apply: NuprlFunctional; eauto.
+      apply: Nuprl_functional; eauto.
     Qed.
 
     Theorem isect_formation {n : nat} :
