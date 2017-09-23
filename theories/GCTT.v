@@ -414,6 +414,7 @@ Module Univ.
     + admit.
   Admitted.
 
+  (* TODO: move to a general location *)
   Theorem nat_max_leq :
     ∀ i j,
       i ≤ max i j.
@@ -440,6 +441,10 @@ Module Univ.
          auto.
   Qed.
 
+  (* To show that the maximal refinement matrix is functional,
+     we need to deal with type-behavior assignments at different levels.
+     However, we can take the maximum of these levels, by monotonicity,
+     bring the assignments up to a common level. *)
   Theorem Nuprlω_functional : matrix_functional Nuprlω.
   Proof.
     move=> A R1 R2 [n1 AR1] [n2 AR2].
