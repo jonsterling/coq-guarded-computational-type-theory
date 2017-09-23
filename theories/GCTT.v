@@ -382,10 +382,6 @@ Module Univ.
     fun X => ∃ n, Nuprl n X.
 
 
-  Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
-  Notation "n ⊩ A ∼ B type" := (∃ R, Nuprl n (A, R) ∧ Nuprl n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
-  Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
-
   Theorem Roll {i : nat} : TyF.t (Spine i) (Nuprl i) = Nuprl i.
   Proof.
     apply: binrel_extensionality => A R.
@@ -404,6 +400,65 @@ Module Univ.
       apply: Q'.
       auto.
   Qed.
+
+  (* TODO *)
+  Theorem Nuprl_monotone :
+    ∀ i j A R,
+      i ≤ j
+      → Nuprl i (A, R)
+      → Nuprl j (A, R).
+  Proof.
+    move=> i j A R.
+    elim => [AR | j' p IH AR].
+    + auto.
+    + admit.
+  Admitted.
+
+  Theorem nat_max_leq :
+    ∀ i j,
+      i ≤ max i j.
+  Proof.
+    move=> i j.
+    elim: i; simpl.
+    + omega.
+    + move=> j' p.
+      elim j; firstorder.
+  Qed.
+
+  Theorem nat_max_commutative : 
+    ∀ i j,
+      max i j = max j i.
+  Proof.
+    elim.
+    + case; auto.
+    + move=> n IH j.
+      elim: j.
+      ++ auto.
+      ++ move=> n' p.
+         simpl.
+         rewrite IH.
+         auto.
+  Qed.
+
+  Theorem Nuprlω_functional : matrix_functional Nuprlω.
+  Proof.
+    rewrite /Nuprlω.
+    move=> A.
+    move=> R1 R2 [n1 AR1] [n2 AR2].
+    have AR1' : Nuprl (max n1 n2) (A, R1).
+    + apply: (@Nuprl_monotone n1); auto.
+      apply: nat_max_leq.
+    + have AR2' : Nuprl (max n1 n2) (A, R2).
+      ++ apply: (@Nuprl_monotone n2); auto.
+         rewrite nat_max_commutative.
+         apply: nat_max_leq.
+      ++ apply: Nuprl_functional; eauto.
+  Qed.
+
+
+  Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "n ⊩ A ∼ B type" := (∃ R, Nuprl n (A, R) ∧ Nuprl n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
+  Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
 
   Module ClosedRules.
 
