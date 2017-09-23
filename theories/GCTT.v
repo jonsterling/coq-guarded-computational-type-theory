@@ -262,8 +262,8 @@ Ltac use_matrix_functionality_ih :=
 
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
-  move=> A; elim: A;
-  unfold based_matrix_functional; intros;
+  elim;
+  rewrite /based_matrix_functional; intros;
   destruct_CTyF; intros;
   noconfusion;
   apply: binrel_extensionality; intros;
@@ -284,11 +284,54 @@ Proof.
   use_matrix_functionality_ih.
 Qed.
 
+
+Theorem CTyF_idempotent : CTyF (CTyF Empty) = CTyF Empty.
+Proof.
+  apply: functional_extensionality.
+  case; elim; intros;
+  apply: propositional_extensionality;
+  split => AR; destruct_CTyF; noconfusion; auto;
+  rewrite -CTyF_Roll;
+
+  match goal with
+  | |- TyF.t _ _ (?A, _) =>
+    match A with
+    | Tm.unit =>
+      apply: TyF.unit;
+      split; auto
+    | Tm.prod _ _ =>
+      apply: TyF.prod;
+      do 4 esplit; repeat split; eauto
+    | Tm.isect _ =>
+      apply: TyF.isect;
+      do 2 esplit; repeat split; eauto;
+      intros
+    end
+  end;
+
+  intros;
+
+  repeat match goal with
+  | H1 : (∀ R : behavior, ?A = ?B), H2 : CTyF _ _ |- _ =>
+    (rewrite H1 in H2 || rewrite -H1 in H2);
+    clear H1
+  | H : ∀ e1 e2 : Tm.t 0, ?P |- ?R (?e1, ?e2) =>
+    specialize (H e1 e2);
+    destruct H
+  | H : ∀ e1 e2 : Tm.t 0, ?P, _ : ?R (?e1, ?e2) |- _ =>
+    specialize (H e1 e2);
+    destruct H
+  | κ : CLK, H : ∀ κ : CLK, ?P |- _ =>
+    specialize (H κ)
+  end;
+  eauto.
+Qed.
+
 Module Univ.
 
-  Definition Spine (i : nat) : matrix.
+  Definition Spine: nat → matrix.
   Proof.
-    elim: i => [|i'].
+    elim => [|i'].
     + exact (CTyF Empty).
     + move=> τ [A R].
       exact
@@ -303,49 +346,6 @@ Module Univ.
   Definition Nuprl (i : nat) : matrix :=
     CTyF (Spine i).
 
-  Theorem CTyF_idempotent : CTyF (CTyF Empty) = CTyF Empty.
-  Proof.
-    apply: functional_extensionality.
-    move=> [A R].
-    move: R.
-    elim: A; intros;
-    apply: propositional_extensionality;
-    split => AR; destruct_CTyF; noconfusion; auto;
-    rewrite -CTyF_Roll;
-
-    match goal with
-    | |- TyF.t _ _ (?A, _) =>
-      match A with
-      | Tm.unit =>
-        apply: TyF.unit;
-        split; auto
-      | Tm.prod _ _ =>
-        apply: TyF.prod;
-        do 4 esplit; repeat split; eauto
-      | Tm.isect _ =>
-        apply: TyF.isect;
-        do 2 esplit; repeat split; eauto;
-        intros
-      end
-    end;
-
-    intros;
-
-    repeat match goal with
-    | H1 : (∀ R : behavior, ?A = ?B), H2 : CTyF _ _ |- _ =>
-      (rewrite H1 in H2 || rewrite -H1 in H2);
-      clear H1
-    | H : ∀ e1 e2 : Tm.t 0, ?P |- ?R (?e1, ?e2) =>
-      specialize (H e1 e2);
-      destruct H
-    | H : ∀ e1 e2 : Tm.t 0, ?P, _ : ?R (?e1, ?e2) |- _ =>
-      specialize (H e1 e2);
-      destruct H
-    | κ : CLK, H : ∀ κ : CLK, ?P |- _ =>
-      specialize (H κ)
-    end;
-    eauto.
-  Qed.
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
@@ -403,9 +403,9 @@ Module Univ.
     + rewrite /Nuprl /CTyF in H.
       match goal with
       | H : lfp ?m ?x |- _ =>
-        case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x) => _ Q'
+        case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x) => _
       end.
-      apply: Q'.
+      apply.
       auto.
   Qed.
 
@@ -427,11 +427,9 @@ Module Univ.
     ∀ i j,
       i ≤ max i j.
   Proof.
-    move=> i j.
-    elim: i; simpl.
+    case => j.
     + omega.
-    + move=> j' p.
-      elim j; firstorder.
+    + case; firstorder.
   Qed.
 
   Theorem nat_max_commutative :
@@ -440,8 +438,7 @@ Module Univ.
   Proof.
     elim.
     + case; auto.
-    + move=> n IH j.
-      elim: j.
+    + move=> n IH; elim.
       ++ auto.
       ++ move=> n' p.
          simpl.
