@@ -177,15 +177,26 @@ Axiom propositional_extensionality :
     (P ↔ Q)
     -> P = Q.
 
+Theorem binrel_extensionality : 
+  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Prop),
+    (∀ x y, R1 (x, y) ↔ R2 (x, y))
+    → R1 = R2.
+Proof.
+  move=> T1 T2 R1 R2 F.
+  apply: functional_extensionality.
+  move=> [x y].
+  apply: propositional_extensionality.
+  eauto.
+Qed.
+
+
 Theorem CTyF_Roll:
   ∀ σ,
     TyF.t σ (CTyF σ)
     = CTyF σ.
 Proof.
   move=> σ.
-  apply: functional_extensionality.
-  move=> [A R].
-  apply: propositional_extensionality.
+  apply: binrel_extensionality => [A R].
   split => [X | X].
   + rewrite /CTyF.
     match goal with
@@ -240,13 +251,6 @@ Ltac destruct_evals :=
       | H : ?A ⇓ ?B |- _ => dependent destruction H
     end.
 
-Ltac destruct_rel_spec :=
-  match goal with
-  | H : ∀ e1 e2, ?P (e1, e2) ↔ _ |- _ =>
-    case: (H e1 e2);
-    clear H
-  end.
-    
 
 Ltac noconfusion :=
   try by [contradiction];
@@ -278,22 +282,25 @@ Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   move=> A; elim: A;
   unfold based_matrix_functional; intros;
-  destruct_CTyF => C1 C2;
+  destruct_CTyF; intros;
   noconfusion;
-  apply: functional_extensionality;
-  move=> [e1 e2];
-  apply: propositional_extensionality;
-  repeat destruct_rel_spec;
-  first firstorder;
-  intros;
+  apply: binrel_extensionality; intros;
   split; intros;
+  
+  repeat
+    match goal with
+    | H : ∀ (e1 e2 : Tm.t 0), ?P |- ?R (?e1, ?e2) => specialize (H e1 e2); destruct H
+    end;
+
+  first by [firstorder];
+  first by [firstorder]; 
+
   backthruhyp; intros;
-  specialize_hyps; destruct_conjs;
+  specialize_hyps;
+  destruct_conjs;
   repeat esplit; eauto;
   use_matrix_functionality_ih.
 Qed.
-
-
 
 Module Univ.
 
@@ -364,7 +371,11 @@ Module Univ.
       apply: functional_extensionality;
       move=> [e1 e2];
       apply: propositional_extensionality;
-      repeat destruct_rel_spec;
+
+      repeat
+        match goal with
+        | H : ∀ (e1 e2 : Tm.t 0), ?P |- ?R (?e1, ?e2) ↔ _ => specialize (H e1 e2); destruct H
+        end;
 
       intros;
       split; intros;
