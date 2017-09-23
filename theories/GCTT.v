@@ -314,28 +314,7 @@ Module Univ.
   Definition Nuprl (i : nat) : matrix :=
     CTyF (Spine i).
 
-  Theorem Spine_functional : ∀ i, matrix_functional (Spine i).
-  Proof.
-    case.
-    + apply: CTyF_Empty_functional.
-    + move=> n A.
-      move=> R1 R2 AR1 AR2.
-      rewrite //= in AR1, AR2.
-      apply: functional_extensionality.
-      move=> [e1 e2].
-      apply: propositional_extensionality.
-      destruct_conjs;
-      split => e1e2;
-      repeat match goal with
-      | H : _ |- _ => specialize (H e1 e2); destruct H
-      | H : _ |- _ => specialize (H e1e2)
-      end;
-      backthruhyp; destruct_conjs; eexists; split; eauto.
-  Qed.
-
-
-  (* Horrid proof, please improve. *)
-  Theorem Welp : CTyF (CTyF Empty) = CTyF Empty.
+  Theorem CTyF_idempotent : CTyF (CTyF Empty) = CTyF Empty.
   Proof.
     apply: functional_extensionality.
     move=> [A R].
@@ -343,64 +322,39 @@ Module Univ.
     elim: A; intros;
     apply: propositional_extensionality;
     split => AR; destruct_CTyF; noconfusion; auto;
-    rewrite -CTyF_Roll.
-    + apply: TyF.unit.
-      split; auto.
-    + apply: TyF.unit.
-      split; auto.
-    + apply: TyF.prod.
-      do 4 esplit; repeat split; eauto.
-      ++ rewrite -H; eauto.
-      ++ rewrite -H0; eauto.
-      ++ intros.
-         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
-         do 4 esplit; repeat split; eauto.
-      ++ intros.
-         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
-         backthruhyp.
-         do 4 esplit; repeat split; eauto.
-    + apply: TyF.prod.
-      do 4 esplit; repeat split; eauto.
-      ++ rewrite H; eauto.
-      ++ rewrite H0; eauto.
-      ++ intros.
-         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
-         do 4 esplit; repeat split; eauto.
-      ++ intros.
-         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
-         backthruhyp.
-         do 4 esplit; repeat split; eauto.
-    + apply: TyF.isect.
-      exists H0, H1; repeat split; eauto.
-      move=> κ;
-      specialize_hyps.
-      ++ rewrite -H; eauto.
-      ++ intros.
-         specialize (H4 e1 e2); destruct H4.
-         eauto.
-      ++ intros.
-         specialize (H4 e1 e2); destruct H4.
-         eauto.
-    + apply: TyF.isect.
-      exists H0, H1; repeat split; eauto; intros.
-      ++ specialize_hyps.
-         rewrite H; eauto.
-      ++ intros.
-         specialize (H4 e1 e2); destruct H4.
-         eauto.
-      ++ intros.
-         specialize (H4 e1 e2); destruct H4.
-         eauto.
+    rewrite -CTyF_Roll;
+
+    match goal with
+    | |- TyF.t _ _ (?A, _) => 
+      match A with
+      | Tm.unit =>
+        apply: TyF.unit;
+        split; auto
+      | Tm.prod _ _ =>
+        apply: TyF.prod;
+        do 4 esplit; repeat split; eauto
+      | Tm.isect _ =>
+        apply: TyF.isect;
+        do 2 esplit; repeat split; eauto;
+        intros
+      end
+    end;
+
+    repeat match goal with 
+    | H1 : (∀ R : behavior, ?A = ?B), H2 : CTyF _ _ |- _ => (rewrite H1 in H2 || rewrite -H1 in H2); clear H1
+    | H : ∀ e1 e2 : Tm.t 0, ?P |- _ => specialize (H e1 e2); destruct H
+    | κ : CLK, H : ∀ κ : CLK, ?P |- _ => specialize (H κ)
+    end;
+    eauto.
   Qed.
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
     case.
     + move=> A.
-      rewrite /Nuprl.
-      rewrite /Spine //=.
+      rewrite /Nuprl /Spine //=.
       unfold based_matrix_functional; intros.
-      rewrite Welp in H, H0.
+      rewrite CTyF_idempotent in H, H0.
       apply: CTyF_Empty_functional; eauto.
     + move=> n A;
       elim: A;
@@ -410,28 +364,28 @@ Module Univ.
       apply: functional_extensionality;
       move=> [e1 e2];
       apply: propositional_extensionality;
-      repeat destruct_rel_spec.
-      ++ intros;
-         split; intros;
-         backthruhyp;
-         specialize_hyps; eauto.
-      ++ intros.
-         split; intros;
-         backthruhyp; specialize_hyps;
-         destruct_conjs;
+      repeat destruct_rel_spec;
+
+      intros;
+      split; intros;
+      backthruhyp;
+      specialize_hyps; eauto.
+
+      ++ destruct_conjs;
          repeat esplit; eauto;
          use_matrix_functionality_ih.
-      ++ intros; split; intros; backthruhyp;
-         specialize_hyps;
-         destruct_conjs;
-         repeat esplit;
-         eauto; intros;
-         specialize_hyps;
+
+      ++ destruct_conjs;
+         repeat esplit; eauto;
          use_matrix_functionality_ih.
+
       ++ intros.
-         split; intros;
-         backthruhyp; specialize_hyps;
-         destruct_conjs; eauto.
+         specialize_hyps.
+         use_matrix_functionality_ih.
+
+      ++ intros.
+         specialize_hyps.
+         use_matrix_functionality_ih.
   Qed.
 
   Definition Nuprlω : matrix :=
