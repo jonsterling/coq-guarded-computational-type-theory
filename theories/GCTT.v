@@ -511,8 +511,7 @@ Module Univ.
       i < n
       → n ⊩ (Tm.univ i) type.
     Proof.
-      move=> p.
-      elim: p => [| j q [R N]].
+      case => [| j q ].
       + apply: univ_formation_S.
       + eexists.
         rewrite -Roll.
