@@ -442,17 +442,14 @@ Module Univ.
 
   Theorem Nuprlω_functional : matrix_functional Nuprlω.
   Proof.
-    rewrite /Nuprlω.
-    move=> A.
-    move=> R1 R2 [n1 AR1] [n2 AR2].
-    have AR1' : Nuprl (max n1 n2) (A, R1).
-    + apply: (@Nuprl_monotone n1); auto.
-      apply: nat_max_leq.
-    + have AR2' : Nuprl (max n1 n2) (A, R2).
-      ++ apply: (@Nuprl_monotone n2); auto.
-         rewrite nat_max_commutative.
-         apply: nat_max_leq.
-      ++ apply: Nuprl_functional; eauto.
+    move=> A R1 R2 [n1 AR1] [n2 AR2].
+    apply: Nuprl_functional.
+    + apply: Nuprl_monotone;
+      first (apply: nat_max_leq; shelve);
+      eauto.
+    + apply: Nuprl_monotone;
+      first (rewrite nat_max_commutative; apply: nat_max_leq);
+      eauto.
   Qed.
 
 
@@ -529,9 +526,7 @@ Module Univ.
       prove_rule TyF.prod.
     Qed.
 
-    (* TODO: this should follow from the fact that the Nuprl type system is functional,
-     i.e. that unique behaviors are assigned to type codes. *)
-    Lemma Choice {n : nat} {A : CLK → Tm.t 0} :
+    Lemma NuprlChoice {n : nat} {A : CLK → Tm.t 0} :
       (∀ κ, ∃ Rκ, Nuprl n (A κ, Rκ))
       → ∃ S, ∀ κ, Nuprl n (A κ, S κ).
     Proof.
@@ -551,7 +546,7 @@ Module Univ.
         → n ⊩ (Tm.isect B) type.
     Proof.
       move=> B Q.
-      case: (Choice Q) => S Q'.
+      case: (NuprlChoice Q) => S Q'.
       prove_rule TyF.isect.
     Qed.
 
