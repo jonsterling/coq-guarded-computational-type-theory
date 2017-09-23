@@ -333,6 +333,107 @@ Module Univ.
       backthruhyp; destruct_conjs; eexists; split; eauto.
   Qed.
 
+
+  (* Horrid proof, please improve. *)
+  Theorem Welp : CTyF (CTyF Empty) = CTyF Empty.
+  Proof.
+    apply: functional_extensionality.
+    move=> [A R].
+    move: R.
+    elim: A; intros;
+    apply: propositional_extensionality;
+    split => AR; destruct_CTyF; noconfusion; auto;
+    rewrite -CTyF_Roll.
+    + apply: TyF.unit.
+      split; auto.
+    + apply: TyF.unit.
+      split; auto.
+    + apply: TyF.prod.
+      do 4 esplit; repeat split; eauto.
+      ++ rewrite -H; eauto.
+      ++ rewrite -H0; eauto.
+      ++ intros.
+         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
+         do 4 esplit; repeat split; eauto.
+      ++ intros.
+         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
+         backthruhyp.
+         do 4 esplit; repeat split; eauto.
+    + apply: TyF.prod.
+      do 4 esplit; repeat split; eauto.
+      ++ rewrite H; eauto.
+      ++ rewrite H0; eauto.
+      ++ intros.
+         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
+         do 4 esplit; repeat split; eauto.
+      ++ intros.
+         specialize (H8 e1 e2); destruct H8; specialize_hyps; destruct_conjs.
+         backthruhyp.
+         do 4 esplit; repeat split; eauto.
+    + apply: TyF.isect.
+      exists H0, H1; repeat split; eauto.
+      move=> κ;
+      specialize_hyps.
+      ++ rewrite -H; eauto.
+      ++ intros.
+         specialize (H4 e1 e2); destruct H4.
+         eauto.
+      ++ intros.
+         specialize (H4 e1 e2); destruct H4.
+         eauto.
+    + apply: TyF.isect.
+      exists H0, H1; repeat split; eauto; intros.
+      ++ specialize_hyps.
+         rewrite H; eauto.
+      ++ intros.
+         specialize (H4 e1 e2); destruct H4.
+         eauto.
+      ++ intros.
+         specialize (H4 e1 e2); destruct H4.
+         eauto.
+  Qed.
+
+  Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
+  Proof.
+    elim.
+    + move=> A.
+      rewrite /Nuprl.
+      rewrite /Spine //=.
+      unfold based_matrix_functional; intros.
+      rewrite Welp in H, H0.
+      apply: CTyF_Empty_functional; eauto.
+    + move=> n F A;
+      elim: A;
+      unfold based_matrix_functional, Nuprl; intros;
+      destruct_CTyF => C1 C2;
+      noconfusion;
+      apply: functional_extensionality;
+      move=> [e1 e2];
+      apply: propositional_extensionality;
+      repeat destruct_rel_spec.
+      ++ intros;
+         split; intros;
+         backthruhyp;
+         specialize_hyps; eauto.
+      ++ intros.
+         split; intros;
+         backthruhyp; specialize_hyps;
+         destruct_conjs;
+         repeat esplit; eauto;
+         use_matrix_functionality_ih.
+      ++ intros; split; intros; backthruhyp;
+         specialize_hyps;
+         destruct_conjs;
+         repeat esplit;
+         eauto; intros;
+         specialize_hyps;
+         use_matrix_functionality_ih.
+      ++ intros.
+         split; intros;
+         backthruhyp; specialize_hyps;
+         destruct_conjs; eauto.
+  Qed.
+
   Definition Nuprlω : matrix :=
     fun X => ∃ n, Nuprl n X.
 
@@ -345,7 +446,7 @@ Module Univ.
   Proof.
     apply: functional_extensionality => X.
     apply: propositional_extensionality.
-    split => H.
+    split => H. 
     + rewrite /Nuprl /CTyF.
       match goal with
       | |- lfp ?m ?x =>
