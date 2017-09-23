@@ -400,7 +400,7 @@ Module Univ.
 
 
   Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
-  Notation "n ⊩ A ~ B type" := (∃ R, Nuprl n (A, R) ∧ Nuprl n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
+  Notation "n ⊩ A ∼ B type" := (∃ R, Nuprl n (A, R) ∧ Nuprl n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
   Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
 
   Theorem Roll {i : nat} : TyF.t (Spine i) (Nuprl i) = Nuprl i.
@@ -520,7 +520,7 @@ Module Univ.
     Theorem isect_irrelevance :
       forall n A,
         n ⊩ A type
-        → n ⊩ A ~ (Tm.isect (fun _ => A)) type.
+        → n ⊩ A ∼ (Tm.isect (fun _ => A)) type.
     Proof.
       move=> n A [R AR].
       exists R; split; auto.
@@ -538,7 +538,7 @@ Module Univ.
     eauto.
   Qed.
 
-  Theorem test2 : exists n, n ⊩ (Tm.univ 0) ~ (Tm.isect (fun _ => Tm.univ 0)) type.
+  Theorem test2 : exists n, n ⊩ (Tm.univ 0) ∼ (Tm.isect (fun _ => Tm.univ 0)) type.
     eauto.
   Qed.
 
