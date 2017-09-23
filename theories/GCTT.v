@@ -222,11 +222,6 @@ Qed.
 Definition Empty : matrix :=
   fun _ => False.
 
-(* This proof would be routine, but because we formed the inductive definition using
-   a semantic least fixed point, Coq doesn't automatically have the induction principle.
-   So, I would have to prove this induction principle myself to make the inductive cases
-   go through. *)
-
 Ltac destruct_CTyF :=
   repeat match goal with
   | T : CTyF _ _ |- _ =>
