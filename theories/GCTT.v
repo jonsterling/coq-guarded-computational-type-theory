@@ -349,15 +349,13 @@ Module Univ.
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
-    case.
-    + move=> A.
-      rewrite /Nuprl /Spine //=.
-      unfold based_matrix_functional; intros.
+    case => [A | n].
+    + rewrite /Nuprl /Spine //=.
+      rewrite /based_matrix_functional; intros.
       rewrite CTyF_idempotent in H, H0.
       apply: CTyF_Empty_functional; eauto.
-    + move=> n A;
-      elim: A;
-      unfold based_matrix_functional, Nuprl; intros;
+    + elim;
+      rewrite /based_matrix_functional /Nuprl; intros;
       destruct_CTyF => C1 C2;
       noconfusion;
       apply: binrel_extensionality => e1 e2;
