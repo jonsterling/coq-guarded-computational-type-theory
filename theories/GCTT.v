@@ -20,6 +20,25 @@ Require Import Coq.Program.Equality.
 Set Implicit Arguments.
 
 
+Axiom propositional_extensionality :
+  ∀ (P Q : Prop),
+    (P ↔ Q)
+    -> P = Q.
+
+Theorem binrel_extensionality :
+  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Prop),
+    (∀ x y, R1 (x, y) ↔ R2 (x, y))
+    → R1 = R2.
+Proof.
+  move=> T1 T2 R1 R2 F.
+  apply: functional_extensionality.
+  move=> [x y].
+  apply: propositional_extensionality.
+  eauto.
+Qed.
+
+
+
 
 Hint Resolve Later.map.
 
@@ -80,9 +99,10 @@ Module Close.
     make_morphism.
     + move=> τ [A R].
       exact
-        (∃ κ B,
+        (∃ κ B R',
             A ⇓ Tm.ltr κ B
-            ∧ ▷[ κ ] (τ (B, R))).
+            ∧ ▷[ κ ] (τ (B, R'))
+            /\ ∀ e1 e2, R (e1, e2) ↔ ▷[ κ ] (R' (e1, e2))).
     + prove_monotone.
   Defined.
 
@@ -158,24 +178,6 @@ Definition based_matrix_functional (σ : matrix) (A : Tm.t 0) : Prop :=
 
 Definition matrix_functional (σ : matrix) : Prop :=
   ∀ A, based_matrix_functional σ A.
-
-
-Axiom propositional_extensionality :
-  ∀ (P Q : Prop),
-    (P ↔ Q)
-    -> P = Q.
-
-Theorem binrel_extensionality :
-  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Prop),
-    (∀ x y, R1 (x, y) ↔ R2 (x, y))
-    → R1 = R2.
-Proof.
-  move=> T1 T2 R1 R2 F.
-  apply: functional_extensionality.
-  move=> [x y].
-  apply: propositional_extensionality.
-  eauto.
-Qed.
 
 
 Theorem CTyF_Roll:
@@ -409,18 +411,235 @@ Module Univ.
       auto.
   Qed.
 
-  (* TODO *)
-  Theorem Nuprl_monotone :
-    ∀ i j A R,
+  Ltac obvious := admit.
+
+  Theorem Nuprl_monotone_S :
+    ∀ i A R,
+      Nuprl i (A, R)
+      → Nuprl (S i) (A, R).
+  Proof.
+    move=> i.
+    rewrite /Nuprl.
+    elim; intros; rewrite -CTyF_Roll; destruct_CTyF; noconfusion.
+    + omega.
+    + apply: TyF.unit.
+      simpl.
+      destruct i; noconfusion.
+      destruct_CTyF; noconfusion.
+      constructor; eauto.
+    + apply: TyF.unit.
+      simpl.
+      constructor; eauto.
+    + apply: TyF.bool.
+      destruct i; noconfusion.
+      destruct_CTyF; noconfusion.
+    + destruct i; noconfusion.
+      destruct_CTyF; noconfusion.
+    + destruct i; noconfusion; destruct_CTyF; noconfusion.
+    + destruct i; noconfusion; destruct_CTyF; noconfusion.
+    + destruct i; noconfusion; destruct_CTyF; noconfusion.
+      apply: TyF.prod.
+      simpl in *.
+      exists H1, H2, H3, H4.
+      constructor; auto.
+      repeat constructor.
+      ++ apply: H.
+         rewrite CTyF_idempotent.
+         auto.
+      ++ apply: H0.
+         rewrite CTyF_idempotent.
+         auto.
+      ++ move=> e1e2.
+         specialize (H8 e1 e2).
+         destruct H8.
+         specialize_hyps.
+         auto.
+      ++ intro.
+         destruct (H8 e1 e2).
+         apply: H10.
+         auto.
+    + apply: TyF.prod.
+      simpl in *.
+      exists H1, H2, H3, H4.
+      constructor; auto.
+    + destruct i; noconfusion; destruct_CTyF; noconfusion.
+      (* This is only easy because I don't have a clause for function
+         types yet ;-) *)
+    + destruct i; noconfusion; destruct_CTyF; noconfusion.
+    + destruct i; noconfusion; destruct_CTyF; noconfusion.
+    + destruct i; noconfusion; destruct_CTyF; noconfusion.
+      apply: TyF.isect.
+      simpl in *.
+      exists H0, H1.
+      constructor; eauto.
+      constructor; eauto.
+      move=> κ.
+      specialize (H κ (H1 κ)).
+      apply: H.
+      rewrite CTyF_idempotent.
+      apply: H3.
+    + apply: TyF.isect.
+      exists H0, H1.
+      eauto.
+    + induction i; simpl in H.
+      ++ destruct_CTyF; noconfusion.
+      ++ apply: TyF.init.
+         destruct_conjs.
+         dependent induction H1.
+         exists H.
+         repeat split; eauto.
+         +++ move=> e1e2.
+             specialize (H2 e1 e2).
+             destruct H2.
+             specialize_hyps.
+             destruct H1.
+             exists x.
+             destruct H1.
+             clear H2.
+             split.
+             ++++
+
+
+  Abort.
+
+
+
+
+
+
+  Definition Nuprl_monotone_case (i j : nat) (A : Tm.t 0) : Prop :=
+    ∀ R,
       i ≤ j
       → Nuprl i (A, R)
       → Nuprl j (A, R).
+
+
+  Theorem Nuprl_unit_monotone : ∀ i j, Nuprl_monotone_case i j Tm.unit.
   Proof.
-    move=> i j A R.
-    elim => [AR | j' p IH AR].
-    + auto.
-    + admit.
-  Admitted.
+    move=> i j R p N.
+    unfold Nuprl in *.
+    destruct_CTyF; noconfusion.
+    + rewrite -CTyF_Roll.
+      induction i.
+      ++ apply: TyF.unit.
+         simpl in H.
+         destruct_CTyF; noconfusion.
+         split; eauto.
+      ++ apply: IHi.
+         +++ omega.
+         +++ simpl in H.
+             destruct_conjs.
+             destruct_evals.
+    + rewrite -CTyF_Roll.
+      apply: TyF.unit.
+      split; auto.
+  Qed.
+
+
+  Theorem Nuprl_bool_monotone : ∀ i j, Nuprl_monotone_case i j Tm.bool.
+  Proof.
+    move=> i j R p N.
+    unfold Nuprl in *.
+    destruct_CTyF; noconfusion.
+    + rewrite -CTyF_Roll.
+      induction i.
+      ++ apply: TyF.bool.
+         simpl in H.
+         destruct_CTyF; noconfusion.
+      ++ apply: IHi.
+         +++ omega.
+         +++ simpl in H.
+             destruct_conjs.
+             destruct_evals.
+  Qed.
+
+  Theorem Nuprl_prod_monotone :
+    ∀ i j A B,
+      Nuprl_monotone_case i j A
+      → Nuprl_monotone_case i j B
+      → Nuprl_monotone_case i j (Tm.prod A B).
+  Proof.
+    move=> i j A B ihA ihB R p Nprod.
+    rewrite /Nuprl.
+    rewrite -CTyF_Roll.
+    apply: TyF.prod.
+    rewrite /Nuprl in Nprod.
+    destruct_CTyF; noconfusion.
+    + induction i; noconfusion.
+      destruct_CTyF; noconfusion.
+      exists H, H0, H1, H2.
+      repeat split; eauto.
+      ++ apply: ihA; eauto.
+         rewrite /Nuprl CTyF_idempotent; auto.
+      ++ apply: ihB; eauto.
+         rewrite /Nuprl CTyF_idempotent; auto.
+      ++ move=> e1e2.
+         destruct (H6 e1 e2).
+         backthruhyp.
+         auto.
+      ++ move=> P.
+         destruct (H6 e1 e2).
+         backthruhyp.
+         auto.
+    + exists H, H0, H1, H2.
+      repeat split; eauto.
+      ++ apply: ihA; eauto.
+      ++ apply: ihB; eauto.
+      ++ move=> e1e2.
+         destruct (H6 e1 e2).
+         backthruhyp.
+         eauto.
+      ++ move=> P.
+         destruct (H6 e1 e2).
+         backthruhyp.
+         eauto.
+  Qed.
+
+  Theorem Nuprl_ltr_monotone :
+    ∀ i j κ A,
+      Nuprl_monotone_case i j A
+      → Nuprl_monotone_case i j (Tm.ltr κ A).
+  Proof.
+    move=> i j κ A ihA  R p Nltr.
+    rewrite /Nuprl -CTyF_Roll.
+    apply: TyF.later.
+    rewrite /Nuprl in Nltr.
+    destruct_CTyF; noconfusion.
+    induction i; noconfusion.
+    destruct_CTyF; noconfusion.
+  Qed.
+
+
+
+  (* TODO *)
+  Theorem Nuprl_monotone :
+    ∀ A i j, Nuprl_monotone_case i j A.
+  Proof.
+    elim.
+    + intros.
+      omega.
+    + apply: Nuprl_unit_monotone.
+    + apply: Nuprl_bool_monotone.
+    + obvious.
+    + obvious.
+    + obvious.
+    + intros; apply: Nuprl_prod_monotone; eauto.
+    + obvious.
+    + obvious.
+    +
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   (* TODO: move to a general location *)
   Theorem nat_max_leq :

@@ -31,6 +31,7 @@ Inductive eval : Tm.t 0 → Tm.t 0 → Prop :=
 | eval_unit : eval Tm.unit Tm.unit
 | eval_univ : ∀ {n}, eval (Tm.univ n) (Tm.univ n)
 | eval_isect : ∀ {n}, eval (Tm.isect n) (Tm.isect n)
+| eval_ltr : ∀ {A κ}, eval (Tm.ltr κ A) (Tm.ltr κ A)
 | eval_tt : eval Tm.tt Tm.tt
 | eval_ff : eval Tm.ff Tm.ff
 | eval_ax : eval Tm.ax Tm.ax.
