@@ -430,10 +430,39 @@ Module Univ.
          repeat esplit; eauto;
          use_matrix_functionality_ih.
 
+      ++ match type of H8 with
+         | ▷[ _ ] ?tyH8 =>
+           match type of H3 with
+           | ▷[ _ ] ?tyH3 =>
+             match type of H4 with
+             | ▷[ _ ] ?tyH4 =>
+               have welp : ▷[ C1 ] (tyH8 ∧ tyH4 ∧ tyH3)
+             end
+           end
+         end.
+         +++ repeat rewrite Later.cart. eauto.
+         +++ apply: Later.map welp.
+             move=> [X [Y Z]].
+             use_matrix_functionality_ih.
+
+      ++ match type of H8 with
+         | ▷[ _ ] ?tyH8 =>
+           match type of H3 with
+           | ▷[ _ ] ?tyH3 =>
+             match type of H0 with
+             | ▷[ _ ] ?tyH0 =>
+               have welp : ▷[ C1 ] (tyH8 ∧ tyH0 ∧ tyH3)
+             end
+           end
+         end.
+         +++ repeat rewrite Later.cart. eauto.
+         +++ apply: Later.map welp.
+             move=> [X [Y Z]].
+             use_matrix_functionality_ih.
+
       ++ intros.
          specialize_hyps.
          use_matrix_functionality_ih.
-
       ++ intros.
          specialize_hyps.
          use_matrix_functionality_ih.
