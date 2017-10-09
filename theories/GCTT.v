@@ -493,94 +493,94 @@ Module Univ.
 
   Ltac obvious := admit.
 
-  Theorem Nuprl_monotone_S :
-    ∀ i A R,
-      Nuprl i (A, R)
-      → Nuprl (S i) (A, R).
-  Proof.
-    move=> i.
-    rewrite /Nuprl.
-    elim; intros; rewrite -CTyF_Roll; destruct_CTyF; noconfusion.
-    + omega.
-    + apply: TyF.unit.
-      simpl.
-      destruct i; noconfusion.
-      destruct_CTyF; noconfusion.
-      constructor; eauto.
-    + apply: TyF.unit.
-      simpl.
-      constructor; eauto.
-    + apply: TyF.bool.
-      destruct i; noconfusion.
-      destruct_CTyF; noconfusion.
-    + destruct i; noconfusion.
-      destruct_CTyF; noconfusion.
-    + destruct i; noconfusion; destruct_CTyF; noconfusion.
-    + destruct i; noconfusion; destruct_CTyF; noconfusion.
-    + destruct i; noconfusion; destruct_CTyF; noconfusion.
-      apply: TyF.prod.
-      simpl in *.
-      exists H1, H2, H3, H4.
-      constructor; auto.
-      repeat constructor.
-      ++ apply: H.
-         rewrite CTyF_idempotent.
-         auto.
-      ++ apply: H0.
-         rewrite CTyF_idempotent.
-         auto.
-      ++ move=> e1e2.
-         specialize (H8 e1 e2).
-         destruct H8.
-         specialize_hyps.
-         auto.
-      ++ intro.
-         destruct (H8 e1 e2).
-         apply: H10.
-         auto.
-    + apply: TyF.prod.
-      simpl in *.
-      exists H1, H2, H3, H4.
-      constructor; auto.
-    + destruct i; noconfusion; destruct_CTyF; noconfusion.
-      (* This is only easy because I don't have a clause for function
-         types yet ;-) *)
-    + destruct i; noconfusion; destruct_CTyF; noconfusion.
-    + destruct i; noconfusion; destruct_CTyF; noconfusion.
-    + destruct i; noconfusion; destruct_CTyF; noconfusion.
-      apply: TyF.isect.
-      simpl in *.
-      exists H0, H1.
-      constructor; eauto.
-      constructor; eauto.
-      move=> κ.
-      specialize (H κ (H1 κ)).
-      apply: H.
-      rewrite CTyF_idempotent.
-      apply: H3.
-    + apply: TyF.isect.
-      exists H0, H1.
-      eauto.
-    + induction i; simpl in H.
-      ++ destruct_CTyF; noconfusion.
-      ++ apply: TyF.init.
-         destruct_conjs.
-         dependent induction H1.
-         exists H.
-         repeat split; eauto.
-         +++ move=> e1e2.
-             specialize (H2 e1 e2).
-             destruct H2.
-             specialize_hyps.
-             destruct H1.
-             exists x.
-             destruct H1.
-             clear H2.
-             split.
-             ++++
+  (* Theorem Nuprl_monotone_S : *)
+  (*   ∀ i A R, *)
+  (*     Nuprl i (A, R) *)
+  (*     → Nuprl (S i) (A, R). *)
+  (* Proof. *)
+  (*   move=> i. *)
+  (*   rewrite /Nuprl. *)
+  (*   elim; intros; rewrite -CTyF_Roll; destruct_CTyF; noconfusion. *)
+  (*   + omega. *)
+  (*   + apply: TyF.unit. *)
+  (*     simpl. *)
+  (*     destruct i; noconfusion. *)
+  (*     destruct_CTyF; noconfusion. *)
+  (*     constructor; eauto. *)
+  (*   + apply: TyF.unit. *)
+  (*     simpl. *)
+  (*     constructor; eauto. *)
+  (*   + apply: TyF.bool. *)
+  (*     destruct i; noconfusion. *)
+  (*     destruct_CTyF; noconfusion. *)
+  (*   + destruct i; noconfusion. *)
+  (*     destruct_CTyF; noconfusion. *)
+  (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *)
+  (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *)
+  (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *)
+  (*     apply: TyF.prod. *)
+  (*     simpl in *. *)
+  (*     exists H1, H2, H3, H4. *)
+  (*     constructor; auto. *)
+  (*     repeat constructor. *)
+  (*     ++ apply: H. *)
+  (*        rewrite CTyF_idempotent. *)
+  (*        auto. *)
+  (*     ++ apply: H0. *)
+  (*        rewrite CTyF_idempotent. *)
+  (*        auto. *)
+  (*     ++ move=> e1e2. *)
+  (*        specialize (H8 e1 e2). *)
+  (*        destruct H8. *)
+  (*        specialize_hyps. *)
+  (*        auto. *)
+  (*     ++ intro. *)
+  (*        destruct (H8 e1 e2). *)
+  (*        apply: H10. *)
+  (*        auto. *)
+  (*   + apply: TyF.prod. *)
+  (*     simpl in *. *)
+  (*     exists H1, H2, H3, H4. *)
+  (*     constructor; auto. *)
+  (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *)
+  (*     (* This is only easy because I don't have a clause for function *)
+  (*        types yet ;-) *) *)
+  (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *)
+  (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *)
+  (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *)
+  (*     apply: TyF.isect. *)
+  (*     simpl in *. *)
+  (*     exists H0, H1. *)
+  (*     constructor; eauto. *)
+  (*     constructor; eauto. *)
+  (*     move=> κ. *)
+  (*     specialize (H κ (H1 κ)). *)
+  (*     apply: H. *)
+  (*     rewrite CTyF_idempotent. *)
+  (*     apply: H3. *)
+  (*   + apply: TyF.isect. *)
+  (*     exists H0, H1. *)
+  (*     eauto. *)
+  (*   + induction i; simpl in H. *)
+  (*     ++ destruct_CTyF; noconfusion. *)
+  (*     ++ apply: TyF.init. *)
+  (*        destruct_conjs. *)
+  (*        dependent induction H1. *)
+  (*        exists H. *)
+  (*        repeat split; eauto. *)
+  (*        +++ move=> e1e2. *)
+  (*            specialize (H2 e1 e2). *)
+  (*            destruct H2. *)
+  (*            specialize_hyps. *)
+  (*            destruct H1. *)
+  (*            exists x. *)
+  (*            destruct H1. *)
+  (*            clear H2. *)
+  (*            split. *)
+  (*            ++++ *)
 
 
-  Abort.
+  (* Abort. *)
 
 
 
@@ -687,9 +687,91 @@ Module Univ.
     destruct_CTyF; noconfusion.
     induction i; noconfusion.
     destruct_CTyF; noconfusion.
+    + exists H, H0, H1.
+      repeat split; eauto.
+      ++ apply: Later.map H3 => X.
+         apply: ihA; eauto.
+         rewrite /Nuprl.
+         rewrite CTyF_idempotent.
+         auto.
+      ++ move=> e1e2.
+         edestruct H4.
+         apply: H2.
+         auto.
+      ++ move=> X.
+         edestruct H4.
+         apply: H5.
+         auto.
+    + exists H, H0, H1; repeat split; eauto.
+      ++ apply: Later.map H3.
+         apply: ihA.
+         auto.
+      ++ edestruct H4.
+         apply: H2.
+      ++ edestruct H4.
+         eauto.
   Qed.
 
+  Theorem Nuprl_isect_monotone :
+    ∀ i j A,
+      (∀ κ, Nuprl_monotone_case i j (A κ))
+      → Nuprl_monotone_case i j (Tm.isect A).
+  Proof.
+    move=> i j A ihA R p Nisect.
+    rewrite /Nuprl -CTyF_Roll.
+    apply: TyF.isect.
+    rewrite /Nuprl in Nisect.
+    destruct_CTyF; noconfusion.
+    + induction i; noconfusion.
+      destruct_CTyF; noconfusion.
+      exists H, H0; repeat split; eauto.
+      ++ move=> κ.
+         specialize (ihA κ).
+         apply: ihA; eauto.
+         rewrite /Nuprl.
+         rewrite CTyF_idempotent.
+         apply: H2.
+      ++ move=> e1e2 κ.
+         specialize (H2 κ).
+         edestruct H3.
+         apply: H1.
+         auto.
+      ++ move=> X.
+         edestruct H3.
+         apply: H4.
+         auto.
+    + exists H, H0.
+      repeat split; eauto.
+      ++ move=> κ.
+         apply: ihA; eauto.
+         apply: H2.
+      ++ move=> e1e2 κ.
+         specialize (H2 κ).
+         edestruct H3.
+         apply: H1.
+         auto.
+      ++ move=> X.
+         edestruct H3.
+         apply: H4.
+         auto.
+  Qed.
 
+  Eval simpl in (Spine 1).
+  Theorem Welp :
+    ∀ i n R,
+      Spine i (Tm.univ n, R)
+      → n < i.
+  Proof.
+    elim.
+    + move=> n R S.
+      simpl in S.
+      destruct_CTyF; noconfusion.
+    + move=> n ih n' R X.
+      simpl in X.
+      destruct_conjs.
+      destruct_evals.
+      omega.
+  Qed.
 
   (* TODO *)
   Theorem Nuprl_monotone :
@@ -706,10 +788,10 @@ Module Univ.
     + intros; apply: Nuprl_prod_monotone; eauto.
     + obvious.
     + obvious.
-    +
-
-
-
+    + intros; apply: Nuprl_ltr_monotone; eauto.
+    + intros; apply: Nuprl_isect_monotone; eauto.
+    + admit. (* This one is hard, not sure how to do it. *)
+  Admitted.
 
 
 
