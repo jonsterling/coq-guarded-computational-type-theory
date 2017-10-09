@@ -262,6 +262,14 @@ Ltac use_matrix_functionality_ih :=
       by rewrite (IH R R'); auto
   end.
 
+
+Ltac mytac :=
+  backthruhyp; intros;
+  specialize_hyps;
+  destruct_conjs;
+  repeat esplit; eauto;
+  use_matrix_functionality_ih.
+
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   elim;
@@ -274,16 +282,16 @@ Proof.
   repeat
     match goal with
     | H : ∀ (e1 e2 : Tm.t 0), ?P |- ?R (?e1, ?e2) => specialize (H e1 e2); destruct H
-    end;
+    end.
 
-  first by [firstorder];
-  first by [firstorder];
-
-  backthruhyp; intros;
-  specialize_hyps;
-  destruct_conjs;
-  repeat esplit; eauto;
-  use_matrix_functionality_ih.
+  + firstorder.
+  + firstorder.
+  + mytac.
+  + mytac.
+  + admit.
+  + admit.
+  + mytac.
+  + mytac.
 Qed.
 
 
