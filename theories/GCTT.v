@@ -288,8 +288,24 @@ Proof.
   + firstorder.
   + mytac.
   + mytac.
-  + admit.
-  + admit.
+  + backthruhyp.
+    specialize_hyps.
+    have welp : ▷[ H0] (CTyF Empty (H7, H8) /\ CTyF Empty (H7, H3) /\ H8 (x, y)).
+    ++ repeat rewrite Later.cart; eauto.
+    ++ apply: Later.map welp.
+       move=> [X [Y Z]].
+       specialize (H H8 H3 X Y).
+       rewrite -H.
+       auto.
+  + backthruhyp.
+    specialize_hyps.
+    have welp : ▷[ H0 ] (CTyF Empty (H7, H8) ∧ CTyF Empty (H7, H3) ∧ H3 (x, y)).
+    ++ repeat rewrite Later.cart; eauto.
+    ++ apply: Later.map welp.
+       move=> [X [Y Z]].
+       specialize (H H8 H3 X Y).
+       rewrite H.
+       auto.
   + mytac.
   + mytac.
 Qed.
@@ -300,42 +316,69 @@ Proof.
   apply: functional_extensionality.
   case; elim; intros;
   apply: propositional_extensionality;
-  split => AR; destruct_CTyF; noconfusion; auto;
-  rewrite -CTyF_Roll;
-
-  match goal with
-  | |- TyF.t _ _ (?A, _) =>
-    match A with
-    | Tm.unit =>
-      apply: TyF.unit;
-      split; auto
-    | Tm.prod _ _ =>
-      apply: TyF.prod;
-      do 4 esplit; repeat split; eauto
-    | Tm.isect _ =>
-      apply: TyF.isect;
-      do 2 esplit; repeat split; eauto;
-      intros
-    end
-  end;
-
-  intros;
-
-  repeat match goal with
-  | H1 : (∀ R : behavior, ?A = ?B), H2 : CTyF _ _ |- _ =>
-    (rewrite H1 in H2 || rewrite -H1 in H2);
-    clear H1
-  | H : ∀ e1 e2 : Tm.t 0, ?P |- ?R (?e1, ?e2) =>
-    specialize (H e1 e2);
-    destruct H
-  | H : ∀ e1 e2 : Tm.t 0, ?P, _ : ?R (?e1, ?e2) |- _ =>
-    specialize (H e1 e2);
-    destruct H
-  | κ : CLK, H : ∀ κ : CLK, ?P |- _ =>
-    specialize (H κ)
-  end;
-  eauto.
+  split=> AR; destruct_CTyF; noconfusion; auto; rewrite -CTyF_Roll.
+  + apply: TyF.unit.
+    split; auto.
+  + apply: TyF.unit.
+    split; auto.
+  + apply: TyF.prod.
+    do 4 esplit; repeat split; eauto.
+    ++ rewrite -H; eauto.
+    ++ rewrite -H0; eauto.
+    ++ move=> e1e2.
+       edestruct H8.
+       eauto.
+    ++ move=> P.
+       edestruct H8.
+       eauto.
+  + apply: TyF.prod.
+    do 4 esplit; repeat split; eauto.
+    ++ rewrite H; eauto.
+    ++ rewrite H0; eauto.
+    ++ move=> e1e2.
+       edestruct H8.
+       eauto.
+    ++ move=> N.
+       edestruct H8.
+       eauto.
+  + apply: TyF.later.
+    exists H0, H1, H2; repeat split; eauto.
+    ++ rewrite -H; eauto.
+    ++ move=> e1e2.
+       edestruct H5.
+       eauto.
+    ++ move=> N.
+       edestruct H5.
+       eauto.
+  + apply: TyF.later.
+    exists H0, H1, H2; repeat split; eauto.
+    ++ rewrite H; eauto.
+    ++ move=> e1e2.
+       edestruct H5.
+       eauto.
+    ++ move=> N.
+       edestruct H5.
+       eauto.
+  + apply: TyF.isect.
+    do 2 esplit; repeat split; eauto; intros.
+    ++ rewrite -H.
+       eauto.
+    ++ edestruct H4.
+       eauto.
+    ++ edestruct H4.
+       eauto.
+  + apply: TyF.isect.
+    do 2 esplit; repeat split; eauto; intros.
+    ++ rewrite H.
+       eauto.
+    ++ edestruct H4.
+       eauto.
+    ++ edestruct H4.
+       eauto.
 Qed.
+
+
+
 
 Module Univ.
 

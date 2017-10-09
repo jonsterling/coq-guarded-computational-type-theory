@@ -11,6 +11,7 @@ Axiom LocalClock : ∃ κ : CLK, True.
 Module Later.
   Axiom t : CLK -> Prop -> Prop.
   Axiom map : forall κ (p q : Prop), (p -> q) -> (t κ p -> t κ q).
+  Axiom cart : ∀ κ (p q : Prop), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
 End Later.
 
 Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 0).
