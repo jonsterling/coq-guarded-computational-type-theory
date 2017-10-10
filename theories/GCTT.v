@@ -594,44 +594,52 @@ Module Univ.
       → Nuprl j (A, R).
 
 
+
+  Ltac simpl_Spine :=
+    match goal with
+    | X : Spine 0 _ |- _ => simpl in X
+    | X : Spine (S _) _ |- _ => simpl in X
+    end.
+
+
   Theorem Nuprl_unit_monotone : ∀ i j, Nuprl_monotone_case i j Tm.unit.
   Proof.
-    move=> i j R p N.
-    unfold Nuprl in *.
-    destruct_CTyF; noconfusion.
-    + rewrite -CTyF_Roll.
-      induction i.
+    move=> i j R p; rewrite /Nuprl => N.
+    destruct_CTyF; noconfusion; rewrite -CTyF_Roll.
+    + induction i as [|i' ih].
       ++ apply: TyF.unit.
-         simpl in H.
+         simpl_Spine.
          destruct_CTyF; noconfusion.
-         split; eauto.
-      ++ apply: IHi.
+         eauto.
+      ++ apply: ih.
          +++ omega.
-         +++ simpl in H.
+         +++ simpl_Spine.
              destruct_conjs.
              destruct_evals.
-    + rewrite -CTyF_Roll.
-      apply: TyF.unit.
-      split; auto.
+    + by [apply: TyF.unit].
   Qed.
-
 
   Theorem Nuprl_bool_monotone : ∀ i j, Nuprl_monotone_case i j Tm.bool.
   Proof.
-    move=> i j R p N.
-    unfold Nuprl in *.
+    move=> i j R p; rewrite /Nuprl => N.
     destruct_CTyF; noconfusion.
     + rewrite -CTyF_Roll.
-      induction i.
+      induction i as [| i' ih ].
       ++ apply: TyF.bool.
-         simpl in H.
+         simpl_Spine.
          destruct_CTyF; noconfusion.
-      ++ apply: IHi.
+      ++ apply: ih.
          +++ omega.
-         +++ simpl in H.
+         +++ simpl_Spine.
              destruct_conjs.
              destruct_evals.
   Qed.
+
+  Ltac destruct_rel_spec :=
+    match goal with
+    | X : ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 |- _ => edestruct X as [F G]; move: F G
+    end.
+
 
   Theorem Nuprl_prod_monotone :
     ∀ i j A B,
@@ -639,124 +647,85 @@ Module Univ.
       → Nuprl_monotone_case i j B
       → Nuprl_monotone_case i j (Tm.prod A B).
   Proof.
-    move=> i j A B ihA ihB R p Nprod.
-    rewrite /Nuprl.
+    move=> i j A B ihA ihB R p; rewrite /Nuprl => Nprod.
     rewrite -CTyF_Roll.
     apply: TyF.prod.
-    rewrite /Nuprl in Nprod.
     destruct_CTyF; noconfusion.
     + induction i; noconfusion.
       destruct_CTyF; noconfusion.
-      exists H, H0, H1, H2.
-      repeat split; eauto.
+      do 4 eexists; repeat split; eauto.
       ++ apply: ihA; eauto.
-         rewrite /Nuprl CTyF_idempotent; auto.
+         rewrite /Nuprl CTyF_idempotent; eauto.
       ++ apply: ihB; eauto.
-         rewrite /Nuprl CTyF_idempotent; auto.
-      ++ move=> e1e2.
-         destruct (H6 e1 e2).
-         backthruhyp.
-         auto.
-      ++ move=> P.
-         destruct (H6 e1 e2).
-         backthruhyp.
-         auto.
-    + exists H, H0, H1, H2.
-      repeat split; eauto.
+         rewrite /Nuprl CTyF_idempotent; eauto.
+      ++ destruct_rel_spec => F _; apply: F.
+      ++ destruct_rel_spec => _; apply.
+    + do 4 eexists; repeat split; eauto.
       ++ apply: ihA; eauto.
       ++ apply: ihB; eauto.
-      ++ move=> e1e2.
-         destruct (H6 e1 e2).
-         backthruhyp.
-         eauto.
-      ++ move=> P.
-         destruct (H6 e1 e2).
-         backthruhyp.
-         eauto.
+      ++ destruct_rel_spec => F _; apply: F.
+      ++ destruct_rel_spec => _; apply.
   Qed.
+
 
   Theorem Nuprl_ltr_monotone :
     ∀ i j κ A,
       Nuprl_monotone_case i j A
       → Nuprl_monotone_case i j (Tm.ltr κ A).
   Proof.
-    move=> i j κ A ihA  R p Nltr.
-    rewrite /Nuprl -CTyF_Roll.
+    move=> i j κ A ihA R p; rewrite /Nuprl => Nltr; rewrite -CTyF_Roll.
     apply: TyF.later.
-    rewrite /Nuprl in Nltr.
     destruct_CTyF; noconfusion.
-    induction i; noconfusion.
-    destruct_CTyF; noconfusion.
-    + exists H, H0, H1.
-      repeat split; eauto.
-      ++ apply: Later.map H3 => X.
+    + induction i; noconfusion.
+      destruct_CTyF; noconfusion.
+      do 3 eexists; repeat split.
+      ++ eauto.
+      ++ apply: Later.map => [X|]; last eauto.
          apply: ihA; eauto.
-         rewrite /Nuprl.
-         rewrite CTyF_idempotent.
-         auto.
-      ++ move=> e1e2.
-         edestruct H4.
-         apply: H2.
-         auto.
-      ++ move=> X.
-         edestruct H4.
-         apply: H5.
-         auto.
-    + exists H, H0, H1; repeat split; eauto.
-      ++ apply: Later.map H3.
-         apply: ihA.
-         auto.
-      ++ edestruct H4.
-         apply: H2.
-      ++ edestruct H4.
+         rewrite /Nuprl CTyF_idempotent.
          eauto.
+      ++ destruct_rel_spec => F _; apply: F.
+      ++ destruct_rel_spec => _; apply.
+    + do 3 eexists; repeat split.
+      ++ eauto.
+      ++ apply: Later.map => [X|]; last eauto.
+         apply: ihA; eauto.
+      ++ destruct_rel_spec => F _; apply: F.
+      ++ destruct_rel_spec => _; apply.
   Qed.
+
+  Ltac specialize_clocks κ :=
+    repeat match goal with
+    | X : ∀ (κ : CLK), ?P |- _ => specialize (X κ)
+    end.
 
   Theorem Nuprl_isect_monotone :
     ∀ i j A,
       (∀ κ, Nuprl_monotone_case i j (A κ))
       → Nuprl_monotone_case i j (Tm.isect A).
   Proof.
-    move=> i j A ihA R p Nisect.
-    rewrite /Nuprl -CTyF_Roll.
+    move=> i j A ihA R p; rewrite /Nuprl => Nisect.
+    rewrite -CTyF_Roll.
     apply: TyF.isect.
-    rewrite /Nuprl in Nisect.
     destruct_CTyF; noconfusion.
     + induction i; noconfusion.
       destruct_CTyF; noconfusion.
-      exists H, H0; repeat split; eauto.
+      do 2 eexists; repeat split; eauto.
       ++ move=> κ.
-         specialize (ihA κ).
+         specialize_clocks κ.
          apply: ihA; eauto.
-         rewrite /Nuprl.
-         rewrite CTyF_idempotent.
-         apply: H2.
-      ++ move=> e1e2 κ.
-         specialize (H2 κ).
-         edestruct H3.
-         apply: H1.
-         auto.
-      ++ move=> X.
-         edestruct H3.
-         apply: H4.
-         auto.
-    + exists H, H0.
-      repeat split; eauto.
+         rewrite /Nuprl CTyF_idempotent.
+         eauto.
+      ++ destruct_rel_spec => F _; apply: F.
+      ++ destruct_rel_spec => _; apply.
+    + do 2 eexists; repeat split; eauto.
       ++ move=> κ.
+         specialize_clocks κ.
          apply: ihA; eauto.
-         apply: H2.
-      ++ move=> e1e2 κ.
-         specialize (H2 κ).
-         edestruct H3.
-         apply: H1.
-         auto.
-      ++ move=> X.
-         edestruct H3.
-         apply: H4.
-         auto.
+      ++ destruct_rel_spec => F _; apply: F.
+      ++ destruct_rel_spec => _; apply.
   Qed.
 
-  Eval simpl in (Spine 1).
   Theorem Welp :
     ∀ i n R,
       Spine i (Tm.univ n, R)
