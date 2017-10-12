@@ -404,24 +404,13 @@ Proof.
     apply: propositional_extensionality.
     split; destruct_CTyF => //=;
     move=> [? [? [R1 [R2 ?]]]];
-    destruct_conjs; rewrite -CTyF_Roll; apply: TyF.prod.
-    ++ exists A, B, R1, R2; repeat split; auto; destruct_evals.
-       +++ rewrite -ihA; eauto.
-       +++ rewrite -ihB; eauto.
-       +++ move=> e1e2.
-           destruct_rel_specs =>  F G.
-           case: F; eauto.
-       +++ move=> *.
-           destruct_rel_specs => F G.
-           apply: G; eauto.
-
-    ++ exists A, B, R1, R2; repeat split; auto; destruct_evals.
-       +++ rewrite ihA; eauto.
-       +++ rewrite ihB; eauto.
-       +++ move=> *; destruct_rel_specs => F G.
-           case: F; eauto.
-       +++ move=> *; destruct_rel_specs => F G.
-           apply: G; eauto.
+    destruct_conjs; rewrite -CTyF_Roll; apply: TyF.prod;
+    exists A, B, R1, R2; repeat split; auto; destruct_evals;
+    by [rewrite ihA]
+     || by [rewrite -ihA]
+     || by [rewrite ihB]
+     || by [rewrite -ihB]
+     || by [destruct_rel_specs; eauto].
 
   + move=> κ A ihA R.
     apply: propositional_extensionality.
@@ -429,13 +418,9 @@ Proof.
     move=> [? [? [R' ?]]];
     destruct_conjs; rewrite -CTyF_Roll;
     apply: TyF.later;
-    exists κ, A, R'; repeat split; auto; destruct_evals.
-    +++ by [rewrite -ihA].
-    +++ destruct_rel_specs => F _; by [apply: F].
-    +++ destruct_rel_specs => _; by [apply].
-    +++ by [rewrite ihA].
-    +++ destruct_rel_specs => F _; by [apply: F].
-    +++ destruct_rel_specs => _; by [apply].
+    exists κ, A, R'; repeat split; auto; destruct_evals;
+    by [rewrite ihA] || by [rewrite -ihA] || by [destruct_rel_specs; eauto].
+
 
   + move=> A ihA R.
     apply: propositional_extensionality.
@@ -443,13 +428,8 @@ Proof.
     move=> [? [R' ?]];
     destruct_conjs; rewrite -CTyF_Roll;
     apply: TyF.isect;
-    exists A, R'; repeat split; auto; destruct_evals.
-    +++ move=> *; by [rewrite -ihA].
-    +++ destruct_rel_specs => F _; by [apply: F].
-    +++ destruct_rel_specs => _; by [apply].
-    +++ move=> *; by [rewrite ihA].
-    +++ destruct_rel_specs => F _; by [apply: F].
-    +++ destruct_rel_specs => _; by [apply].
+    exists A, R'; repeat split; auto; destruct_evals; move=> *;
+    by [rewrite ihA] || by [rewrite -ihA] || by [destruct_rel_specs; eauto].
 Qed.
 
 
