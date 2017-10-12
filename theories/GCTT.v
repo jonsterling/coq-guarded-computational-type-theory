@@ -42,6 +42,28 @@ Qed.
 
 Hint Resolve Later.map.
 
+
+
+Theorem later_join : ∀ κ P Q, ▷[κ] P → ▷[κ] Q → ▷[κ] (P ∧ Q).
+Proof.
+  move=> κ ? ? X Y.
+  by [rewrite Later.cart].
+Qed.
+
+
+Ltac later_elim_aux y :=
+  lazymatch goal with
+  | H1 : ▷[?κ] _, H2 : ▷[?κ] _ |- _ =>
+    let x := fresh in
+    have := later_join H1 H2 => x;
+    clear H1; clear H2;
+    later_elim_aux x
+  | |- ▷[?κ] _ => apply: Later.map y
+  end.
+
+Ltac later_elim :=
+  let x := fresh in later_elim_aux x.
+
 (* A behavior is a binary relations on terms; later we will show this to be symmetric
      and transitive. *)
 Definition behavior := ℘ (Tm.t 0 * Tm.t 0).
@@ -332,12 +354,6 @@ Ltac print_goal :=
   | |- ?G => idtac G; idtac "----------------------------------------------"
   end.
 
-Theorem later_join : ∀ κ P Q, ▷[κ] P → ▷[κ] Q → ▷[κ] (P ∧ Q).
-Proof.
-  move=> κ ? ? X Y.
-  by [rewrite Later.cart].
-Qed.
-
 
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
@@ -372,22 +388,24 @@ Proof.
     destruct_CTyFs => [[? [? [R1' [? [H1 ?]]]]] [? [? [R2' [? [H2 ?]]]]]]; noconfusion.
     apply: binrel_extensionality => e1 e2.
     destruct_rel_specs e1 e2 => F1 G1 F2 G2.
-    split => *.
-    ++ apply: G2; apply: Later.map (later_join H1 (later_join H2 (F1 _))); eauto.
-       move=> [? [? ?]].
-       rewrite (ihA R2' R1'); eauto.
-    ++ apply: G1; apply: Later.map (later_join H1 (later_join H2 (F2 _))); eauto.
-       move=> [? [? ?]].
-       rewrite (ihA R1' R2'); eauto.
+    split => e1e2.
+    ++ specialize (F1 e1e2).
+       apply: G2.
+       later_elim => *; destruct_conjs.
+       by [rewrite (ihA R2' R1')].
+    ++ specialize (F2 e1e2).
+       apply: G1.
+       later_elim => *; destruct_conjs.
+       by [rewrite (ihA R1' R2')].
   + move=> A ihA R1 R2 *.
     destruct_CTyFs => [[? [R1' ?]] [? [R2' ?]]]; noconfusion.
     apply: binrel_extensionality => e1 e2.
     destruct_rel_specs e1 e2 => F1 G1 F2 G2.
     split => *.
     ++ apply: G1 => κ.
-       rewrite (ihA κ (R2' κ) (R1' κ)); eauto.
+       rewrite (ihA κ (R2' κ) (R1' κ)); auto.
     ++ apply: G2 => κ.
-       rewrite (ihA κ (R1' κ) (R2' κ)); eauto.
+       rewrite (ihA κ (R1' κ) (R2' κ)); auto.
 Qed.
 
 
@@ -434,7 +452,6 @@ Proof.
     ++ by [rewrite -ihA].
     ++ by [rewrite ihA].
 Qed.
-
 
 
 Module Univ.
@@ -508,12 +525,12 @@ Module Univ.
          destruct_rel_specs e1 e2 => F1 G1 F2 G2.
          split => e1e2.
          +++ apply: G2.
-             apply: Later.map (later_join H1 (later_join H2 (F1 e1e2))).
-             move=> [? [? ?]].
+             specialize (F1 e1e2).
+             later_elim => *; destruct_conjs.
              by [rewrite (ihA R2' R1')].
          +++ apply: G1.
-             apply: Later.map (later_join H1 (later_join H2 (F2 e1e2))).
-             move=> [? [? ?]].
+             specialize (F2 e1e2).
+             later_elim => *; destruct_conjs.
              by [rewrite (ihA R1' R2')].
 
       ++ move=> A ihA R1 R2 *.
