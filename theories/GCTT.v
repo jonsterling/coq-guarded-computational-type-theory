@@ -434,100 +434,110 @@ Qed.
 
 
 
-(* Module Univ. *)
+Module Univ.
 
-(*   Definition Spine: nat → matrix. *)
-(*   Proof. *)
-(*     elim => [|i']. *)
-(*     + exact (CTyF Empty). *)
-(*     + move=> τ [A R]. *)
-(*       exact *)
-(*         (∃ j, *)
-(*             j <= i' *)
-(*             ∧ A ⇓ Tm.univ j *)
-(*             ∧ ∀ e1 e2, *)
-(*                 R (e1, e2) ↔ *)
-(*                   ∃ S, CTyF τ (e1, S) ∧ CTyF τ (e2, S)). *)
-(*   Defined. *)
+  Definition Spine: nat → matrix.
+  Proof.
+    elim => [|i'].
+    + exact (CTyF Empty).
+    + move=> τ [A R].
+      exact
+        (∃ j,
+            j <= i'
+            ∧ A ⇓ Tm.univ j
+            ∧ ∀ e1 e2,
+                R (e1, e2) ↔
+                  ∃ S, CTyF τ (e1, S) ∧ CTyF τ (e2, S)).
+  Defined.
 
-(*   Definition Nuprl (i : nat) : matrix := *)
-(*     CTyF (Spine i). *)
+  Definition Nuprl (i : nat) : matrix :=
+    CTyF (Spine i).
 
 
 
-(*   Ltac simpl_Spine := *)
-(*     match goal with *)
-(*     | X : Spine 0 _ |- _ => simpl in X *)
-(*     | X : Spine (S _) _ |- _ => simpl in X *)
-(*     end. *)
+  Ltac simpl_Spine :=
+    match goal with
+    | X : Spine 0 _ |- _ => simpl in X
+    | X : Spine (S _) _ |- _ => simpl in X
+    end.
 
-(*   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i). *)
-(*   Proof. *)
-(*     case => [A | n]. *)
-(*     + rewrite /Nuprl /Spine //=. *)
-(*       rewrite /based_matrix_functional; intros. *)
-(*       rewrite CTyF_idempotent in H, H0. *)
-(*       apply: CTyF_Empty_functional; eauto. *)
-(*     + elim; *)
-(*       rewrite /based_matrix_functional /Nuprl; intros; *)
-(*       destruct_CTyFs => C1 C2; *)
-(*       noconfusion; *)
-(*       apply: binrel_extensionality => e1 e2; *)
-(*       repeat *)
-(*         match goal with *)
-(*         | H : ∀ (e1 e2 : Tm.t 0), ?P |- _ => specialize (H e1 e2); destruct H *)
-(*         end; *)
+  Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
+  Proof.
+    case => [A | n].
+    + rewrite /Nuprl /Spine //=.
+      rewrite /based_matrix_functional; intros.
+      rewrite CTyF_idempotent in H, H0.
+      apply: CTyF_Empty_functional; eauto.
+    + elim; rewrite /based_matrix_functional /Nuprl;
+      try by [move=> *; destruct_CTyFs].
 
-(*       intros; *)
-(*       split; intros; *)
-(*       backthruhyp; *)
-(*       specialize_hyps; eauto. *)
+      ++ move=> *; destruct_CTyFs => *; noconfusion.
+         apply: binrel_extensionality => *.
+         split => *; destruct_rel_specs; eauto.
 
-(*       ++ destruct_conjs; *)
-(*          repeat esplit; eauto; *)
-(*          use_matrix_functionality_ih. *)
+      ++ move=> *; destruct_CTyFs => *; noconfusion.
+         apply: binrel_extensionality => *.
+         split => *; destruct_rel_specs; eauto.
 
-(*       ++ destruct_conjs; *)
-(*          repeat esplit; eauto; *)
-(*          use_matrix_functionality_ih. *)
+      ++ move=> A ihA B ihB R1 R2 ? ?.
+         destruct_CTyFs => //= [[? [? [R1' [R2' ?]]]] [? [? [R1'' [R2'' ?]]]]].
+         apply: binrel_extensionality => *;
+         split => e1e2; destruct_evals; destruct_conjs.
+         +++ destruct_rel_specs => F1 G1 F2 G2.
+             case: F2; eauto => *.
+             apply: G1.
+             destruct_conjs; destruct_evals.
+             do 4 eexists; repeat split; eauto.
+             ++++ rewrite (ihA R1'' R1'); eauto.
+             ++++ rewrite (ihB R2'' R2'); eauto.
+         +++ destruct_rel_specs => F1 G1 F2 G2.
+             case: F1; eauto => *.
+             apply: G2.
+             destruct_conjs; destruct_evals.
+             do 4 eexists; repeat split; eauto.
+             ++++ rewrite (ihA R1' R1''); eauto.
+             ++++ rewrite (ihB R2' R2''); eauto.
 
-(*       ++ match type of H8 with *)
-(*          | ▷[ _ ] ?tyH8 => *)
-(*            match type of H3 with *)
-(*            | ▷[ _ ] ?tyH3 => *)
-(*              match type of H4 with *)
-(*              | ▷[ _ ] ?tyH4 => *)
-(*                have welp : ▷[ C1 ] (tyH8 ∧ tyH4 ∧ tyH3) *)
-(*              end *)
-(*            end *)
-(*          end. *)
-(*          +++ repeat rewrite Later.cart. eauto. *)
-(*          +++ apply: Later.map welp. *)
-(*              move=> [X [Y Z]]. *)
-(*              use_matrix_functionality_ih. *)
+      ++ move=> κ A ihA R1 R2 *.
+         destruct_CTyFs => [[? [? [R1' [? [H1 sp1]]]]] [? [? [R2' [? [H2 sp2]]]]]].
+         destruct_conjs; destruct_evals.
+         apply: binrel_extensionality => e1 e2.
+         case: (sp1 e1 e2) => F1 G1.
+         case: (sp2 e1 e2) => F2 G2.
+         split => e1e2.
+         +++ apply: G2.
+             apply: Later.map (later_join H1 (later_join H2 (F1 e1e2))).
+             move=> [? [? ?]].
+             by [rewrite (ihA R2' R1')].
+         +++ apply: G1.
+             apply: Later.map (later_join H1 (later_join H2 (F2 e1e2))).
+             move=> [? [? ?]].
+             by [rewrite (ihA R1' R2')].
 
-(*       ++ match type of H8 with *)
-(*          | ▷[ _ ] ?tyH8 => *)
-(*            match type of H3 with *)
-(*            | ▷[ _ ] ?tyH3 => *)
-(*              match type of H0 with *)
-(*              | ▷[ _ ] ?tyH0 => *)
-(*                have welp : ▷[ C1 ] (tyH8 ∧ tyH0 ∧ tyH3) *)
-(*              end *)
-(*            end *)
-(*          end. *)
-(*          +++ repeat rewrite Later.cart. eauto. *)
-(*          +++ apply: Later.map welp. *)
-(*              move=> [X [Y Z]]. *)
-(*              use_matrix_functionality_ih. *)
+      ++ move=> A ihA R1 R2 *.
+         destruct_CTyFs => [[? [R1' ?]] [? [R2' ?]]].
+         destruct_conjs; destruct_evals.
+         apply: binrel_extensionality => *.
+         split => e1e2.
+         +++ destruct_rel_specs => F1 G1 F2 G2.
+             apply: G1 => κ.
+             rewrite (ihA κ (R2' κ) (R1' κ)); eauto.
+         +++ destruct_rel_specs => F1 G1 F2 G2.
+             apply: G2 => κ.
+             rewrite (ihA κ (R1' κ) (R2' κ)); eauto.
 
-(*       ++ intros. *)
-(*          specialize_hyps. *)
-(*          use_matrix_functionality_ih. *)
-(*       ++ intros. *)
-(*          specialize_hyps. *)
-(*          use_matrix_functionality_ih. *)
-(*   Qed. *)
+      ++ move=> i R1 R2 *.
+         destruct_CTyFs => //= [[j1 [p1 [? sp1]]] [j2 [p2 [? sp2]]]].
+         destruct_evals.
+         apply: binrel_extensionality => e1 e2.
+         case: (sp1 e1 e2) => F1 G1.
+         case: (sp2 e1 e2) => F2 G2.
+         split => e1e2.
+         +++ apply: G2.
+             case: F1; eauto.
+         +++ apply: G1.
+             case: F2; eauto.
+  Qed.
 
 (*   Definition Nuprlω : matrix := *)
 (*     fun X => ∃ n, Nuprl n X. *)
