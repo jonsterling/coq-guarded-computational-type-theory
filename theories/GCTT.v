@@ -310,6 +310,17 @@ Proof.
   ++ rewrite X; auto.
 Qed.
 
+
+Ltac reorient :=
+  match goal with
+  | H : ?Y = _ |- ?X = ?Y => symmetry; etransitivity; first eassumption
+  end.
+
+Ltac eqcd :=
+  apply: universal_extensionality
+  || apply: later_extensionality
+  || apply: functional_extensionality.
+
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   elim; rewrite /based_matrix_functional;
@@ -320,65 +331,49 @@ Proof.
   + specialize_functionality_ih => p1 p2.
     rewrite p1 p2.
     congruence.
-  + symmetry. etransitivity; first eassumption.
-    apply: binrel_extensionality => e1 e2.
-    mysplit => *; Later.gather => *; destruct_conjs;
-    specialize_functionality_ih => p.
-    ++ by [rewrite p].
-    ++ by [rewrite -p].
-
-  + symmetry. etransitivity; first eassumption.
-    apply: functional_extensionality => *.
-    apply: universal_extensionality => κ.
+  + reorient.
+    repeat eqcd => *.
+    Later.gather => *; destruct_conjs.
+    specialize_functionality_ih => p;
+    congruence.
+  + reorient.
+    repeat eqcd => *.
     specialize_hyps.
-    specialize_functionality_ih => p.
-    rewrite p.
-    auto.
+    specialize_functionality_ih => *.
+    congruence.
 Qed.
 
 Theorem CTyF_idempotent : CTyF (CTyF Empty) = CTyF Empty.
 Proof.
   apply: functional_extensionality.
-  case; elim; try by [move=> *; apply: propositional_extensionality; mysplit; destruct_CTyF].
+  case; elim; try by [move=> *; apply: propositional_extensionality; mysplit; destruct_CTyF];
 
-  + move=> *.
-    apply: propositional_extensionality.
-    mysplit; destruct_CTyF => *; rewrite -CTyF_Roll;
+  move=> *; apply: propositional_extensionality.
+
+  + mysplit; destruct_CTyF => *; rewrite -CTyF_Roll;
     apply: TyF.unit; by [noconfusion].
 
-  + move=> *.
-    apply: propositional_extensionality;
-    mysplit; destruct_CTyF => *; rewrite -CTyF_Roll;
+  + mysplit; destruct_CTyF => *; rewrite -CTyF_Roll;
     apply: TyF.bool; by [noconfusion].
 
 
-  + move=> *.
-    apply: propositional_extensionality.
-    mysplit; destruct_CTyF => //= *;
+  + mysplit; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll; apply: TyF.prod;
     repeat mysplit; eauto; destruct_evals;
-    match goal with
-    | H : _ |- _ => by [rewrite H] || by [rewrite -H]
-    end.
+    by [congruence].
 
-
-  + move=> ? ? ih *.
-    apply: propositional_extensionality.
-    mysplit; destruct_CTyF => //= *;
+  + mysplit; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll;
     apply: TyF.later;
     repeat mysplit; destruct_evals; eauto.
-    ++ by [rewrite -ih].
-    ++ by [rewrite ih].
+    ++ by [congruence].
+    ++ by [congruence].
 
-  + move=> ? ihA *.
-    apply: propositional_extensionality.
-    mysplit; destruct_CTyF => //= *;
+  + mysplit; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll;
     apply: TyF.isect;
-    repeat mysplit; auto; destruct_evals; eauto => *.
-    ++ by [rewrite -ihA].
-    ++ by [rewrite ihA].
+    repeat mysplit; auto; destruct_evals; eauto => *;
+    specialize_hyps; by [congruence].
 Qed.
 
 
@@ -401,24 +396,12 @@ Module Univ.
     CTyF (Spine i).
 
 
-
   Ltac simpl_Spine :=
     match goal with
     | X : Spine 0 _ |- _ => simpl in X
     | X : Spine (S _) _ |- _ => simpl in X
     end.
 
-  Ltac reorient :=
-    match goal with
-    | H : ?Y = _ |- ?X = ?Y => symmetry; etransitivity; first eassumption
-    end.
-
-  Ltac eqcd :=
-    apply: universal_extensionality
-    || apply: later_extensionality
-    || apply: functional_extensionality.
-
-  Hint Extern 4 later_extensionality => auto.
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
@@ -429,7 +412,6 @@ Module Univ.
 
     + elim; rewrite /based_matrix_functional /Nuprl;
       move=> *; destruct_CTyFs => *; noconfusion.
-
       ++ congruence.
       ++ congruence.
       ++ reorient.
