@@ -18,78 +18,6 @@ Module M := Matrix.
 
 Set Implicit Arguments.
 
-
-
-Ltac specialize_clocks κ :=
-  repeat match goal with
-  | X : ∀ (κ : CLK), ?P |- _ => specialize (X κ)
-  end.
-
-
-Ltac destruct_evals :=
-  repeat
-    match goal with
-      | H : ?A ⇓ ?B |- _ => dependent destruction H
-    end.
-
-
-Ltac destruct_eval :=
-  match goal with
-  | |- _ ⇓ _ → _ => let x := fresh in move=> x; dependent destruction x
-  end.
-
-Ltac backthruhyp :=
-  let H := fresh in
-  match goal with
-  | H : _ → ?P |- ?P => apply H
-  end.
-
-Ltac specialize_hyps :=
-  repeat
-    match goal with
-    | H : ∀ κ : CLK, ?P, κ : CLK |- _ => specialize (H κ)
-    | H : ?R (?e1, ?e2) -> ?P, H' : ?R (?e1, ?e2) |- _ => specialize (H H')
-    end.
-
-
-Theorem universal_extensionality :
-  ∀ (A : Type) (P Q : A → Prop),
-    (∀ x, P x = Q x)
-    → (∀ x, P x) = (∀ x, Q x).
-Proof.
-  move=> A P Q E.
-  apply: propositional_extensionality; T.split => *.
-  ++ rewrite -E. auto.
-  ++ rewrite E. auto.
-Qed.
-
-Theorem later_extensionality :
-  ∀ κ (P Q : Prop),
-    (▷[κ] (P = Q))
-    → (▷[κ] P) = (▷[κ] Q).
-Proof.
-  move=> κ P Q E.
-  apply: propositional_extensionality.
-  T.split => *; Later.gather; move=> [X Y].
-  ++ rewrite -X; auto.
-  ++ rewrite X; auto.
-Qed.
-
-
-Ltac reorient :=
-  match goal with
-  | H : ?Y = _ |- ?X = ?Y => symmetry; etransitivity; first eassumption
-  end.
-
-Ltac eqcd :=
-  apply: universal_extensionality
-  || apply: later_extensionality
-  || apply: functional_extensionality.
-
-
-
-
-
 Local Ltac make_morphism :=
   unshelve refine {| mon_func := _ |}.
 
@@ -99,6 +27,7 @@ Local Ltac morphism_monotone :=
     apply: (@mon_prop _ _ _ _ m);
     eauto
   end.
+
 
 Hint Resolve Later.map.
 
@@ -247,8 +176,8 @@ Module Clo.
     try by [contradiction];
     rewrite /M.empty;
     move=> *; simpl in *;
-          T.destruct_conjs;
-          destruct_evals.
+    T.destruct_conjs;
+    T.destruct_evals.
 
 
   Ltac destruct_clo :=
@@ -280,14 +209,14 @@ Module Clo.
     + specialize_functionality_ih => p1 p2.
       rewrite p1 p2.
       congruence.
-    + reorient.
-      repeat eqcd => *.
+    + T.reorient.
+      repeat T.eqcd => *.
       Later.gather => *; T.destruct_conjs.
       specialize_functionality_ih => p;
       congruence.
-    + reorient.
-      repeat eqcd => *.
-      specialize_hyps.
+    + T.reorient.
+      repeat T.eqcd => *.
+      T.specialize_hyps.
       specialize_functionality_ih => *.
       congruence.
   Qed.
@@ -309,21 +238,21 @@ Module Clo.
 
     + T.split; destruct_clo => //= *;
       T.destruct_conjs; rewrite -roll; apply: Sig.prod;
-      repeat T.split; eauto; destruct_evals;
+      repeat T.split; eauto; T.destruct_evals;
       by [congruence].
 
     + T.split; destruct_clo => //= *;
       T.destruct_conjs; rewrite -roll;
       apply: Sig.later;
-      repeat T.split; destruct_evals; eauto.
+      repeat T.split; T.destruct_evals; eauto.
       ++ by [congruence].
       ++ by [congruence].
 
     + T.split; destruct_clo => //= *;
       T.destruct_conjs; rewrite -roll;
       apply: Sig.isect;
-      repeat T.split; auto; destruct_evals; eauto => *;
-      specialize_hyps; by [congruence].
+      repeat T.split; auto; T.destruct_evals; eauto => *;
+      T.specialize_hyps; by [congruence].
   Qed.
 
 End Clo.

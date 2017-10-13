@@ -26,8 +26,6 @@ Require Import Coq.Program.Equality.
 
 Set Implicit Arguments.
 
-Hint Resolve Later.map.
-
 Ltac print_goal :=
   match goal with
   | |- ?G => idtac G; idtac "----------------------------------------------"
@@ -87,18 +85,18 @@ Module Univ.
       simpl_Spine; Clo.noconfusion.
       ++ congruence.
       ++ congruence.
-      ++ reorient.
+      ++ T.reorient.
          Clo.specialize_functionality_ih => p q.
          rewrite p q.
          congruence.
-      ++ reorient.
-         repeat eqcd => *.
+      ++ T.reorient.
+         repeat T.eqcd => *.
          Later.gather => *; destruct_conjs.
          Clo.specialize_functionality_ih.
          congruence.
-      ++ reorient.
-         repeat eqcd => *.
-         specialize_hyps; Clo.specialize_functionality_ih.
+      ++ T.reorient.
+         repeat T.eqcd => *.
+         T.specialize_hyps; Clo.specialize_functionality_ih.
          congruence.
 
       ++ congruence.
@@ -224,13 +222,13 @@ Module Univ.
     + induction i; Clo.noconfusion; simpl_Spine;
       Clo.destruct_clos; Clo.noconfusion.
       repeat T.split; eauto => *.
-      specialize_hyps.
+      T.specialize_hyps.
       apply: ihA; auto.
       rewrite /Nuprl Clo.idempotence.
       eauto.
 
     + repeat T.split; eauto => *.
-      specialize_hyps.
+      T.specialize_hyps.
       by [apply: ihA].
   Qed.
 
@@ -277,8 +275,8 @@ Module Univ.
          +++ simpl_Spine.
              Clo.destruct_clos.
          +++ simpl_Spine.
-             destruct_conjs.
-             destruct_evals.
+             T.destruct_conjs.
+             T.destruct_evals.
 
              have: ∃ j', j = S j'.
              induction j; omega || eauto.
@@ -296,8 +294,8 @@ Module Univ.
          +++ simpl_Spine.
              Clo.destruct_clos.
          +++ simpl_Spine.
-             destruct_conjs.
-             destruct_evals.
+             T.destruct_conjs.
+             T.destruct_evals.
              simpl in *.
              have: ∃ j', j = S j'.
              induction j; omega || eauto.
@@ -448,7 +446,7 @@ Module Univ.
       rewrite -Roll; apply: Sig.isect.
       exists (fun _ => A), (fun _ => R).
       repeat T.split; eauto.
-      eqcd => *.
+      T.eqcd => *.
       case: LocalClock => ? _.
       apply: propositional_extensionality.
       split; auto.
