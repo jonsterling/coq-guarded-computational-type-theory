@@ -6,17 +6,22 @@ Set Implicit Arguments.
 Module Tm.
   Inductive t (n : nat) :=
   | var : forall i, i < n -> t n
-  | unit : t n
-  | bool : t n
-  | ax : t n
-  | tt : t n
-  | ff : t n
-  | prod : t n -> t n -> t n
-  | arr : t n -> t n -> t n
-  | pair : t n -> t n -> t n
-  | ltr : CLK -> t n -> t n
-  | isect : (CLK -> t n) -> t n
-  | univ : nat -> t n.
+  | ret : val n → t n
+  | fst : t n -> t n
+  | snd : t n → t n
+  with val (n : nat) :=
+  | unit : val n
+  | bool : val n
+  | ax : val n
+  | tt : val n
+  | ff : val n
+  | prod : t n -> t n -> val n
+  | arr : t n -> t n -> val n
+  | pair : t n -> t n -> val n
+  | ltr : CLK -> t n -> val n
+  | isect : (CLK -> t n) -> val n
+  | univ : nat -> val n.
+
 
   Arguments unit [n].
   Arguments bool [n].
@@ -26,28 +31,11 @@ Module Tm.
   Arguments univ [n] i.
 End Tm.
 
-Inductive eval : Tm.t 0 → Tm.t 0 → Prop :=
-| eval_prod : ∀ {A B}, eval (Tm.prod A B) (Tm.prod A B)
-| eval_unit : eval Tm.unit Tm.unit
-| eval_bool : eval Tm.bool Tm.bool
-| eval_univ : ∀ {n}, eval (Tm.univ n) (Tm.univ n)
-| eval_isect : ∀ {n}, eval (Tm.isect n) (Tm.isect n)
-| eval_ltr : ∀ {A κ}, eval (Tm.ltr κ A) (Tm.ltr κ A)
-| eval_tt : eval Tm.tt Tm.tt
-| eval_ff : eval Tm.ff Tm.ff
-| eval_pair : forall {e1 e2}, eval (Tm.pair e1 e2) (Tm.pair e1 e2)
-| eval_ax : eval Tm.ax Tm.ax.
+Inductive eval : Tm.t 0 → Tm.val 0 → Prop :=
+| eval_ret : ∀ {v}, eval (Tm.ret v) v
+| eval_fst : ∀ {e e1 e2 v}, eval e (Tm.pair e1 e2) → eval e1 v → eval (Tm.fst e) v
+| eval_snd : ∀ {e e1 e2 v}, eval e (Tm.pair e1 e2) → eval e2 v → eval (Tm.snd e) v.
 
 Notation "e ⇓ e'" := (eval e e') (at level 50).
 
-Hint Resolve
-     eval_prod
-     eval_pair
-     eval_unit
-     eval_bool
-     eval_univ
-     eval_isect
-     eval_tt
-     eval_ff
-     eval_ax
-     eval_ltr.
+Hint Resolve eval_ret eval_fst eval_snd.
