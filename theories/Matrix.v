@@ -10,11 +10,14 @@ Definition behavior := Tm.t 0 * Tm.t 0 → Prop.
 (* A 'refinement matrix' (called 'type system' by Allen) is a relation between terms and behaviors. *)
 Definition matrix := Tm.t 0 * behavior → Prop.
 
-Definition based_matrix_functional (σ : matrix) (A : Tm.t 0) : Prop :=
+Definition based_functional (σ : matrix) (A : Tm.t 0) : Prop :=
   ∀ R1 R2,
     σ (A, R1)
     → σ (A, R2)
     → R1 = R2.
 
-Definition matrix_functional (σ : matrix) : Prop :=
-  ∀ A, based_matrix_functional σ A.
+Definition functional (σ : matrix) : Prop :=
+  ∀ A, based_functional σ A.
+
+Definition empty : matrix :=
+  fun _ => False.
