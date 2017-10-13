@@ -459,10 +459,9 @@ Module Univ.
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
-    case => [A | n].
+    case => [A ? ? | n].
 
-    + rewrite /Nuprl /Spine //= /based_matrix_functional; move=> ? ? Y Z.
-      rewrite CTyF_idempotent in Y, Z.
+    + rewrite /Nuprl //= CTyF_idempotent.
       apply: CTyF_Empty_functional; eauto.
 
     + elim; rewrite /based_matrix_functional /Nuprl;
@@ -487,7 +486,7 @@ Module Univ.
          | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
          end.
 
-      ++ split => e1e2; destruct_rel_specs e1 e2 => *;
+      ++ split => e1e2;
          backthruhyp => *;
          match goal with
          | ih : _, H : _ |- ?R ?κ (e1, e2) => by [rewrite (ih κ (R κ) (H κ)); eauto]
