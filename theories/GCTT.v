@@ -380,7 +380,7 @@ Module Univ.
   Defined.
   Hint Resolve lt_wf_tp : arith.
 
-  Obligation Tactic := idtac.
+  Local Obligation Tactic := firstorder.
   Program Fixpoint Spine (n : nat) {measure n (lt)} : matrix :=
     match n with
     | 0 => CTyF Empty
@@ -391,19 +391,6 @@ Module Univ.
           ∧ snd X = fun es =>
                       ∃ S, CTyF (@Spine j _) (fst es, S) ∧ CTyF (@Spine j _) (snd es, S)
     end.
-
-  Next Obligation.
-  Proof.
-    firstorder.
-  Defined.
-  Next Obligation.
-  Proof.
-    firstorder.
-  Defined.
-  Next Obligation.
-    apply: lt_wf_tp.
-  Defined.
-
 
   Theorem Unfold_Spine_S :
     ∀ X n,
