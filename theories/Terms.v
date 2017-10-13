@@ -39,4 +39,15 @@ Inductive eval : Tm.t 0 → Tm.t 0 → Prop :=
 | eval_ax : eval Tm.ax Tm.ax.
 
 Notation "e ⇓ e'" := (eval e e') (at level 50).
-Hint Resolve eval_prod eval_pair eval_unit eval_bool eval_univ eval_isect eval_tt eval_ff eval_ax eval_ltr.
+
+Hint Resolve
+     eval_prod
+     eval_pair
+     eval_unit
+     eval_bool
+     eval_univ
+     eval_isect
+     eval_tt
+     eval_ff
+     eval_ax
+     eval_ltr.

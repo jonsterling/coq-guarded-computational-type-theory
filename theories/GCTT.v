@@ -42,8 +42,6 @@ Qed.
 
 Hint Resolve Later.map.
 
-
-
 Theorem later_join : ∀ κ P Q, ▷[κ] P → ▷[κ] Q → ▷[κ] (P ∧ Q).
 Proof.
   move=> κ ? ? X Y.
@@ -358,54 +356,31 @@ Ltac print_goal :=
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   elim; rewrite /based_matrix_functional;
-  try by [move=> *; destruct_CTyFs; simpl => *; noconfusion].
-  + move=> R1 R2 ? ?.
-    destruct_CTyFs => //= => *.
-    destruct_conjs.
-    apply: binrel_extensionality => e1 e2.
-    destruct_rel_specs e1 e2 => *.
-    split; eauto.
-  + move=> R1 R2 ? ?.
-    destruct_CTyFs => //= => *.
-    destruct_conjs.
-    apply: binrel_extensionality => e1 e2.
-    destruct_rel_specs e1 e2 => *.
-    split; eauto.
-  + move=> A ihA B ihB R1 R2 *.
-    destruct_CTyFs => //= [[? [? [R11 [R12 ?]]]] [? [? [R21 [R22 ?]]]]]; noconfusion.
-    apply: binrel_extensionality => e1 e2.
-    destruct_rel_specs e1 e2 => F1 G1 F2 G2.
-    split => *.
-    ++ apply: G1; case: F2; eauto => *; noconfusion.
-       repeat mysplit; eauto.
-       +++ rewrite (ihA R21 R11); auto.
-       +++ rewrite (ihB R22 R12); auto.
-    ++ apply: G2; case: F1; eauto => *; noconfusion.
-       repeat mysplit; eauto.
-       +++ rewrite (ihA R11 R21); auto.
-       +++ rewrite (ihB R12 R22); auto.
-  + move=> κ A ihA R1 R2 *.
-    destruct_CTyFs => [[? [? [R1' [? [H1 ?]]]]] [? [? [R2' [? [H2 ?]]]]]]; noconfusion.
-    apply: binrel_extensionality => e1 e2.
-    destruct_rel_specs e1 e2 => F1 G1 F2 G2.
-    split => e1e2.
-    ++ specialize (F1 e1e2).
-       apply: G2.
-       later_elim => *; destruct_conjs.
-       by [rewrite (ihA R2' R1')].
-    ++ specialize (F2 e1e2).
-       apply: G1.
-       later_elim => *; destruct_conjs.
-       by [rewrite (ihA R1' R2')].
-  + move=> A ihA R1 R2 *.
-    destruct_CTyFs => [[? [R1' ?]] [? [R2' ?]]]; noconfusion.
-    apply: binrel_extensionality => e1 e2.
-    destruct_rel_specs e1 e2 => F1 G1 F2 G2.
-    split => *.
-    ++ apply: G1 => κ.
-       rewrite (ihA κ (R2' κ) (R1' κ)); auto.
-    ++ apply: G2 => κ.
-       rewrite (ihA κ (R1' κ) (R2' κ)); auto.
+  move=> *; try by [destruct_CTyFs => //= *; noconfusion];
+  destruct_CTyFs => *; noconfusion;
+  apply: binrel_extensionality => e1 e2;
+  destruct_rel_specs e1 e2 => *.
+
+  + split; eauto.
+
+  + split; eauto.
+
+  + split => *; specialize_hyps; backthruhyp;
+    noconfusion;
+    repeat mysplit; eauto;
+    match goal with
+    | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
+    end.
+
+  + split => *; backthruhyp; specialize_hyps; later_elim=> *; destruct_conjs;
+    match goal with
+    | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
+    end.
+
+  + split => *; backthruhyp => *;
+    match goal with
+    | ih : _, H : CLK → behavior |- ?R ?κ _ => by [rewrite (ih κ (R κ) (H κ)); eauto]
+    end.
 Qed.
 
 
@@ -413,37 +388,38 @@ Theorem CTyF_idempotent : CTyF (CTyF Empty) = CTyF Empty.
 Proof.
   apply: functional_extensionality.
   case; elim; try by [move=> *; apply: propositional_extensionality; split; destruct_CTyF].
+
   + move=> *.
     apply: propositional_extensionality.
     split; destruct_CTyF => *; rewrite -CTyF_Roll;
     apply: TyF.unit; by [noconfusion].
 
-  + move=> R.
+  + move=> *.
     apply: propositional_extensionality;
     split; destruct_CTyF => *; rewrite -CTyF_Roll;
     apply: TyF.bool; by [noconfusion].
 
 
-  + move=> A ihA B ihB R.
+  + move=> *.
     apply: propositional_extensionality.
     split; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll; apply: TyF.prod;
-    simpl; repeat mysplit; eauto; destruct_evals.
-    ++ by [rewrite -ihA].
-    ++ by [rewrite -ihB].
-    ++ by [rewrite ihA].
-    ++ by [rewrite ihB].
+    simpl; repeat mysplit; eauto; destruct_evals;
+    match goal with
+    | H : _ |- _ => by [rewrite H] || by [rewrite -H]
+    end.
 
-  + move=> κ A ihA R.
+
+  + move=> ? ? ih *.
     apply: propositional_extensionality.
     split; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll;
     apply: TyF.later;
     simpl; repeat mysplit; destruct_evals; eauto.
-    ++ by [rewrite -ihA].
-    ++ by [rewrite ihA].
+    ++ by [rewrite -ih].
+    ++ by [rewrite ih].
 
-  + move=> A ihA R.
+  + move=> ? ihA *.
     apply: propositional_extensionality.
     split; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll;
@@ -490,67 +466,34 @@ Module Univ.
       apply: CTyF_Empty_functional; eauto.
 
     + elim; rewrite /based_matrix_functional /Nuprl;
-      try by [move=> *; destruct_CTyFs].
+      try by [move=> *; destruct_CTyFs];
 
-      ++ move=> *; destruct_CTyFs => *; noconfusion.
-         apply: binrel_extensionality => e1 e2.
-         split => *; destruct_rel_specs e1 e2; eauto.
+      move=> *; destruct_CTyFs => *; noconfusion;
+      apply: binrel_extensionality => e1 e2;
+      destruct_rel_specs e1 e2; move=> *.
 
-      ++ move=> *; destruct_CTyFs => *; noconfusion.
-         apply: binrel_extensionality => e1 e2.
-         split => *; destruct_rel_specs e1 e2; eauto.
+      ++ split; eauto.
+      ++ split; eauto.
 
-      ++ move=> A ihA B ihB R1 R2 ? ?.
-         destruct_CTyFs => //= [[? [? [R1' [R2' ?]]]] [? [? [R1'' [R2'' ?]]]]].
-         apply: binrel_extensionality => e1 e2;
-         split => e1e2; destruct_evals; destruct_conjs;
-         destruct_rel_specs e1 e2 => F1 G1 F2 G2.
-         +++ case: F2; eauto => *.
-             apply: G1.
-             destruct_conjs; destruct_evals.
-             repeat mysplit; eauto.
-             ++++ rewrite (ihA R1'' R1'); eauto.
-             ++++ rewrite (ihB R2'' R2'); eauto.
-         +++ case: F1; eauto => *.
-             apply: G2.
-             destruct_conjs; destruct_evals.
-             repeat mysplit; eauto.
-             ++++ rewrite (ihA R1' R1''); eauto.
-             ++++ rewrite (ihB R2' R2''); eauto.
+      ++ split=> *;
+         backthruhyp; specialize_hyps; destruct_conjs; destruct_evals;
+         repeat mysplit; eauto;
+         match goal with
+         | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
+         end.
 
-      ++ move=> κ A ihA R1 R2 *.
-         destruct_CTyFs => [[? [? [R1' [? [H1 sp1]]]]] [? [? [R2' [? [H2 sp2]]]]]].
-         destruct_conjs; destruct_evals.
-         apply: binrel_extensionality => e1 e2.
-         destruct_rel_specs e1 e2 => F1 G1 F2 G2.
-         split => e1e2.
-         +++ apply: G2.
-             specialize (F1 e1e2).
-             later_elim => *; destruct_conjs.
-             by [rewrite (ihA R2' R1')].
-         +++ apply: G1.
-             specialize (F2 e1e2).
-             later_elim => *; destruct_conjs.
-             by [rewrite (ihA R1' R2')].
+      ++ split => *; backthruhyp; specialize_hyps; later_elim=> *; destruct_conjs;
+         match goal with
+         | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
+         end.
 
-      ++ move=> A ihA R1 R2 *.
-         destruct_CTyFs => [[? [R1' ?]] [? [R2' ?]]].
-         destruct_conjs; destruct_evals.
-         apply: binrel_extensionality => e1 e2.
-         split => e1e2.
-         +++ destruct_rel_specs e1 e2 => ? G1 *.
-             apply: G1 => κ.
-             rewrite (ihA κ (R2' κ) (R1' κ)); eauto.
-         +++ destruct_rel_specs e1 e2 => ? ? ? G2.
-             apply: G2 => κ.
-             rewrite (ihA κ (R1' κ) (R2' κ)); eauto.
+      ++ split => e1e2; destruct_rel_specs e1 e2 => *;
+         backthruhyp => *;
+         match goal with
+         | ih : _, H : _ |- ?R ?κ (e1, e2) => by [rewrite (ih κ (R κ) (H κ)); eauto]
+         end.
 
-      ++ move=> i R1 R2 *.
-         destruct_CTyFs => //= [[j1 [p1 [? sp1]]] [j2 [p2 [? sp2]]]].
-         destruct_evals.
-         apply: binrel_extensionality => e1 e2.
-         destruct_rel_specs e1 e2 => *.
-         split; eauto.
+      ++ split; eauto.
   Qed.
 
 (*   Definition Nuprlω : matrix := *)
