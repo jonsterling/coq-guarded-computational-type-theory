@@ -63,8 +63,7 @@ Module Close.
     + move=> τ [A R].
       exact
         (A ⇓ Tm.unit
-         ∧ ∀ e1 e2,
-            R (e1, e2) ↔ [e1, e2] ⇓ Tm.ax).
+         ∧ R = fun e12 => [fst e12, snd e12] ⇓ Tm.ax).
     + prove_monotone.
   Defined.
 
@@ -74,8 +73,7 @@ Module Close.
     + move=> τ [A R].
       exact
        (A ⇓ Tm.bool
-        ∧ ∀ e1 e2,
-           R (e1, e2) ↔ ([e1, e2] ⇓ Tm.tt ∨ [e1, e2] ⇓ Tm.ff)).
+        ∧ R = fun e12 => ([fst e12, snd e12] ⇓ Tm.tt ∨ [fst e12, snd e12] ⇓ Tm.ff)).
     + prove_monotone.
   Defined.
 
@@ -87,7 +85,7 @@ Module Close.
         (∃ κ B R',
             A ⇓ Tm.ltr κ B
             ∧ ▷[ κ ] (τ (B, R'))
-            /\ ∀ e1 e2, R (e1, e2) ↔ ▷[ κ ] (R' (e1, e2))).
+            /\ R = fun e12 => ▷[ κ ] (R' e12)).
     + prove_monotone.
   Defined.
 
@@ -100,12 +98,12 @@ Module Close.
             A ⇓ Tm.prod B C
             ∧ τ (B, R1)
             ∧ τ (C, R2)
-            ∧ ∀ e1 e2,
-                R (e1, e2) ↔ ∃ e11 e12 e21 e22,
-                  (e1 ⇓ Tm.pair e11 e12)
-                  ∧ (e2 ⇓ Tm.pair e21 e22)
-                  ∧ R1 (e11, e21)
-                  ∧ R2 (e12, e22)).
+            ∧ R = fun es =>
+                    ∃ e11 e12 e21 e22,
+                      (fst es ⇓ Tm.pair e11 e12)
+                      ∧ (snd es ⇓ Tm.pair e21 e22)
+                      ∧ R1 (e11, e21)
+                      ∧ R2 (e12, e22)).
     + prove_monotone.
   Defined.
 
@@ -117,7 +115,7 @@ Module Close.
         (∃ B S,
             A ⇓ Tm.isect B
             ∧ (∀ κ, τ (B κ, S κ))
-            ∧ ∀ e1 e2, R (e1, e2) ↔ ∀ κ, S κ (e1, e2)).
+            ∧ R = fun es => ∀ κ, S κ es).
     + prove_monotone.
   Defined.
 End Close.
@@ -277,51 +275,66 @@ Ltac use_matrix_functionality_ih :=
       by rewrite (IH R R'); auto
   end.
 
-Ltac destruct_rel_spec e1 e2:=
-  let H := fresh in
-  let F := fresh in
-  let G := fresh in
-  move=> H; case (H e1 e2) => F G; clear H; move: F G.
-
-Ltac destruct_rel_specs e1 e2 :=
-  repeat
-    match goal with
-    | H : ∀ (e1 e2 : Tm.t 0), ?R1 (e1, e2) ↔ @?Q e1 e2 |- _ =>
-      move: H; destruct_rel_spec e1 e2
-    end.
-
-
 Ltac print_goal :=
   match goal with
   | |- ?G => idtac G; idtac "----------------------------------------------"
   end.
 
+Ltac specialize_functionality_ih :=
+  repeat
+    match goal with
+    | H : ∀ R1 R2 : behavior, CTyF _ (?X, _) → CTyF _ (?X, _) → _ = _, H' : CTyF _ (?X, ?R1), H'' : CTyF _ (?X, ?R2) |- _ => specialize (H _ _ H' H''); move: H
+    end.
+
+
+Theorem universal_extensionality :
+  ∀ (A : Type) (P Q : A → Prop),
+    (∀ x, P x = Q x)
+    → (∀ x, P x) = (∀ x, Q x).
+Proof.
+  move=> A P Q E.
+  apply: propositional_extensionality; mysplit => *.
+  ++ rewrite -E. auto.
+  ++ rewrite E. auto.
+Qed.
+
+Theorem later_extensionality :
+  ∀ κ (P Q : Prop),
+    (▷[κ] (P = Q))
+    → (▷[κ] P) = (▷[κ] Q).
+Proof.
+  move=> κ P Q E.
+  apply: propositional_extensionality.
+  mysplit => *; Later.gather; move=> [X Y].
+  ++ rewrite -X; auto.
+  ++ rewrite X; auto.
+Qed.
 
 Theorem CTyF_Empty_functional : matrix_functional (CTyF Empty).
 Proof.
   elim; rewrite /based_matrix_functional;
   move=> *; try by [destruct_CTyFs => //= *; noconfusion];
-  destruct_CTyFs => *; noconfusion;
-  apply: binrel_extensionality => e1 e2;
-  destruct_rel_specs e1 e2 => *.
+  destruct_CTyFs => *; noconfusion.
+  + congruence.
+  + congruence.
+  + specialize_functionality_ih => p1 p2.
+    rewrite p1 p2.
+    congruence.
+  + symmetry. etransitivity; first eassumption.
+    apply: binrel_extensionality => e1 e2.
+    mysplit => *; Later.gather => *; destruct_conjs;
+    specialize_functionality_ih => p.
+    ++ by [rewrite p].
+    ++ by [rewrite -p].
 
-  + mysplit; eauto.
-
-  + mysplit; eauto.
-
-  + mysplit => *; specialize_hyps; backthruhyp;
-    noconfusion;
-    repeat mysplit; eauto;
-    use_matrix_functionality_ih.
-
-  + mysplit => *; backthruhyp; specialize_hyps; Later.gather => *; destruct_conjs;
-    use_matrix_functionality_ih.
-
-  + mysplit => *; backthruhyp => *;
-    specialize_hyps;
-    use_matrix_functionality_ih.
+  + symmetry. etransitivity; first eassumption.
+    apply: functional_extensionality => *.
+    apply: universal_extensionality => κ.
+    specialize_hyps.
+    specialize_functionality_ih => p.
+    rewrite p.
+    auto.
 Qed.
-
 
 Theorem CTyF_idempotent : CTyF (CTyF Empty) = CTyF Empty.
 Proof.
@@ -380,9 +393,8 @@ Module Univ.
         (∃ j,
             j <= i'
             ∧ A ⇓ Tm.univ j
-            ∧ ∀ e1 e2,
-                R (e1, e2) ↔
-                  ∃ S, CTyF τ (e1, S) ∧ CTyF τ (e2, S)).
+            ∧ R = fun es =>
+                    ∃ S, CTyF τ (fst es, S) ∧ CTyF τ (snd es, S)).
   Defined.
 
   Definition Nuprl (i : nat) : matrix :=
@@ -396,6 +408,18 @@ Module Univ.
     | X : Spine (S _) _ |- _ => simpl in X
     end.
 
+  Ltac reorient :=
+    match goal with
+    | H : ?Y = _ |- ?X = ?Y => symmetry; etransitivity; first eassumption
+    end.
+
+  Ltac eqcd :=
+    apply: universal_extensionality
+    || apply: later_extensionality
+    || apply: functional_extensionality.
+
+  Hint Extern 4 later_extensionality => auto.
+
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
     case => [A ? ? | n].
@@ -404,29 +428,23 @@ Module Univ.
       apply: CTyF_Empty_functional; eauto.
 
     + elim; rewrite /based_matrix_functional /Nuprl;
-      try by [move=> *; destruct_CTyFs];
+      move=> *; destruct_CTyFs => *; noconfusion.
 
-      move=> *; destruct_CTyFs => *; noconfusion;
-      apply: binrel_extensionality => e1 e2;
-      destruct_rel_specs e1 e2; move=> *.
-
-      ++ mysplit; eauto.
-      ++ mysplit; eauto.
-
-      ++ mysplit=> *; backthruhyp; specialize_hyps;
-         destruct_conjs; destruct_evals;
-         repeat mysplit; eauto;
-         use_matrix_functionality_ih.
-
-
-      ++ mysplit => *; backthruhyp; specialize_hyps;
-         Later.gather => *; destruct_conjs;
-         use_matrix_functionality_ih.
-
-      ++ mysplit => *; backthruhyp => *; specialize_hyps;
-         use_matrix_functionality_ih.
-
-      ++ mysplit; eauto.
+      ++ congruence.
+      ++ congruence.
+      ++ reorient.
+         specialize_functionality_ih => p q.
+         rewrite p q.
+         congruence.
+      ++ reorient.
+         repeat eqcd => *.
+         Later.gather => *; destruct_conjs.
+         specialize_functionality_ih.
+         congruence.
+      ++ reorient.
+         repeat eqcd => *.
+         specialize_hyps; specialize_functionality_ih.
+         congruence.
   Qed.
 
 
