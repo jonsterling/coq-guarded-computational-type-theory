@@ -6,4 +6,5 @@ theories/OrderTheory.v
 theories/Axioms.v
 theories/Terms.v
 theories/Closure.v
+theories/Tower.v
 theories/GCTT.v
