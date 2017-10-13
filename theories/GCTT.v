@@ -386,6 +386,7 @@ Module Univ.
   Defined.
   Hint Resolve lt_wf_tp : arith.
 
+  Obligation Tactic := idtac.
   Program Fixpoint Spine (n : nat) {measure n (lt)} : matrix :=
     match n with
     | 0 => CTyF Empty
@@ -399,15 +400,17 @@ Module Univ.
 
   Next Obligation.
   Proof.
-    omega.
+    firstorder.
   Defined.
   Next Obligation.
   Proof.
-    omega.
+    firstorder.
+  Defined.
+  Next Obligation.
+    apply: lt_wf_tp.
   Defined.
 
 
-  (* TODO: Coq's wellfounded recursion stuff seems to be blocked on an axiom, so I can't compute it. This is a hack. *)
   Theorem Unfold_Spine_S :
     ∀ X n,
       Spine (S n) X =
@@ -417,17 +420,16 @@ Module Univ.
           fun es =>
             ∃ S, CTyF (Spine j) (fst es, S) ∧ CTyF (Spine j) (snd es, S).
   Proof.
-    admit.
-  Admitted.
+    move=> X n.
+    by [Wf.WfExtensionality.unfold_sub Spine (Spine (S n) X)].
+  Qed.
 
   Theorem Unfold_Spine_0 :
-    ∀ X,
-      Spine 0 X = CTyF Empty X.
+    ∀ X, Spine 0 X = CTyF Empty X.
   Proof.
-    admit.
-  Admitted.
-
-
+    move=> X.
+      by [Wf.WfExtensionality.unfold_sub Spine (Spine 0 X)].
+  Qed.
 
   Definition Nuprl (i : nat) : matrix :=
     CTyF (Spine i).
