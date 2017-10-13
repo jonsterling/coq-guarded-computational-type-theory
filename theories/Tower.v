@@ -263,45 +263,28 @@ Module Monotone.
       Clo.destruct_clos; Clo.noconfusion.
       induction i; Spine.simplify; Clo.destruct_clos; Clo.noconfusion.
 
-    + intros; apply: ltr; eauto.
-    + intros; apply: isect; eauto.
-    + induction n as [|n' ihn].
-      ++ move=> i j; rewrite /Monotone /Tower => R p.
-         Clo.destruct_clo => *.
-         induction i.
-         +++ Spine.simplify.
-             Clo.destruct_clos.
-         +++ Spine.simplify.
-             T.destruct_conjs.
-             T.destruct_evals.
+    + move=> *; apply: ltr; eauto.
+    + move=> *; apply: isect; eauto.
+    + move=> n i j; rewrite /Monotone /Tower => R p.
+      Clo.destruct_clo => *.
+      induction i.
+      ++ Spine.simplify.
+         Clo.destruct_clos.
+      ++ Spine.simplify.
+         T.destruct_conjs.
+         T.destruct_evals.
 
-             have: ∃ j', j = S j'.
-             induction j; omega || eauto.
-             move=> [j' q].
-             rewrite q.
-             rewrite -Clo.roll.
+         have: ∃ j', j = S j'.
+         +++ induction j.
+             ++++ omega.
+             ++++ eauto.
+         +++ move=> [j' q].
+             rewrite q -Clo.roll.
              apply: Sig.init.
              Spine.simplify.
-             exists 0; repeat T.split; eauto.
+             simpl.
+             repeat T.split; [idtac | constructor | idtac].
              ++++ omega.
-
-      ++ move=> i j; rewrite /Monotone /Tower => R p.
-         Clo.destruct_clo => *.
-         induction i.
-         +++ Spine.simplify.
-             Clo.destruct_clos.
-         +++ Spine.simplify.
-             T.destruct_conjs.
-             T.destruct_evals.
-             simpl in *.
-             have: ∃ j', j = S j'.
-             induction j; omega || eauto.
-             move=> [j' q].
-             rewrite q.
-             rewrite -Clo.roll.
-             apply: Sig.init.
-             Spine.simplify.
-             exists (S n'); repeat T.split; eauto.
-             ++++ omega.
+             ++++ eauto.
   Qed.
 End Monotone.
