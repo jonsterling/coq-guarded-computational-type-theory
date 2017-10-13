@@ -493,10 +493,6 @@ Module Univ.
       auto.
   Qed.
 
-  Ltac obvious := admit.
-
-
-
   Definition Nuprl_monotone_case (i j : nat) (A : Tm.t 0) : Prop :=
     ∀ R,
       i ≤ j
@@ -603,7 +599,6 @@ Module Univ.
       by [apply: ihA].
   Qed.
 
-  (* TODO: fill in the obvious goals *)
   Theorem Nuprl_monotone :
     ∀ A i j, Nuprl_monotone_case i j A.
   Proof.
@@ -612,12 +607,32 @@ Module Univ.
       omega.
     + apply: Nuprl_unit_monotone.
     + apply: Nuprl_bool_monotone.
-    + obvious.
-    + obvious.
-    + obvious.
+
+    + move=> i j R; rewrite /Nuprl_monotone_case /Nuprl => *.
+      destruct_CTyFs; induction i; simpl_Spine => *;
+      destruct_CTyFs;
+      noconfusion.
+
+    + move=> i j R; rewrite /Nuprl_monotone_case /Nuprl => *.
+      destruct_CTyFs; induction i; simpl_Spine => *;
+      destruct_CTyFs;
+      noconfusion.
+
+    + move=> i j R; rewrite /Nuprl_monotone_case /Nuprl => *.
+      destruct_CTyFs; induction i; simpl_Spine => *;
+      destruct_CTyFs;
+      noconfusion.
+
     + intros; apply: Nuprl_prod_monotone; eauto.
-    + obvious.
-    + obvious.
+
+    + rewrite /Nuprl_monotone_case /Nuprl => ? ? ? ? i *.
+      destruct_CTyFs; noconfusion.
+      induction i; simpl_Spine; destruct_CTyFs; noconfusion.
+
+    + rewrite /Nuprl_monotone_case /Nuprl => ? ? ? ? i *.
+      destruct_CTyFs; noconfusion.
+      induction i; simpl_Spine; destruct_CTyFs; noconfusion.
+
     + intros; apply: Nuprl_ltr_monotone; eauto.
     + intros; apply: Nuprl_isect_monotone; eauto.
     + induction n as [|n' ihn].
@@ -658,8 +673,7 @@ Module Univ.
              simpl_Spine.
              exists (S n'); repeat mysplit; eauto.
              ++++ omega.
-  Admitted.
-
+  Qed.
 
   (* TODO: move to a general location *)
   Theorem nat_max_leq :
