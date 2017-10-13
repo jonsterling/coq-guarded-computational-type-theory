@@ -405,7 +405,7 @@ Module Univ.
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
-    case => [A ? ? | n].
+    case => *.
 
     + rewrite /Nuprl //= CTyF_idempotent.
       apply: CTyF_Empty_functional; eauto.
@@ -430,30 +430,30 @@ Module Univ.
   Qed.
 
 
-(*   Definition Nuprlω : matrix := *)
-(*     fun X => ∃ n, Nuprl n X. *)
+  Definition Nuprlω : matrix :=
+    fun X => ∃ n, Nuprl n X.
 
 
-(*   Theorem Roll {i : nat} : TyF.t (Spine i) (Nuprl i) = Nuprl i. *)
-(*   Proof. *)
-(*     apply: binrel_extensionality => A R. *)
-(*     split => H. *)
-(*     + rewrite /Nuprl /CTyF. *)
-(*       match goal with *)
-(*       | |- lfp ?m ?x => *)
-(*         case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x) *)
-(*       end. *)
-(*       auto. *)
-(*     + rewrite /Nuprl /CTyF in H. *)
-(*       match goal with *)
-(*       | H : lfp ?m ?x |- _ => *)
-(*         case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x) => _ *)
-(*       end. *)
-(*       apply. *)
-(*       auto. *)
-(*   Qed. *)
+  Theorem Roll {i : nat} : TyF.t (Spine i) (Nuprl i) = Nuprl i.
+  Proof.
+    apply: binrel_extensionality => A R.
+    split => H.
+    + rewrite /Nuprl /CTyF.
+      match goal with
+      | |- lfp ?m ?x =>
+        case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x)
+      end.
+      auto.
+    + rewrite /Nuprl /CTyF in H.
+      match goal with
+      | H : lfp ?m ?x |- _ =>
+        case: (lfp_fixed_point matrix (PowerSetCompleteLattice (Tm.t 0 * behavior)) m x) => _
+      end.
+      apply.
+      auto.
+  Qed.
 
-(*   Ltac obvious := admit. *)
+  Ltac obvious := admit.
 
 (*   (* Theorem Nuprl_monotone_S : *) *)
 (*   (*   ∀ i A R, *) *)
@@ -549,125 +549,108 @@ Module Univ.
 
 
 
-(*   Definition Nuprl_monotone_case (i j : nat) (A : Tm.t 0) : Prop := *)
-(*     ∀ R, *)
-(*       i ≤ j *)
-(*       → Nuprl i (A, R) *)
-(*       → Nuprl j (A, R). *)
+  Definition Nuprl_monotone_case (i j : nat) (A : Tm.t 0) : Prop :=
+    ∀ R,
+      i ≤ j
+      → Nuprl i (A, R)
+      → Nuprl j (A, R).
 
-(*   Theorem Nuprl_unit_monotone : ∀ i j, Nuprl_monotone_case i j Tm.unit. *)
-(*   Proof. *)
-(*     move=> i j R p; rewrite /Nuprl => N. *)
-(*     destruct_CTyF; noconfusion; rewrite -CTyF_Roll. *)
-(*     + induction i as [|i' ih]. *)
-(*       ++ apply: TyF.unit. *)
-(*          simpl_Spine. *)
-(*          destruct_CTyF; noconfusion. *)
-(*          eauto. *)
-(*       ++ apply: ih. *)
-(*          +++ omega. *)
-(*          +++ simpl_Spine. *)
-(*              destruct_conjs. *)
-(*              destruct_evals. *)
-(*     + by [apply: TyF.unit]. *)
-(*   Qed. *)
+  Theorem Nuprl_unit_monotone : ∀ i j, Nuprl_monotone_case i j Tm.unit.
+  Proof.
+    move=> i j R p; rewrite /Nuprl; destruct_CTyF; noconfusion; rewrite -CTyF_Roll.
+    + induction i as [|i' ih].
+      ++ apply: TyF.unit.
+         simpl_Spine.
+         destruct_CTyFs; noconfusion.
+      ++ apply: ih; first omega.
+         simpl_Spine.
+         noconfusion.
+    + by [apply: TyF.unit].
+  Qed.
 
-(*   Theorem Nuprl_bool_monotone : ∀ i j, Nuprl_monotone_case i j Tm.bool. *)
-(*   Proof. *)
-(*     move=> i j R p; rewrite /Nuprl => N. *)
-(*     destruct_CTyF; noconfusion. *)
-(*     + rewrite -CTyF_Roll. *)
-(*       induction i as [| i' ih ]. *)
-(*       ++ apply: TyF.bool. *)
-(*          simpl_Spine. *)
-(*          destruct_CTyF; noconfusion. *)
-(*       ++ apply: ih. *)
-(*          +++ omega. *)
-(*          +++ simpl_Spine. *)
-(*              destruct_conjs. *)
-(*              destruct_evals. *)
-(*   Qed. *)
+  Theorem Nuprl_bool_monotone : ∀ i j, Nuprl_monotone_case i j Tm.bool.
+  Proof.
+    move=> i j R p; rewrite /Nuprl;
+    destruct_CTyF => //= *.
+    + induction i as [| i' ih].
+      ++ rewrite -CTyF_Roll; apply: TyF.bool.
+         simpl_Spine.
+         destruct_CTyFs.
+      ++ apply: ih; first omega.
+         simpl_Spine.
+         noconfusion.
 
-(*   Theorem Nuprl_prod_monotone : *)
-(*     ∀ i j A B, *)
-(*       Nuprl_monotone_case i j A *)
-(*       → Nuprl_monotone_case i j B *)
-(*       → Nuprl_monotone_case i j (Tm.prod A B). *)
-(*   Proof. *)
-(*     move=> i j A B ihA ihB R p; rewrite /Nuprl => Nprod. *)
-(*     rewrite -CTyF_Roll. *)
-(*     apply: TyF.prod. *)
-(*     destruct_CTyF; noconfusion. *)
-(*     + induction i; noconfusion. *)
-(*       destruct_CTyF; noconfusion. *)
-(*       do 4 eexists; repeat split; eauto. *)
-(*       ++ apply: ihA; eauto. *)
-(*          rewrite /Nuprl CTyF_idempotent; eauto. *)
-(*       ++ apply: ihB; eauto. *)
-(*          rewrite /Nuprl CTyF_idempotent; eauto. *)
-(*       ++ destruct_rel_specs => F _; apply: F. *)
-(*       ++ destruct_rel_specs => _; apply. *)
-(*     + do 4 eexists; repeat split; eauto. *)
-(*       ++ apply: ihA; eauto. *)
-(*       ++ apply: ihB; eauto. *)
-(*       ++ destruct_rel_spec => F _; apply: F. *)
-(*       ++ destruct_rel_spec => _; apply. *)
-(*   Qed. *)
+    + rewrite -CTyF_Roll.
+      induction i as [| i' ih ].
+      ++ by [apply: TyF.bool].
+      ++ apply: ih.
+         omega.
+  Qed.
+
+  Theorem Nuprl_prod_monotone :
+    ∀ i j A B,
+      Nuprl_monotone_case i j A
+      → Nuprl_monotone_case i j B
+      → Nuprl_monotone_case i j (Tm.prod A B).
+  Proof.
+    move=> i j A B ihA ihB R p; rewrite /Nuprl => Nprod.
+    rewrite -CTyF_Roll.
+    apply: TyF.prod.
+    destruct_CTyFs; noconfusion.
+    + induction i; noconfusion.
+      destruct_CTyFs; noconfusion.
+      repeat mysplit; eauto.
+      ++ apply: ihA; auto.
+         rewrite /Nuprl CTyF_idempotent; eauto.
+      ++ apply: ihB; auto.
+         rewrite /Nuprl CTyF_idempotent; eauto.
+    + repeat mysplit; eauto.
+      ++ by [apply: ihA].
+      ++ by [apply: ihB].
+  Qed.
 
 
-(*   Theorem Nuprl_ltr_monotone : *)
-(*     ∀ i j κ A, *)
-(*       Nuprl_monotone_case i j A *)
-(*       → Nuprl_monotone_case i j (Tm.ltr κ A). *)
-(*   Proof. *)
-(*     move=> i j κ A ihA R p; rewrite /Nuprl => Nltr; rewrite -CTyF_Roll. *)
-(*     apply: TyF.later. *)
-(*     destruct_CTyF; noconfusion. *)
-(*     + induction i; noconfusion. *)
-(*       destruct_CTyF; noconfusion. *)
-(*       do 3 eexists; repeat split. *)
-(*       ++ eauto. *)
-(*       ++ apply: Later.map => [X|]; last eauto. *)
-(*          apply: ihA; eauto. *)
-(*          rewrite /Nuprl CTyF_idempotent. *)
-(*          eauto. *)
-(*       ++ destruct_rel_spec => F _; apply: F. *)
-(*       ++ destruct_rel_spec => _; apply. *)
-(*     + do 3 eexists; repeat split. *)
-(*       ++ eauto. *)
-(*       ++ apply: Later.map => [X|]; last eauto. *)
-(*          apply: ihA; eauto. *)
-(*       ++ destruct_rel_spec => F _; apply: F. *)
-(*       ++ destruct_rel_spec => _; apply. *)
-(*   Qed. *)
+  Theorem Nuprl_ltr_monotone :
+    ∀ i j κ A,
+      Nuprl_monotone_case i j A
+      → Nuprl_monotone_case i j (Tm.ltr κ A).
+  Proof.
+    move=> i ? ? ? ihA ? ?; rewrite /Nuprl => ?; rewrite -CTyF_Roll.
+    apply: TyF.later.
+    destruct_CTyFs; noconfusion.
+    + induction i; noconfusion.
+      destruct_CTyFs; noconfusion.
+      repeat mysplit; eauto.
+      apply: Later.map => [X|]; last eauto.
+      apply: ihA; eauto.
+      rewrite /Nuprl CTyF_idempotent.
+      eauto.
+    + repeat mysplit; eauto.
+      apply: Later.map => *; last eauto.
+      by [apply: ihA].
+  Qed.
 
 
-(*   Theorem Nuprl_isect_monotone : *)
-(*     ∀ i j A, *)
-(*       (∀ κ, Nuprl_monotone_case i j (A κ)) *)
-(*       → Nuprl_monotone_case i j (Tm.isect A). *)
-(*   Proof. *)
-(*     move=> i j A ihA R p; rewrite /Nuprl => Nisect. *)
-(*     rewrite -CTyF_Roll. *)
-(*     apply: TyF.isect. *)
-(*     destruct_CTyF; noconfusion. *)
-(*     + induction i; noconfusion. *)
-(*       destruct_CTyF; noconfusion. *)
-(*       do 2 eexists; repeat split; eauto. *)
-(*       ++ move=> κ. *)
-(*          specialize_clocks κ. *)
-(*          apply: ihA; eauto. *)
-(*          rewrite /Nuprl CTyF_idempotent. *)
-(*          eauto. *)
-(*       ++ destruct_rel_spec => F _; apply: F. *)
-(*       ++ destruct_rel_spec => _; apply. *)
-(*     + do 2 eexists; repeat split; eauto. *)
-(*       ++ move=> κ. *)
-(*          specialize_clocks κ. *)
-(*          apply: ihA; eauto. *)
-(*       ++ destruct_rel_spec => F _; apply: F. *)
-(*       ++ destruct_rel_spec => _; apply. *)
-(*   Qed. *)
+  Theorem Nuprl_isect_monotone :
+    ∀ i j A,
+      (∀ κ, Nuprl_monotone_case i j (A κ))
+      → Nuprl_monotone_case i j (Tm.isect A).
+  Proof.
+    move=> i ? ? ihA ? ?; rewrite /Nuprl => Nisect.
+    rewrite -CTyF_Roll.
+    apply: TyF.isect.
+    destruct_CTyFs; noconfusion.
+    + induction i; noconfusion.
+      destruct_CTyFs; noconfusion.
+      repeat mysplit; eauto => *.
+      specialize_hyps.
+      apply: ihA; auto.
+      rewrite /Nuprl CTyF_idempotent.
+      eauto.
+    + repeat mysplit; eauto => *.
+      specialize_hyps.
+      by [apply: ihA].
+  Qed.
 
 (*   Theorem Welp : *)
 (*     ∀ i n R, *)
