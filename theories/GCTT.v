@@ -8,7 +8,6 @@ From gctt Require Import OrderTheory.
 From gctt Require Import Axioms.
 From gctt Require Import Terms.
 
-Require Import Coq.Program.Tactics.
 Require Import Coq.Setoids.Setoid.
 Require Import Classes.SetoidClass.
 Require Import Classes.Morphisms.
@@ -20,33 +19,8 @@ Require Import Coq.Program.Equality.
 Set Implicit Arguments.
 
 
-Axiom propositional_extensionality :
-  ∀ (P Q : Prop),
-    (P ↔ Q)
-    -> P = Q.
-
-Theorem binrel_extensionality :
-  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Prop),
-    (∀ x y, R1 (x, y) ↔ R2 (x, y))
-    → R1 = R2.
-Proof.
-  move=> T1 T2 R1 R2 F.
-  apply: functional_extensionality.
-  move=> [x y].
-  apply: propositional_extensionality.
-  eauto.
-Qed.
-
-
-
 
 Hint Resolve Later.map.
-
-Theorem later_join : ∀ κ P Q, ▷[κ] P → ▷[κ] Q → ▷[κ] (P ∧ Q).
-Proof.
-  move=> κ ? ? X Y.
-  by [rewrite Later.cart].
-Qed.
 
 
 Ltac mysplit :=
@@ -57,19 +31,6 @@ Ltac mysplit :=
   | |- _ ↔ _ => split
   end.
 
-
-Ltac later_elim_aux y :=
-  lazymatch goal with
-  | H1 : ▷[?κ] _, H2 : ▷[?κ] _ |- _ =>
-    let x := fresh in
-    have := later_join H1 H2 => x;
-    clear H1; clear H2;
-    later_elim_aux x
-  | |- ▷[?κ] _ => apply: Later.map y
-  end.
-
-Ltac later_elim :=
-  let x := fresh in later_elim_aux x.
 
 (* A behavior is a binary relations on terms; later we will show this to be symmetric
      and transitive. *)
@@ -270,7 +231,6 @@ Ltac destruct_eval :=
   end.
 
 
-
 Ltac destruct_conjs :=
   repeat match goal with
   | H : ∃ _:_,_ |- _ => case: H => *
@@ -284,12 +244,6 @@ Ltac noconfusion :=
   destruct_conjs;
   destruct_evals.
 
-
-(* Ltac destruct_CTyFs := *)
-(*   repeat match goal with *)
-(*   | T : CTyF _ _ |- _ => *)
-(*     apply: (CTyF_ind T); clear T; try by [noconfusion] *)
-(*   end. *)
 
 Ltac destruct_CTyF :=
   let x := fresh in move=> x; apply: (CTyF_ind x); clear x;
@@ -360,9 +314,8 @@ Proof.
     repeat mysplit; eauto;
     use_matrix_functionality_ih.
 
-  + mysplit => *; backthruhyp; specialize_hyps; later_elim=> *; destruct_conjs;
+  + mysplit => *; backthruhyp; specialize_hyps; Later.gather => *; destruct_conjs;
     use_matrix_functionality_ih.
-
 
   + mysplit => *; backthruhyp => *;
     specialize_hyps;
@@ -467,7 +420,7 @@ Module Univ.
 
 
       ++ mysplit => *; backthruhyp; specialize_hyps;
-         later_elim=> *; destruct_conjs;
+         Later.gather => *; destruct_conjs;
          use_matrix_functionality_ih.
 
       ++ mysplit => *; backthruhyp => *; specialize_hyps;

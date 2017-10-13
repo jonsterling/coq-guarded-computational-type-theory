@@ -1,9 +1,11 @@
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Tactics.
+Require Import Coq.Logic.FunctionalExtensionality.
 
 From mathcomp Require Import ssreflect.
 
 Set Bullet Behavior "Strict Subproofs".
+Set Implicit Arguments.
 
 Axiom CLK : Type.
 Axiom LocalClock : ∃ κ : CLK, True.
@@ -12,6 +14,25 @@ Module Later.
   Axiom t : CLK -> Prop -> Prop.
   Axiom map : forall κ (p q : Prop), (p -> q) -> (t κ p -> t κ q).
   Axiom cart : ∀ κ (p q : Prop), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
+
+  Theorem join : ∀ κ p q, t κ p → t κ q → t κ (p ∧ q).
+  Proof.
+    move=> *.
+    by [rewrite cart].
+  Qed.
+
+  Local Ltac elim_aux y :=
+  lazymatch goal with
+  | H1 : t ?κ _, H2 : t?κ _ |- _ =>
+    let x := fresh in
+    have := join H1 H2 => x;
+    clear H1; clear H2;
+    elim_aux x
+  | |- t ?κ _ => apply: map y
+  end.
+
+  Ltac gather :=
+    let x := fresh in elim_aux x.
 End Later.
 
 Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 0).
@@ -41,4 +62,22 @@ Theorem unique_choice :
 Proof.
   move=> A B.
   apply: dependent_unique_choice.
+Qed.
+
+
+Axiom propositional_extensionality :
+  ∀ (P Q : Prop),
+    (P ↔ Q)
+    -> P = Q.
+
+Theorem binrel_extensionality :
+  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Prop),
+    (∀ x y, R1 (x, y) ↔ R2 (x, y))
+    → R1 = R2.
+Proof.
+  move=> T1 T2 R1 R2 F.
+  apply: functional_extensionality.
+  move=> [x y].
+  apply: propositional_extensionality.
+  eauto.
 Qed.
