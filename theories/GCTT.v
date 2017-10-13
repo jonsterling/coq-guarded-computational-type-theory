@@ -379,39 +379,75 @@ Qed.
 
 Module Univ.
 
-  Definition Spine: nat → matrix.
+  Lemma lt_wf_tp: well_founded lt.
   Proof.
-    elim => [|i'].
-    + exact (CTyF Empty).
-    + move=> τ [A R].
-      exact
-        (∃ j,
-            j <= i'
-            ∧ A ⇓ Tm.univ j
-            ∧ R = fun es =>
-                    ∃ S, CTyF τ (fst es, S) ∧ CTyF τ (snd es, S)).
+    intro n; induction n; constructor; intros; inversion H; eauto;
+      destruct IHn; eauto.
   Defined.
+  Hint Resolve lt_wf_tp : arith.
+
+  Program Fixpoint Spine (n : nat) {measure n (lt)} : matrix :=
+    match n with
+    | 0 => CTyF Empty
+    | S n =>
+      fun X =>
+        ∃ (j : nat) (p : j ≤ n),
+          fst X ⇓ Tm.univ j
+          ∧ snd X = fun es =>
+                      ∃ S, CTyF (@Spine j _) (fst es, S) ∧ CTyF (@Spine j _) (snd es, S)
+    end.
+
+  Next Obligation.
+  Proof.
+    omega.
+  Defined.
+  Next Obligation.
+  Proof.
+    omega.
+  Defined.
+
+
+  (* TODO: Coq's wellfounded recursion stuff seems to be blocked on an axiom, so I can't compute it. This is a hack. *)
+  Theorem Unfold_Spine_S :
+    ∀ X n,
+      Spine (S n) X =
+      ∃ (j : nat) (p : j ≤ n),
+        fst X ⇓ Tm.univ j
+        ∧ snd X =
+          fun es =>
+            ∃ S, CTyF (Spine j) (fst es, S) ∧ CTyF (Spine j) (snd es, S).
+  Proof.
+    admit.
+  Admitted.
+
+  Theorem Unfold_Spine_0 :
+    ∀ X,
+      Spine 0 X = CTyF Empty X.
+  Proof.
+    admit.
+  Admitted.
+
+
 
   Definition Nuprl (i : nat) : matrix :=
     CTyF (Spine i).
 
-
   Ltac simpl_Spine :=
-    match goal with
-    | X : Spine 0 _ |- _ => simpl in X
-    | X : Spine (S _) _ |- _ => simpl in X
+    repeat match goal with
+    | X : Spine 0 _ |- _ => rewrite Unfold_Spine_0 in X
+    | X : Spine (S _) _ |- _ => rewrite Unfold_Spine_S in X
+    | _ => rewrite Unfold_Spine_S || rewrite Unfold_Spine_0
     end.
 
 
   Theorem Nuprl_functional : ∀ i, matrix_functional (Nuprl i).
   Proof.
     case => *.
-
     + rewrite /Nuprl //= CTyF_idempotent.
       apply: CTyF_Empty_functional; eauto.
-
     + elim; rewrite /based_matrix_functional /Nuprl;
-      move=> *; destruct_CTyFs => *; noconfusion.
+      move=> *; destruct_CTyFs;
+      simpl_Spine; noconfusion.
       ++ congruence.
       ++ congruence.
       ++ reorient.
@@ -427,6 +463,8 @@ Module Univ.
          repeat eqcd => *.
          specialize_hyps; specialize_functionality_ih.
          congruence.
+
+      ++ congruence.
   Qed.
 
 
@@ -454,98 +492,6 @@ Module Univ.
   Qed.
 
   Ltac obvious := admit.
-
-(*   (* Theorem Nuprl_monotone_S : *) *)
-(*   (*   ∀ i A R, *) *)
-(*   (*     Nuprl i (A, R) *) *)
-(*   (*     → Nuprl (S i) (A, R). *) *)
-(*   (* Proof. *) *)
-(*   (*   move=> i. *) *)
-(*   (*   rewrite /Nuprl. *) *)
-(*   (*   elim; intros; rewrite -CTyF_Roll; destruct_CTyF; noconfusion. *) *)
-(*   (*   + omega. *) *)
-(*   (*   + apply: TyF.unit. *) *)
-(*   (*     simpl. *) *)
-(*   (*     destruct i; noconfusion. *) *)
-(*   (*     destruct_CTyF; noconfusion. *) *)
-(*   (*     constructor; eauto. *) *)
-(*   (*   + apply: TyF.unit. *) *)
-(*   (*     simpl. *) *)
-(*   (*     constructor; eauto. *) *)
-(*   (*   + apply: TyF.bool. *) *)
-(*   (*     destruct i; noconfusion. *) *)
-(*   (*     destruct_CTyF; noconfusion. *) *)
-(*   (*   + destruct i; noconfusion. *) *)
-(*   (*     destruct_CTyF; noconfusion. *) *)
-(*   (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *) *)
-(*   (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *) *)
-(*   (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *) *)
-(*   (*     apply: TyF.prod. *) *)
-(*   (*     simpl in *. *) *)
-(*   (*     exists H1, H2, H3, H4. *) *)
-(*   (*     constructor; auto. *) *)
-(*   (*     repeat constructor. *) *)
-(*   (*     ++ apply: H. *) *)
-(*   (*        rewrite CTyF_idempotent. *) *)
-(*   (*        auto. *) *)
-(*   (*     ++ apply: H0. *) *)
-(*   (*        rewrite CTyF_idempotent. *) *)
-(*   (*        auto. *) *)
-(*   (*     ++ move=> e1e2. *) *)
-(*   (*        specialize (H8 e1 e2). *) *)
-(*   (*        destruct H8. *) *)
-(*   (*        specialize_hyps. *) *)
-(*   (*        auto. *) *)
-(*   (*     ++ intro. *) *)
-(*   (*        destruct (H8 e1 e2). *) *)
-(*   (*        apply: H10. *) *)
-(*   (*        auto. *) *)
-(*   (*   + apply: TyF.prod. *) *)
-(*   (*     simpl in *. *) *)
-(*   (*     exists H1, H2, H3, H4. *) *)
-(*   (*     constructor; auto. *) *)
-(*   (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *) *)
-(*   (*     (* This is only easy because I don't have a clause for function *) *)
-(*   (*        types yet ;-) *) *) *)
-(*   (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *) *)
-(*   (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *) *)
-(*   (*   + destruct i; noconfusion; destruct_CTyF; noconfusion. *) *)
-(*   (*     apply: TyF.isect. *) *)
-(*   (*     simpl in *. *) *)
-(*   (*     exists H0, H1. *) *)
-(*   (*     constructor; eauto. *) *)
-(*   (*     constructor; eauto. *) *)
-(*   (*     move=> κ. *) *)
-(*   (*     specialize (H κ (H1 κ)). *) *)
-(*   (*     apply: H. *) *)
-(*   (*     rewrite CTyF_idempotent. *) *)
-(*   (*     apply: H3. *) *)
-(*   (*   + apply: TyF.isect. *) *)
-(*   (*     exists H0, H1. *) *)
-(*   (*     eauto. *) *)
-(*   (*   + induction i; simpl in H. *) *)
-(*   (*     ++ destruct_CTyF; noconfusion. *) *)
-(*   (*     ++ apply: TyF.init. *) *)
-(*   (*        destruct_conjs. *) *)
-(*   (*        dependent induction H1. *) *)
-(*   (*        exists H. *) *)
-(*   (*        repeat split; eauto. *) *)
-(*   (*        +++ move=> e1e2. *) *)
-(*   (*            specialize (H2 e1 e2). *) *)
-(*   (*            destruct H2. *) *)
-(*   (*            specialize_hyps. *) *)
-(*   (*            destruct H1. *) *)
-(*   (*            exists x. *) *)
-(*   (*            destruct H1. *) *)
-(*   (*            clear H2. *) *)
-(*   (*            split. *) *)
-(*   (*            ++++ *) *)
-
-
-(*   (* Abort. *) *)
-
-
-
 
 
 
@@ -597,13 +543,14 @@ Module Univ.
     rewrite -CTyF_Roll.
     apply: TyF.prod.
     destruct_CTyFs; noconfusion.
-    + induction i; noconfusion.
-      destruct_CTyFs; noconfusion.
+    + induction i; noconfusion; simpl_Spine.
+      destruct_CTyFs; noconfusion; simpl_Spine;
       repeat mysplit; eauto.
       ++ apply: ihA; auto.
          rewrite /Nuprl CTyF_idempotent; eauto.
       ++ apply: ihB; auto.
          rewrite /Nuprl CTyF_idempotent; eauto.
+      ++ noconfusion.
     + repeat mysplit; eauto.
       ++ by [apply: ihA].
       ++ by [apply: ihB].
@@ -617,14 +564,15 @@ Module Univ.
   Proof.
     move=> i ? ? ? ihA ? ?; rewrite /Nuprl => ?; rewrite -CTyF_Roll.
     apply: TyF.later.
-    destruct_CTyFs; noconfusion.
-    + induction i; noconfusion.
-      destruct_CTyFs; noconfusion.
+    destruct_CTyFs; noconfusion; simpl_Spine.
+    + induction i; noconfusion; simpl_Spine.
+      destruct_CTyFs; noconfusion; simpl_Spine.
       repeat mysplit; eauto.
       apply: Later.map => [X|]; last eauto.
       apply: ihA; eauto.
       rewrite /Nuprl CTyF_idempotent.
       eauto.
+      noconfusion.
     + repeat mysplit; eauto.
       apply: Later.map => *; last eauto.
       by [apply: ihA].
@@ -639,226 +587,251 @@ Module Univ.
     move=> i ? ? ihA ? ?; rewrite /Nuprl => Nisect.
     rewrite -CTyF_Roll.
     apply: TyF.isect.
-    destruct_CTyFs; noconfusion.
-    + induction i; noconfusion.
+    destruct_CTyFs; noconfusion; simpl_Spine.
+    + induction i; noconfusion; simpl_Spine;
       destruct_CTyFs; noconfusion.
       repeat mysplit; eauto => *.
       specialize_hyps.
       apply: ihA; auto.
       rewrite /Nuprl CTyF_idempotent.
       eauto.
+
     + repeat mysplit; eauto => *.
       specialize_hyps.
       by [apply: ihA].
   Qed.
 
-(*   Theorem Welp : *)
-(*     ∀ i n R, *)
-(*       Spine i (Tm.univ n, R) *)
-(*       → n < i. *)
-(*   Proof. *)
-(*     elim. *)
-(*     + move=> n R S. *)
-(*       simpl in S. *)
-(*       destruct_CTyF; noconfusion. *)
-(*     + move=> n ih n' R X. *)
-(*       simpl in X. *)
-(*       destruct_conjs. *)
-(*       destruct_evals. *)
-(*       omega. *)
-(*   Qed. *)
+  (* TODO: fill in the obvious goals *)
+  Theorem Nuprl_monotone :
+    ∀ A i j, Nuprl_monotone_case i j A.
+  Proof.
+    elim.
+    + intros.
+      omega.
+    + apply: Nuprl_unit_monotone.
+    + apply: Nuprl_bool_monotone.
+    + obvious.
+    + obvious.
+    + obvious.
+    + intros; apply: Nuprl_prod_monotone; eauto.
+    + obvious.
+    + obvious.
+    + intros; apply: Nuprl_ltr_monotone; eauto.
+    + intros; apply: Nuprl_isect_monotone; eauto.
+    + induction n as [|n' ihn].
+      ++ move=> i j; rewrite /Nuprl_monotone_case /Nuprl => R p.
+         destruct_CTyF => *.
+         induction i.
+         +++ simpl_Spine.
+             destruct_CTyFs.
+         +++ simpl_Spine.
+             destruct_conjs.
+             destruct_evals.
 
-(*   (* TODO *) *)
-(*   Theorem Nuprl_monotone : *)
-(*     ∀ A i j, Nuprl_monotone_case i j A. *)
-(*   Proof. *)
-(*     elim. *)
-(*     + intros. *)
-(*       omega. *)
-(*     + apply: Nuprl_unit_monotone. *)
-(*     + apply: Nuprl_bool_monotone. *)
-(*     + obvious. *)
-(*     + obvious. *)
-(*     + obvious. *)
-(*     + intros; apply: Nuprl_prod_monotone; eauto. *)
-(*     + obvious. *)
-(*     + obvious. *)
-(*     + intros; apply: Nuprl_ltr_monotone; eauto. *)
-(*     + intros; apply: Nuprl_isect_monotone; eauto. *)
-(*     + admit. (* This one is hard, not sure how to do it. *) *)
-(*   Admitted. *)
+             have: ∃ j', j = S j'.
+             induction j; omega || eauto.
+             move=> [j' q].
+             rewrite q.
+             rewrite -CTyF_Roll.
+             apply: TyF.init.
+             simpl_Spine.
+             exists 0; repeat mysplit; eauto.
+             ++++ omega.
+
+      ++ move=> i j; rewrite /Nuprl_monotone_case /Nuprl => R p.
+         destruct_CTyF => *.
+         induction i.
+         +++ simpl_Spine.
+             destruct_CTyFs.
+         +++ simpl_Spine.
+             destruct_conjs.
+             destruct_evals.
+             simpl in *.
+             have: ∃ j', j = S j'.
+             induction j; omega || eauto.
+             move=> [j' q].
+             rewrite q.
+             rewrite -CTyF_Roll.
+             apply: TyF.init.
+             simpl_Spine.
+             exists (S n'); repeat mysplit; eauto.
+             ++++ omega.
+  Admitted.
 
 
+  (* TODO: move to a general location *)
+  Theorem nat_max_leq :
+    ∀ i j,
+      i ≤ max i j.
+  Proof.
+    case => j.
+    + omega.
+    + case; firstorder.
+  Qed.
 
+  Theorem nat_max_commutative :
+    ∀ i j,
+      max i j = max j i.
+  Proof.
+    elim.
+    + case; auto.
+    + move=> n IH; elim.
+      ++ auto.
+      ++ move=> n' p.
+         simpl.
+         rewrite IH.
+         auto.
+  Qed.
 
-
-
-
-
-
-
-
-(*   (* TODO: move to a general location *) *)
-(*   Theorem nat_max_leq : *)
-(*     ∀ i j, *)
-(*       i ≤ max i j. *)
-(*   Proof. *)
-(*     case => j. *)
-(*     + omega. *)
-(*     + case; firstorder. *)
-(*   Qed. *)
-
-(*   Theorem nat_max_commutative : *)
-(*     ∀ i j, *)
-(*       max i j = max j i. *)
-(*   Proof. *)
-(*     elim. *)
-(*     + case; auto. *)
-(*     + move=> n IH; elim. *)
-(*       ++ auto. *)
-(*       ++ move=> n' p. *)
-(*          simpl. *)
-(*          rewrite IH. *)
-(*          auto. *)
-(*   Qed. *)
-
-(*   (* To show that the maximal refinement matrix is functional, *)
+  (* To show that the maximal refinement matrix is functional, *)
 (*      we need to deal with type-behavior assignments at different levels. *)
 (*      However, we can take the maximum of these levels, by monotonicity, *)
-(*      bring the assignments up to a common level. *) *)
-(*   Theorem Nuprlω_functional : matrix_functional Nuprlω. *)
-(*   Proof. *)
-(*     move=> A R1 R2 [n1 AR1] [n2 AR2]. *)
-(*     apply: Nuprl_functional. *)
-(*     + apply: Nuprl_monotone; *)
-(*       first (apply: nat_max_leq; shelve); *)
-(*       eauto. *)
-(*     + apply: Nuprl_monotone; *)
-(*       first (rewrite nat_max_commutative; apply: nat_max_leq); *)
-(*       eauto. *)
-(*   Qed. *)
+(*      bring the assignments up to a common level. *)
+  Theorem Nuprlω_functional : matrix_functional Nuprlω.
+  Proof.
+    move=> A R1 R2 [n1 AR1] [n2 AR2].
+    apply: Nuprl_functional.
+    + apply: Nuprl_monotone;
+      first (apply: nat_max_leq; shelve);
+      eauto.
+    + apply: Nuprl_monotone;
+      first (rewrite nat_max_commutative; apply: nat_max_leq);
+      eauto.
+  Qed.
 
 
-(*   Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing). *)
-(*   Notation "n ⊩ A ∼ B type" := (∃ R, Nuprl n (A, R) ∧ Nuprl n (B, R)) (at level 0, A at level 0, B at level 0, only parsing). *)
-(*   Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing). *)
+  Notation "n ⊩ A type" := (∃ R, Nuprl n (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "n ⊩ A ∼ B type" := (∃ R, Nuprl n (A, R) ∧ Nuprl n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
+  Notation "ω⊩ A type" := (∃ R, Nuprlω (A, R)) (at level 0, A at level 0, only parsing).
 
-(*   Module ClosedRules. *)
+  Module ClosedRules.
 
-(*     (* A nice hack from Adam Chlipala Theory, to force the resolution of *)
-(*        some existential variables. *) *)
-(*     Ltac equate M N := *)
-(*       let r := constr:(eq_refl M : M = N) *)
-(*       in idtac. *)
+    (* A nice hack from Adam Chlipala Theory, to force the resolution of *)
+(*        some existential variables. *)
+    Ltac equate M N :=
+      let r := constr:(eq_refl M : M = N)
+      in idtac.
 
-(*     Ltac simplify := *)
-(*       simpl; *)
-(*       repeat *)
-(*         (match goal with *)
-(*          | |- ∃ (R : behavior), Nuprl ?n ?X => eexists; rewrite -Roll *)
-(*          | |- ?i ≤ ?j => omega *)
-(*          | |- ∃ (x : ?A), ?P => eexists *)
-(*          | |- ?P ∧ ?Q => split *)
+    Ltac simplify :=
+      simpl;
+      repeat
+        (match goal with
+         | |- ∃ (R : behavior), Nuprl ?n ?X => eexists; rewrite -Roll
+         | |- ?i ≤ ?j => omega
+         | |- ∃ (x : ?A), ?P => eexists
+         | |- ?P ∧ ?Q => split
 
-(*          (* We will often encounter a semantic specification for a relation *)
+         (* We will often encounter a semantic specification for a relation *)
 (*             before we have even filled it in (i.e. it is an existential variable). *)
-(*             So, we can force it to be instantiated to exactly the right thing. *) *)
-(*          | |- ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 => *)
-(*            equate R (fun e12 => S (fst e12) (snd e12)); *)
-(*            intros *)
+(*             So, we can force it to be instantiated to exactly the right thing. *)
+         | |- ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 =>
+           equate R (fun e12 => S (fst e12) (snd e12));
+           intros
 
-(*          | |- ?P ↔ ?Q => split *)
-(*          end); eauto. *)
+         | |- ?P ↔ ?Q => split
+         end); eauto.
 
-(*     (* A tactic to prove a rule by appealing to one of the *)
-(*        constructors of the refinement matrix closure operator. *) *)
-(*     Ltac prove_rule con := *)
-(*       match goal with *)
-(*       | |- ?n ⊩ ?A type => eexists; rewrite -Roll; apply: con; simplify *)
-(*       end. *)
+    (* A tactic to prove a rule by appealing to one of the *)
+(*        constructors of the refinement matrix closure operator. *)
+    Ltac prove_rule con :=
+      match goal with
+      | |- ?n ⊩ ?A type => eexists; rewrite -Roll; apply: con; simplify
+      end.
 
-(*     Theorem unit_formation {n : nat} : n ⊩ Tm.unit type. *)
-(*     Proof. *)
-(*       prove_rule TyF.unit. *)
-(*     Qed. *)
+    Theorem unit_formation {n : nat} : n ⊩ Tm.unit type.
+    Proof.
+      prove_rule TyF.unit.
+      reflexivity.
+    Qed.
 
-(*     Lemma univ_formation_S {n : nat} *)
-(*       : (S n) ⊩ (Tm.univ n) type. *)
-(*     Proof. *)
-(*       prove_rule TyF.init. *)
-(*     Qed. *)
+    Lemma univ_formation_S {n : nat}
+      : (S n) ⊩ (Tm.univ n) type.
+    Proof.
+      prove_rule TyF.init.
+      simpl_Spine.
+      repeat mysplit; eauto.
+      reflexivity.
+    Qed.
 
-(*     Theorem univ_formation {n i : nat} : *)
-(*       i < n *)
-(*       → n ⊩ (Tm.univ i) type. *)
-(*     Proof. *)
-(*       case => [| j q ]. *)
-(*       + apply: univ_formation_S. *)
-(*       + eexists. *)
-(*         rewrite -Roll. *)
-(*         apply: TyF.init. *)
-(*         eexists. *)
-(*         split; [ idtac | simplify ]. *)
-(*         omega. *)
-(*     Qed. *)
+    Theorem univ_formation {n i : nat} :
+      i < n
+      → n ⊩ (Tm.univ i) type.
+    Proof.
+      case => [| j q ].
+      + apply: univ_formation_S.
+      + eexists.
+        rewrite -Roll.
+        apply: TyF.init.
+        simpl_Spine.
+        exists i. repeat split.
+        ++ omega.
+        ++ auto.
+           simpl.
+           auto.
+    Qed.
 
-(*     Theorem prod_formation {n : nat} : *)
-(*       ∀ A B, *)
-(*         n ⊩ A type *)
-(*         → n ⊩ B type *)
-(*         → n ⊩ (Tm.prod A B) type. *)
-(*     Proof. *)
-(*       move=> A B [R1 D] [R2 E]. *)
-(*       prove_rule TyF.prod. *)
-(*     Qed. *)
+    Theorem prod_formation {n : nat} :
+      ∀ A B,
+        n ⊩ A type
+        → n ⊩ B type
+        → n ⊩ (Tm.prod A B) type.
+    Proof.
+      move=> A B [R1 D] [R2 E].
+      prove_rule TyF.prod.
+      reflexivity.
+    Qed.
 
-(*     Lemma NuprlChoice {n : nat} {A : CLK → Tm.t 0} : *)
-(*       (∀ κ, ∃ Rκ, Nuprl n (A κ, Rκ)) *)
-(*       → ∃ S, ∀ κ, Nuprl n (A κ, S κ). *)
-(*     Proof. *)
-(*       move=> X. *)
-(*       apply: (unique_choice (fun κ R => Nuprl n (A κ, R))) => κ. *)
-(*       case: (X κ) => S T. *)
-(*       eexists; split; eauto => S' T'. *)
-(*       apply: Nuprl_functional; eauto. *)
-(*     Qed. *)
+    Lemma NuprlChoice {n : nat} {A : CLK → Tm.t 0} :
+      (∀ κ, ∃ Rκ, Nuprl n (A κ, Rκ))
+      → ∃ S, ∀ κ, Nuprl n (A κ, S κ).
+    Proof.
+      move=> X.
+      apply: (unique_choice (fun κ R => Nuprl n (A κ, R))) => κ.
+      case: (X κ) => S T.
+      eexists; split; eauto => S' T'.
+      apply: Nuprl_functional; eauto.
+    Qed.
 
-(*     Theorem isect_formation {n : nat} : *)
-(*       forall B, *)
-(*         (∀ κ, n ⊩ (B κ) type) *)
-(*         → n ⊩ (Tm.isect B) type. *)
-(*     Proof. *)
-(*       move=> B Q. *)
-(*       case: (NuprlChoice Q) => S Q'. *)
-(*       prove_rule TyF.isect. *)
-(*     Qed. *)
+    Theorem isect_formation {n : nat} :
+      forall B,
+        (∀ κ, n ⊩ (B κ) type)
+        → n ⊩ (Tm.isect B) type.
+    Proof.
+      move=> B Q.
+      case: (NuprlChoice Q) => S Q'.
+      prove_rule TyF.isect.
+      reflexivity.
+    Qed.
 
-(*     Theorem isect_irrelevance : *)
-(*       forall n A, *)
-(*         n ⊩ A type *)
-(*         → n ⊩ A ∼ (Tm.isect (fun _ => A)) type. *)
-(*     Proof. *)
-(*       move=> n A [R AR]. *)
-(*       eexists; split; eauto. *)
-(*       rewrite -Roll; apply: TyF.isect. *)
-(*       do 2 eexists; repeat split; *)
-(*       first by [constructor]; *)
-(*       intros. *)
-(*       + exact AR. *)
-(*       + assumption. *)
-(*       + case: LocalClock; auto. *)
-(*     Qed. *)
+    Theorem isect_irrelevance :
+      forall n A,
+        n ⊩ A type
+        → n ⊩ A ∼ (Tm.isect (fun _ => A)) type.
+    Proof.
+      move=> n A [R AR].
+      eexists; split; eauto.
+      rewrite -Roll; apply: TyF.isect.
+      exists (fun _ => A).
+      exists (fun _ => R).
+      repeat mysplit; eauto.
+      eqcd => *.
+      apply: propositional_extensionality.
+      split.
+      + auto.
+      + case: LocalClock.
+        auto.
+    Qed.
 
-(*     Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance. *)
-(*   End ClosedRules. *)
+    Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance.
+  End ClosedRules.
 
-(*   Theorem test : ∃ n, n ⊩ (Tm.prod Tm.unit (Tm.univ 0)) type. *)
-(*   Proof. *)
-(*     eauto. *)
-(*   Qed. *)
+  Theorem test : ∃ n, n ⊩ (Tm.prod Tm.unit (Tm.univ 0)) type.
+  Proof.
+    eauto.
+  Qed.
 
-(*   Theorem test2 : ∃ n, n ⊩ (Tm.univ 0) ∼ (Tm.isect (fun _ => Tm.univ 0)) type. *)
-(*     eauto. *)
-(*   Qed. *)
+  Theorem test2 : ∃ n, n ⊩ (Tm.univ 0) ∼ (Tm.isect (fun _ => Tm.univ 0)) type.
+    eauto.
+  Qed.
 
-(* End Univ. *)
+End Univ.
