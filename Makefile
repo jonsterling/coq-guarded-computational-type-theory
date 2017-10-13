@@ -102,9 +102,12 @@ endif
 #                    #
 ######################
 
-VFILES:=theories/OrderTheory.v\
+VFILES:=theories/Tactic.v\
+  theories/Matrix.v\
+  theories/OrderTheory.v\
   theories/Axioms.v\
   theories/Terms.v\
+  theories/Closure.v\
   theories/GCTT.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
