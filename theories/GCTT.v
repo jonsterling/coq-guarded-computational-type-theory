@@ -17,12 +17,7 @@ Module M := Matrix.
 Module T := Tactic.
 
 
-Require Import Coq.Setoids.Setoid.
-Require Import Classes.SetoidClass.
-Require Import Classes.Morphisms.
-Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.omega.Omega.
-Require Import Coq.Program.Equality.
 
 
 Set Implicit Arguments.
