@@ -326,18 +326,11 @@ Ltac mysplit :=
   | |- _ ↔ _ => split
   end.
 
-Ltac mytac :=
-  backthruhyp; move=> *;
-  specialize_hyps;
-  destruct_conjs;
-  repeat esplit; eauto;
-  use_matrix_functionality_ih.
-
 Ltac destruct_rel_spec e1 e2:=
   let H := fresh in
   let F := fresh in
   let G := fresh in
-  move=> H; destruct (H e1 e2) as [F G]; clear H; move: F G.
+  move=> H; case (H e1 e2) => F G; clear H; move: F G.
 
 Ltac destruct_rel_specs e1 e2 :=
   repeat
@@ -368,19 +361,15 @@ Proof.
   + split => *; specialize_hyps; backthruhyp;
     noconfusion;
     repeat mysplit; eauto;
-    match goal with
-    | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
-    end.
+    use_matrix_functionality_ih.
 
   + split => *; backthruhyp; specialize_hyps; later_elim=> *; destruct_conjs;
-    match goal with
-    | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
-    end.
+    use_matrix_functionality_ih.
+
 
   + split => *; backthruhyp => *;
-    match goal with
-    | ih : _, H : CLK → behavior |- ?R ?κ _ => by [rewrite (ih κ (R κ) (H κ)); eauto]
-    end.
+    specialize_hyps;
+    use_matrix_functionality_ih.
 Qed.
 
 
@@ -474,26 +463,22 @@ Module Univ.
       ++ split; eauto.
       ++ split; eauto.
 
-      ++ split=> *;
-         backthruhyp; specialize_hyps; destruct_conjs; destruct_evals;
+      ++ split=> *; backthruhyp; specialize_hyps;
+         destruct_conjs; destruct_evals;
          repeat mysplit; eauto;
-         match goal with
-         | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
-         end.
+         use_matrix_functionality_ih.
 
-      ++ split => *; backthruhyp; specialize_hyps; later_elim=> *; destruct_conjs;
-         match goal with
-         | ih : _ |- ?R _ => by [erewrite (ih R _); eauto]
-         end.
 
-      ++ split => e1e2;
-         backthruhyp => *;
-         match goal with
-         | ih : _, H : _ |- ?R ?κ (e1, e2) => by [rewrite (ih κ (R κ) (H κ)); eauto]
-         end.
+      ++ split => *; backthruhyp; specialize_hyps;
+         later_elim=> *; destruct_conjs;
+         use_matrix_functionality_ih.
+
+      ++ split => *; backthruhyp => *; specialize_hyps;
+         use_matrix_functionality_ih.
 
       ++ split; eauto.
   Qed.
+
 
 (*   Definition Nuprlω : matrix := *)
 (*     fun X => ∃ n, Nuprl n X. *)
