@@ -269,12 +269,6 @@ Ltac specialize_hyps :=
     | H : ?R (?e1, ?e2) -> ?P, H' : ?R (?e1, ?e2) |- _ => specialize (H H')
     end.
 
-Ltac use_matrix_functionality_ih :=
-  match goal with
-  | IH : ∀ R1 R2 : behavior, CTyF _ (?A, R1) → CTyF _ (?A, R2) → R1 = R2, U : ?R' (?e1, ?e2) |- ?R (?e1, ?e2) =>
-      by rewrite (IH R R'); auto
-  end.
-
 Ltac print_goal :=
   match goal with
   | |- ?G => idtac G; idtac "----------------------------------------------"
@@ -699,10 +693,10 @@ Module Univ.
          auto.
   Qed.
 
-  (* To show that the maximal refinement matrix is functional, *)
-(*      we need to deal with type-behavior assignments at different levels. *)
-(*      However, we can take the maximum of these levels, by monotonicity, *)
-(*      bring the assignments up to a common level. *)
+  (* To show that the maximal refinement matrix is functional, we need
+      to deal with type-behavior assignments at different levels.
+      However, we can take the maximum of these levels, by
+      monotonicity bring the assignments up to a common level. *)
   Theorem Nuprlω_functional : matrix_functional Nuprlω.
   Proof.
     move=> A R1 R2 [n1 AR1] [n2 AR2].
@@ -729,21 +723,13 @@ Module Univ.
       in idtac.
 
     Ltac simplify :=
-      simpl;
+      simpl; simpl_Spine; simpl;
       repeat
         (match goal with
          | |- ∃ (R : behavior), Nuprl ?n ?X => eexists; rewrite -Roll
          | |- ?i ≤ ?j => omega
          | |- ∃ (x : ?A), ?P => eexists
          | |- ?P ∧ ?Q => split
-
-         (* We will often encounter a semantic specification for a relation *)
-(*             before we have even filled it in (i.e. it is an existential variable). *)
-(*             So, we can force it to be instantiated to exactly the right thing. *)
-         | |- ∀ e1 e2, ?R (e1, e2) ↔ @?S e1 e2 =>
-           equate R (fun e12 => S (fst e12) (snd e12));
-           intros
-
          | |- ?P ↔ ?Q => split
          end); eauto.
 
@@ -751,22 +737,18 @@ Module Univ.
 (*        constructors of the refinement matrix closure operator. *)
     Ltac prove_rule con :=
       match goal with
-      | |- ?n ⊩ ?A type => eexists; rewrite -Roll; apply: con; simplify
+      | |- ?n ⊩ ?A type => eexists; rewrite -Roll; apply: con; simplify; try reflexivity
       end.
 
     Theorem unit_formation {n : nat} : n ⊩ Tm.unit type.
     Proof.
       prove_rule TyF.unit.
-      reflexivity.
     Qed.
 
     Lemma univ_formation_S {n : nat}
       : (S n) ⊩ (Tm.univ n) type.
     Proof.
       prove_rule TyF.init.
-      simpl_Spine.
-      repeat mysplit; eauto.
-      reflexivity.
     Qed.
 
     Theorem univ_formation {n i : nat} :
@@ -781,9 +763,7 @@ Module Univ.
         simpl_Spine.
         exists i. repeat split.
         ++ omega.
-        ++ auto.
-           simpl.
-           auto.
+        ++ constructor.
     Qed.
 
     Theorem prod_formation {n : nat} :
@@ -794,7 +774,6 @@ Module Univ.
     Proof.
       move=> A B [R1 D] [R2 E].
       prove_rule TyF.prod.
-      reflexivity.
     Qed.
 
     Lemma NuprlChoice {n : nat} {A : CLK → Tm.t 0} :
@@ -816,7 +795,6 @@ Module Univ.
       move=> B Q.
       case: (NuprlChoice Q) => S Q'.
       prove_rule TyF.isect.
-      reflexivity.
     Qed.
 
     Theorem isect_irrelevance :
@@ -827,15 +805,12 @@ Module Univ.
       move=> n A [R AR].
       eexists; split; eauto.
       rewrite -Roll; apply: TyF.isect.
-      exists (fun _ => A).
-      exists (fun _ => R).
+      exists (fun _ => A), (fun _ => R).
       repeat mysplit; eauto.
       eqcd => *.
+      case: LocalClock => ? _.
       apply: propositional_extensionality.
-      split.
-      + auto.
-      + case: LocalClock.
-        auto.
+      split; auto.
     Qed.
 
     Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance.
