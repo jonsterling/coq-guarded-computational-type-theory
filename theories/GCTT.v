@@ -49,6 +49,15 @@ Proof.
 Qed.
 
 
+Ltac mysplit :=
+  simpl;
+  match goal with
+  | |- _ ∧ _ => split
+  | |- ∃ _: _, _ => esplit
+  | |- _ ↔ _ => split
+  end.
+
+
 Ltac later_elim_aux y :=
   lazymatch goal with
   | H1 : ▷[?κ] _, H2 : ▷[?κ] _ |- _ =>
@@ -85,12 +94,7 @@ Module Close.
 
   Ltac prove_monotone :=
     simpl; move=> *; destruct_conjs;
-    repeat
-      match goal with
-      | |- ?P ∧ ?Q => split
-      | |- ∃ (x : ?A), ?P => esplit
-      end;
-    eauto.
+    repeat mysplit; eauto.
 
   Definition unit : monotone matrix matrix.
   Proof.
@@ -207,7 +211,7 @@ Theorem CTyF_Roll:
 Proof.
   move=> σ.
   apply: binrel_extensionality => [A R].
-  split => [X | X].
+  mysplit => [X | X].
   + rewrite /CTyF.
     match goal with
     | |- lfp ?m ?x =>
@@ -319,13 +323,6 @@ Ltac use_matrix_functionality_ih :=
       by rewrite (IH R R'); auto
   end.
 
-Ltac mysplit :=
-  match goal with
-  | |- _ ∧ _ => split
-  | |- ∃ _: _, _ => esplit
-  | |- _ ↔ _ => split
-  end.
-
 Ltac destruct_rel_spec e1 e2:=
   let H := fresh in
   let F := fresh in
@@ -354,20 +351,20 @@ Proof.
   apply: binrel_extensionality => e1 e2;
   destruct_rel_specs e1 e2 => *.
 
-  + split; eauto.
+  + mysplit; eauto.
 
-  + split; eauto.
+  + mysplit; eauto.
 
-  + split => *; specialize_hyps; backthruhyp;
+  + mysplit => *; specialize_hyps; backthruhyp;
     noconfusion;
     repeat mysplit; eauto;
     use_matrix_functionality_ih.
 
-  + split => *; backthruhyp; specialize_hyps; later_elim=> *; destruct_conjs;
+  + mysplit => *; backthruhyp; specialize_hyps; later_elim=> *; destruct_conjs;
     use_matrix_functionality_ih.
 
 
-  + split => *; backthruhyp => *;
+  + mysplit => *; backthruhyp => *;
     specialize_hyps;
     use_matrix_functionality_ih.
 Qed.
@@ -376,24 +373,24 @@ Qed.
 Theorem CTyF_idempotent : CTyF (CTyF Empty) = CTyF Empty.
 Proof.
   apply: functional_extensionality.
-  case; elim; try by [move=> *; apply: propositional_extensionality; split; destruct_CTyF].
+  case; elim; try by [move=> *; apply: propositional_extensionality; mysplit; destruct_CTyF].
 
   + move=> *.
     apply: propositional_extensionality.
-    split; destruct_CTyF => *; rewrite -CTyF_Roll;
+    mysplit; destruct_CTyF => *; rewrite -CTyF_Roll;
     apply: TyF.unit; by [noconfusion].
 
   + move=> *.
     apply: propositional_extensionality;
-    split; destruct_CTyF => *; rewrite -CTyF_Roll;
+    mysplit; destruct_CTyF => *; rewrite -CTyF_Roll;
     apply: TyF.bool; by [noconfusion].
 
 
   + move=> *.
     apply: propositional_extensionality.
-    split; destruct_CTyF => //= *;
+    mysplit; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll; apply: TyF.prod;
-    simpl; repeat mysplit; eauto; destruct_evals;
+    repeat mysplit; eauto; destruct_evals;
     match goal with
     | H : _ |- _ => by [rewrite H] || by [rewrite -H]
     end.
@@ -401,19 +398,19 @@ Proof.
 
   + move=> ? ? ih *.
     apply: propositional_extensionality.
-    split; destruct_CTyF => //= *;
+    mysplit; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll;
     apply: TyF.later;
-    simpl; repeat mysplit; destruct_evals; eauto.
+    repeat mysplit; destruct_evals; eauto.
     ++ by [rewrite -ih].
     ++ by [rewrite ih].
 
   + move=> ? ihA *.
     apply: propositional_extensionality.
-    split; destruct_CTyF => //= *;
+    mysplit; destruct_CTyF => //= *;
     destruct_conjs; rewrite -CTyF_Roll;
     apply: TyF.isect;
-    simpl; repeat mysplit; auto; destruct_evals; eauto => *.
+    repeat mysplit; auto; destruct_evals; eauto => *.
     ++ by [rewrite -ihA].
     ++ by [rewrite ihA].
 Qed.
@@ -460,23 +457,23 @@ Module Univ.
       apply: binrel_extensionality => e1 e2;
       destruct_rel_specs e1 e2; move=> *.
 
-      ++ split; eauto.
-      ++ split; eauto.
+      ++ mysplit; eauto.
+      ++ mysplit; eauto.
 
-      ++ split=> *; backthruhyp; specialize_hyps;
+      ++ mysplit=> *; backthruhyp; specialize_hyps;
          destruct_conjs; destruct_evals;
          repeat mysplit; eauto;
          use_matrix_functionality_ih.
 
 
-      ++ split => *; backthruhyp; specialize_hyps;
+      ++ mysplit => *; backthruhyp; specialize_hyps;
          later_elim=> *; destruct_conjs;
          use_matrix_functionality_ih.
 
-      ++ split => *; backthruhyp => *; specialize_hyps;
+      ++ mysplit => *; backthruhyp => *; specialize_hyps;
          use_matrix_functionality_ih.
 
-      ++ split; eauto.
+      ++ mysplit; eauto.
   Qed.
 
 
