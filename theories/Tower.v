@@ -35,7 +35,7 @@ Module Spine.
   Local Obligation Tactic := firstorder.
   Program Fixpoint t (n : nat) {measure n (lt)} : M.matrix :=
     match n with
-    | 0 => Clo.t M.empty
+    | 0 => M.empty
     | S n =>
       fun X =>
         ∃ (j : nat) (p : j ≤ n),
@@ -58,7 +58,7 @@ Module Spine.
   Qed.
 
   Theorem unfold_0 :
-    ∀ X, t 0 X = Clo.t M.empty X.
+    ∀ X, t 0 X = M.empty X.
   Proof.
     move=> X.
       by [Wf.WfExtensionality.unfold_sub t (t 0 X)].
@@ -78,7 +78,7 @@ Definition Tower (i : nat) : M.matrix :=
 Theorem functionality : ∀ i, Clo.uniquely_valued (Tower i).
 Proof.
   elim => [*|? ih *].
-  + rewrite /Tower //= Clo.idempotence.
+  + rewrite /Tower //=.
     apply: Clo.functionality; eauto => //=.
   + rewrite /Tower; Spine.simplify.
     apply: Clo.functionality.
@@ -113,17 +113,31 @@ Proof.
 Qed.
 
 Module Monotone.
-  Definition Monotone (i j : nat) (A : Tm.t 0) : Prop :=
-    ∀ R,
-      i ≤ j
-      → Tower i (A, R)
-      → Tower j (A, R).
-
-
-  Theorem tower :
-    ∀ A i j, Monotone i j A.
+  Theorem spine : ∀ i j, i ≤ j → Spine.t i ⊑ Spine.t j.
   Proof.
-    admit.
-  Admitted.
+    move=> i j p [A R] T.
+    induction i.
+    + Spine.simplify.
+      contradiction.
+    + Spine.simplify.
+      case: T => [j' [p' //= [evA spR]]].
+      induction p.
+      ++ Spine.simplify.
+         exists j'; eauto.
+      ++ Spine.simplify.
+         exists j'; esplit; eauto.
+         omega.
+  Qed.
 
+  Theorem tower : ∀ i j, i ≤ j → Tower i ⊑ Tower j.
+  Proof.
+    move=> i j p [A R].
+    Clo.case_clo; move=> ? ?; rewrite /Tower -Clo.roll.
+    + apply: Sig.init; apply: spine; eauto.
+    + by [apply: Sig.unit].
+    + by [apply: Sig.bool].
+    + by [apply: Sig.prod].
+    + by [apply: Sig.isect].
+    + by [apply: Sig.later].
+  Qed.
 End Monotone.
