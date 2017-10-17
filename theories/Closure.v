@@ -283,15 +283,18 @@ Module Clo.
   Ltac moves :=
     move=> *.
 
+  Ltac case_clo :=
+    let x := fresh in
+    move=> x;
+    apply: (ind _ x).
+
   Theorem functionality
     : ∀ σ,
       universe_system σ
       → uniquely_valued σ
       → uniquely_valued (t σ).
   Proof.
-    move=> σ σuni σfn.
-    move=> A R1 AtσR1.
-    apply: (ind (fun X => uniquely_valued_body (t σ) X) AtσR1).
+    move=> ? ? ? ? ?; case_clo.
     + functionality_case.
     + functionality_case.
       congruence.
