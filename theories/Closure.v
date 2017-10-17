@@ -316,12 +316,18 @@ Module Clo.
   Qed.
 
 
-  Theorem functionality2 : uniquely_valued (t M.empty).
-  Proof.
-    apply: functionality => //= *.
-  Qed.
-
   Theorem idempotence : t (t M.empty) = t M.empty.
   Proof.
-  Admitted.
+    apply: binrel_extensionality => A R.
+    split.
+    + case_clo => ? ?; try by [auto]; rewrite -roll.
+      ++ by [apply: Sig.unit].
+      ++ by [apply: Sig.bool].
+      ++ by [apply: Sig.prod].
+      ++ by [apply: Sig.isect].
+      ++ by [apply: Sig.later].
+    + move=> ?.
+      rewrite -roll.
+      by [apply: Sig.init].
+  Qed.
 End Clo.
