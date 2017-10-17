@@ -260,6 +260,28 @@ Module Clo.
     | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => have: V1 = V2; [apply: determinacy; eauto | discriminate]
     end.
 
+  Ltac evals_to_eq :=
+    match goal with
+    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => have: V1 = V2; [apply: determinacy; eauto | move => *]
+  end.
+
+  Ltac destruct_eqs :=
+    repeat
+      match goal with
+      | H : _ = _ |- _ => dependent destruction H
+      end.
+
+
+  Ltac allrewrite :=
+    repeat match goal with
+           | [ p : _ = _, H : _ |- _ ] => progress (rewrite p in H || rewrite p)
+           end.
+
+
+  Ltac rewrite_functionality_ih :=
+    lazymatch goal with
+    | ih : uniquely_valued_body _ _ |- _ => rewrite /uniquely_valued_body in ih; simpl in ih; erewrite ih
+    end.
 
 
   Theorem functionality
@@ -291,28 +313,44 @@ Module Clo.
       case: A'tσR'' => //= H'; T.destruct_conjs; try use_universe_system; try discrim_eval.
       congruence.
 
-    + move=> [A' R']  [B [C [RB [RC [evA' [ihB [ihC spR']]]]]]].
+    + move=> [A' R'] //= *.
+      T.destruct_conjs.
       move=> R'' //= A'tσR''.
       rewrite -roll in A'tσR''.
-      case: A'tσR'' => //= X; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
-      case: X =>  [B' [C' [RB' [RC' [evA'' [ihB' [ihC' spR'']]]]]]].
-         have : B = B' ∧ C = C' ∧ RB = RB' ∧ RC = RC'.
-         +++ have: Tm.prod B C = Tm.prod B' C'.
-             ++++ apply: determinacy; eauto.
-             ++++ case => p1 p2.
-                  split; auto.
-                  split; auto.
-                  split.
-                  +++++ apply: ihB; rewrite p1. auto.
-                  +++++ apply: ihC; rewrite p2; auto.
-         +++ move=> [p1 [p2 [p3 [p4]]]].
-             T.destruct_conjs.
-             T.reorient.
-             rewrite -p3.
-             rewrite -p4.
-             T.reorient.
-             auto.
+      case: A'tσR'' => //= *; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
+      T.destruct_conjs.
+      evals_to_eq.
+      destruct_eqs.
+      repeat rewrite_functionality_ih;
+      eauto.
 
+    + move=> [A' R'] //= *.
+      T.destruct_conjs.
+      move=> R'' //= A'tσR''.
+      rewrite -roll in A'tσR''.
+      case: A'tσR'' => //= *; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
+      T.destruct_conjs.
+      evals_to_eq.
+      destruct_eqs.
+      repeat T.eqcd => ?.
+      T.specialize_hyps.
+      rewrite_functionality_ih; eauto.
+
+    + move=> [A' R'] //= *.
+      T.destruct_conjs.
+      move=> R'' //= A'tσR''.
+      rewrite -roll in A'tσR''.
+      case: A'tσR'' => //= *; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
+      T.destruct_conjs.
+      evals_to_eq.
+      destruct_eqs.
+      T.eqcd => ?.
+      T.eqcd.
+      Later.gather => *.
+      T.destruct_conjs.
+
+      rewrite_functionality_ih; eauto.
+  Qed.
 
 
 
