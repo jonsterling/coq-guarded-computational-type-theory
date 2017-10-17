@@ -76,8 +76,9 @@ Module Univ.
 
 
   Notation "n ⊩ A type" := (∃ R, Tower n (A, R)) (at level 0, A at level 0, only parsing).
-  Notation "n ⊩ A ∼ B type" := (∃ R, Tower n (A, R) ∧ Tower n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
-  Notation "ω⊩ A type" := (∃ R, Towerω (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "n ⊩ A ∼ B" := (∃ R, Tower n (A, R) ∧ Tower n (B, R)) (at level 0, A at level 0, B at level 0, only parsing).
+  Notation "⊧ A type" := (∃ R, Towerω (A, R)) (at level 0, A at level 0, only parsing).
+  Notation "⊧ A ∼ B" := (∃ R, Towerω (A, R) ∧ Towerω (B, R)) (at level 0, A at level 0, only parsing).
 
   Module ClosedRules.
 
@@ -105,20 +106,20 @@ Module Univ.
       | |- ?n ⊩ ?A type => eexists; rewrite -Tower.roll; apply: con; simplify; try reflexivity
       end.
 
-    Theorem unit_formation {n : nat} : n ⊩ Tm.unit type.
+    Theorem unit_formation {n : nat} : n ⊩ (Tm.ret Tm.unit) type.
     Proof.
       prove_rule Sig.unit.
     Qed.
 
     Lemma univ_formation_S {n : nat}
-      : (S n) ⊩ (Tm.univ n) type.
+      : (S n) ⊩ (Tm.ret (Tm.univ n)) type.
     Proof.
       prove_rule Sig.init.
     Qed.
 
     Theorem univ_formation {n i : nat} :
       i < n
-      → n ⊩ (Tm.univ i) type.
+      → n ⊩ (Tm.ret (Tm.univ i)) type.
     Proof.
       case => [| j q ].
       + apply: univ_formation_S.
@@ -135,7 +136,7 @@ Module Univ.
       ∀ A B,
         n ⊩ A type
         → n ⊩ B type
-        → n ⊩ (Tm.prod A B) type.
+        → n ⊩ (Tm.ret (Tm.prod A B)) type.
     Proof.
       move=> A B [R1 D] [R2 E].
       prove_rule Sig.prod.
@@ -155,7 +156,7 @@ Module Univ.
     Theorem isect_formation {n : nat} :
       forall B,
         (∀ κ, n ⊩ (B κ) type)
-        → n ⊩ (Tm.isect B) type.
+        → n ⊩ (Tm.ret (Tm.isect B)) type.
     Proof.
       move=> B Q.
       case: (TowerChoice Q) => S Q'.
@@ -163,12 +164,12 @@ Module Univ.
     Qed.
 
     Theorem isect_irrelevance :
-      forall n A,
-        n ⊩ A type
-        → n ⊩ A ∼ (Tm.isect (fun _ => A)) type.
+      forall A,
+        ⊧ A type
+        → ⊧ A ∼ (Tm.ret (Tm.isect (fun _ => A))).
     Proof.
-      move=> n A [R AR].
-      eexists; split; eauto.
+      move=> A [R [n AR]].
+      eexists; split; eauto; exists n; eauto.
       rewrite -Tower.roll; apply: Sig.isect.
       exists (fun _ => A), (fun _ => R).
       repeat T.split; eauto.
@@ -178,16 +179,45 @@ Module Univ.
       split; auto.
     Qed.
 
-    Hint Resolve unit_formation univ_formation prod_formation isect_formation isect_irrelevance.
+    Theorem eq_ty_from_level :
+      ∀ n A B,
+        n ⊩ A ∼ B
+        → ⊧ A ∼ B.
+    Proof.
+      move=> n A B [R [TA TB]].
+      eexists.
+      split.
+      + eexists; eauto.
+      + eexists; eauto.
+    Qed.
+
+    Theorem ty_from_level :
+      ∀ n A,
+        n ⊩ A type
+        → ⊧ A type.
+    Proof.
+      move=> n A [R TA].
+      eexists.
+      eexists; eauto.
+    Qed.
+
+
+
+    Hint Resolve unit_formation univ_formation eq_ty_from_level ty_from_level prod_formation isect_formation isect_irrelevance.
   End ClosedRules.
 
-  Theorem test : ∃ n, n ⊩ (Tm.prod Tm.unit (Tm.univ 0)) type.
+
+
+  Coercion Tm.ret : Tm.val >-> Tm.t.
+  Theorem test : ∃ n, n ⊩ (Tm.ret (Tm.prod Tm.unit (Tm.univ 0))) type.
   Proof.
     eauto.
   Qed.
 
-  Theorem test2 : ∃ n, n ⊩ (Tm.univ 0) ∼ (Tm.isect (fun _ => Tm.univ 0)) type.
+  Theorem test2 : ⊧ (Tm.ret (Tm.univ 0)) ∼ (Tm.ret (Tm.isect (fun _ => Tm.univ 0))).
     eauto.
   Qed.
+
+  Print test2.
 
 End Univ.

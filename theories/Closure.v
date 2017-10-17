@@ -155,21 +155,27 @@ Module Clo.
       auto.
   Qed.
 
-
   Theorem ind :
-    ∀ (σ : M.matrix) (X : Tm.t 0 * M.behavior) (P : Prop),
-      t σ X
-      → (σ X → P)
-      → (Close.unit (t σ) X → P)
-      → (Close.bool (t σ) X → P)
-      → (Close.prod (t σ) X → P)
-      → (Close.isect (t σ) X → P)
-      → (Close.later (t σ) X → P)
-      → P.
+    ∀ Y (σ ρ : M.matrix),
+      t σ Y
+      → (∀ X, σ X → ρ X)
+      → (∀ X, Close.unit ρ X → ρ X)
+      → (∀ X, Close.bool ρ X → ρ X)
+      → (∀ X, Close.prod ρ X → ρ X)
+      → (∀ X, Close.isect ρ X → ρ X)
+      → (∀ X, Close.later ρ X → ρ X)
+      → ρ Y.
   Proof.
-    move=> σ [A R] P C init unit bool prod isect later.
-    rewrite -roll in C.
-    case: C; auto.
+    move=> [A R] σ ρ AcloR init unit bool prod isect later.
+    rewrite /t /lfp in AcloR.
+    simpl in AcloR.
+    rewrite -/M.matrix in AcloR.
+
+    destruct AcloR.
+    destruct H.
+    apply: H.
+    + move=> [A' R']; elim; auto.
+    + auto.
   Qed.
 
 
@@ -179,215 +185,141 @@ Module Clo.
     move=> *; simpl in *;
     T.destruct_conjs.
 
-
-
-  Ltac destruct_clo :=
-    let x := fresh in move=> x; apply: (ind x); clear x;
-    try by [noconfusion].
-
-  Ltac destruct_clos :=
-    repeat
-      match goal with
-      | T : Clo.t _ _ |- _ =>
-        move: T;
-        destruct_clo
-      end.
-
   Ltac specialize_functionality_ih :=
     repeat
       match goal with
       | H : ∀ R1 R2 : M.behavior, t _ (?X, _) → t _ (?X, _) → _ = _, H' : t _ (?X, ?R1), H'' : t _ (?X, ?R2) |- _ => specialize (H _ _ H' H''); move: H
   end.
 
-  Inductive type_value_candidate : Tm.val 0 → Prop :=
-  | unit : type_value_candidate Tm.unit
-  | bool : type_value_candidate Tm.bool
-  | prod : ∀ A B, type_value_candidate (Tm.prod A B)
-  | ltr : ∀ κ A, type_value_candidate (Tm.ltr κ A)
-  | isect : ∀ A, type_value_candidate (Tm.isect A)
-  | univ : ∀ i, type_value_candidate (Tm.univ i).
-  Hint Constructors type_value_candidate.
 
-  Theorem value_of_type : ∀ A R, t M.empty (A, R) → ∃ A0, A ⇓ A0 ∧ type_value_candidate A0 ∧ t M.empty (Tm.ret A0, R).
+  Theorem monotonicity : ∀ σ1 σ2, (σ1 ⊑ σ2) → t σ1 ⊑ t σ2.
   Proof.
-    move=> A R T.
-    apply: (ind T) => //= T'; T.destruct_conjs.
-    + repeat T.split; eauto.
-      rewrite -roll.
-      apply: Sig.unit.
-      split; auto.
-    + repeat T.split; eauto.
-      rewrite -roll; apply: Sig.bool.
-      split; auto.
-    + repeat T.split; eauto.
-      rewrite -roll; apply: Sig.prod.
-      repeat T.split; eauto.
-    + repeat T.split; eauto.
-      rewrite -roll; apply: Sig.isect.
-      repeat T.split; eauto.
-    + repeat T.split; eauto.
-      rewrite -roll; apply: Sig.later.
-      repeat T.split; eauto.
+    move=> σ1 σ2 p [A R] AtR.
+    destruct AtR as [τ ih]; simpl in *.
+    destruct ih as [ih1 ih2].
+    apply ih1; auto.
+    move=> [A' R'] s.
+    rewrite -roll.
+    elim s => A'R'.
+    + apply: Sig.init; auto.
+    + apply: Sig.unit; auto.
+    + apply: Sig.bool; auto.
+    + apply: Sig.prod; auto.
+    + apply: Sig.isect; auto.
+    + apply: Sig.later; auto.
   Qed.
 
+  Definition universe_system (σ : M.matrix) :=
+    ∀ A R, σ (A, R) → ∃ i, A ⇓ Tm.univ i.
+
+
+  Theorem unit_functionality : ∀ σ, M.functional (Close.unit σ).
+  Proof.
+    move=> σ.
+    move=> A R1 R2 //= *.
+    T.destruct_conjs.
+    congruence.
+  Qed.
 
   Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.
 
-  Ltac eval_destruction :=
-    match goal with | H : _ ⇓ _ |- _ => dependent destruction H end.
+
+  Theorem prod_functionality : ∀ σ, M.functional σ → M.functional (Close.prod σ).
+    move=> σ σfn A R1 R2 [B [C [R11 [R12 [evA [BR11 [CR12 spR1]]]]]]] [B' [C' [R11' [R12' [evA' [BR11' [CR12' spR1']]]]]]].
+    have: B = B' ∧ C = C'.
+    + have: Tm.prod B C = Tm.prod B' C'.
+      ++ apply: determinacy; eauto.
+      ++ case; eauto.
+
+    + move=> [p q].
+      rewrite -p in BR11'.
+      rewrite -q in CR12'.
+      have : R11 = R11' /\ R12 = R12'.
+      ++ split; apply: σfn; eauto.
+      ++ move=> [p' q'].
+         rewrite -p' in spR1'.
+         rewrite q' in spR1.
+         congruence.
+  Qed.
+
+  Definition uniquely_valued_body (σ : M.matrix) X :=
+    ∀ R', σ (fst X, R') → snd X = R'.
+
+  Definition uniquely_valued (σ : M.matrix) :=
+    ∀ A R, σ (A, R) → uniquely_valued_body σ (A, R).
 
 
-  Ltac by_eval_inversion :=
-    match goal with | H : _ ⇓ _ |- _ => by [inversion H] end.
-
-
-  Ltac invert_type_val :=
+  Ltac use_universe_system :=
     match goal with
-    | H : type_value_candidate _ |- _ => dependent destruction H
-    | H1 : ?A ⇓ ?A0, H2 : ?A ⇓ ?A1, H3 : ?A0 = ?A1 |- _ => idtac
-    | H1 : ?A ⇓ ?A0, H2 : ?A ⇓ ?A0 |- _ => clear H2
-    | H1 : ?A ⇓ ?A0, H2 : ?A ⇓ ?A1 |- _ =>
-      let x := fresh in have x: A0 = A1; [by [apply: determinacy H1 H2] | try discriminate]
+    | H : universe_system ?σ, H' : ?σ (?A, ?R) |- _ =>
+      destruct (H A R H')
     end.
+
+  Ltac discrim_eval :=
+    match goal with
+    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => have: V1 = V2; [apply: determinacy; eauto | discriminate]
+    end.
+
+
+
+  Theorem functionality
+    : ∀ σ,
+      universe_system σ
+      → uniquely_valued σ
+      → uniquely_valued (t σ).
+  Proof.
+    move=> σ σuni σfn.
+    move=> A R1 AtσR1.
+    apply: (ind (fun X => uniquely_valued_body (t σ) X) AtσR1).
+    + move => [A' R'] A'σR' R'' //= A'tσR''.
+      use_universe_system.
+      rewrite -roll in A'tσR''.
+      case: A'tσR'' => //= H'; first by [apply: σfn; eauto];
+      T.destruct_conjs;
+      discrim_eval.
+
+
+    + move=> [A' R'] //= X R'' //= A'tσR''.
+      T.destruct_conjs.
+      rewrite -roll in A'tσR''.
+      case: A'tσR'' => //= H'; T.destruct_conjs; try use_universe_system; try discrim_eval.
+      congruence.
+
+    + move=> [A' R'] //= X R'' //= A'tσR''.
+      T.destruct_conjs.
+      rewrite -roll in A'tσR''.
+      case: A'tσR'' => //= H'; T.destruct_conjs; try use_universe_system; try discrim_eval.
+      congruence.
+
+    + move=> [A' R']  [B [C [RB [RC [evA' [ihB [ihC spR']]]]]]].
+      move=> R'' //= A'tσR''.
+      rewrite -roll in A'tσR''.
+      case: A'tσR'' => //= X; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
+      case: X =>  [B' [C' [RB' [RC' [evA'' [ihB' [ihC' spR'']]]]]]].
+         have : B = B' ∧ C = C' ∧ RB = RB' ∧ RC = RC'.
+         +++ have: Tm.prod B C = Tm.prod B' C'.
+             ++++ apply: determinacy; eauto.
+             ++++ case => p1 p2.
+                  split; auto.
+                  split; auto.
+                  split.
+                  +++++ apply: ihB; rewrite p1. auto.
+                  +++++ apply: ihC; rewrite p2; auto.
+         +++ move=> [p1 [p2 [p3 [p4]]]].
+             T.destruct_conjs.
+             T.reorient.
+             rewrite -p3.
+             rewrite -p4.
+             T.reorient.
+             auto.
 
 
 
 
   Theorem functionality : M.functional (t M.empty).
-  Proof.
-    move=> A R1 R2.
-    move=> T1; case: (value_of_type T1) => {T1} A01 [eval1 [cand1 T1]].
-    move=> T2; case: (value_of_type T2) => {T2} A02 [eval2 [cand2 T2]].
-    move: A01 A02 cand1 cand2 eval1 eval2 T1 T2.
-    repeat invert_type_val.
-    + admit.
-    + admit.
-    + rewrite H in T1.
-      destruct_clos => //= *; T.destruct_conjs;
-      repeat invert_type_val; try by_eval_inversion.
-      eval_destruction.
-      T.destruct_evals.
-      repeat eval_inversion..
-
-    + invert_type_val.
-    + invert_type_val.
-    + invert_type_val.
-
-
-
-    + admit.
-    + admit.
-    +
-    invert_type_val.
-    invert_type_val.
-    invert_type_val.
-    admit.
-    repeat invert_type_val.
-    discriminate.
-
-
-
-
-    repeat invert_type_val.
-    repeat invert_type_val.
-    move: A01 A02 A eval1 eval2 R1 R2 T1 T2.
-    elim.
-    + move=> A02 A cand1 cand2 eval1 eval2 //= *.
-
-
-      repeat invert_type_val.
-      move=> *.
-
-      case: (determinacy eval1 eval2) => p.
-      rewrite -p.
-      move=> R1 R2 T1 T2.
-      destruct_clos => //= *; T.destruct_conjs; try by [eval_inversion].
-      congruence.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-
-      repeat match goal with | H : _ ⇓ _ |- _ => dependent destruction H end.
-
-
-      ++ congruence.
-      ++ eval_inversion.
-
-
-
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-
-    dependent induction eval1; dependent induction eval2.
-
-    + move=> *; destruct_clos => //= *.
-      noconfusion.
-
-
-
-    apply: (value_of_type T).
-
-    elim; rewrite /M.based_functional;
-    move=> *; try by [destruct_clos => //= *; noconfusion].
-    destruct_clos => *; noconfusion.
-    + congruence.
-    + congruence.
-    + specialize_functionality_ih => p1 p2.
-      rewrite p1 p2.
-      congruence.
-    + T.reorient.
-      repeat T.eqcd => *.
-      Later.gather => *; T.destruct_conjs.
-      specialize_functionality_ih => p;
-      congruence.
-    + T.reorient.
-      repeat T.eqcd => *.
-      T.specialize_hyps.
-      specialize_functionality_ih => *.
-      congruence.
-  Qed.
-
+  Admitted.
 
   Theorem idempotence : t (t M.empty) = t M.empty.
   Proof.
-    apply: functional_extensionality.
-    case; elim; try by [move=> *; apply: propositional_extensionality; T.split; destruct_clo];
-
-    move=> *; apply: propositional_extensionality.
-
-    + T.split; destruct_clo => *; rewrite -roll;
-      apply: Sig.unit; by [Clo.noconfusion].
-
-    + T.split; destruct_clo => *; rewrite -roll;
-      apply: Sig.bool; by [Clo.noconfusion].
-
-
-    + T.split; destruct_clo => //= *;
-      T.destruct_conjs; rewrite -roll; apply: Sig.prod;
-      repeat T.split; eauto; T.destruct_evals;
-      by [congruence].
-
-    + T.split; destruct_clo => //= *;
-      T.destruct_conjs; rewrite -roll;
-      apply: Sig.later;
-      repeat T.split; T.destruct_evals; eauto.
-      ++ by [congruence].
-      ++ by [congruence].
-
-    + T.split; destruct_clo => //= *;
-      T.destruct_conjs; rewrite -roll;
-      apply: Sig.isect;
-      repeat T.split; auto; T.destruct_evals; eauto => *;
-      T.specialize_hyps; by [congruence].
-  Qed.
-
+  Admitted.
 End Clo.
