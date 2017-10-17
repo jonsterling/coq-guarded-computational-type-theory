@@ -210,7 +210,7 @@ Module Clo.
   Qed.
 
   Definition universe_system (σ : M.matrix) :=
-    ∀ A R, σ (A, R) → ∃ i, A ⇓ Tm.univ i.
+    ∀ X, σ X → ∃ i, fst X ⇓ Tm.univ i.
 
 
   Theorem unit_functionality : ∀ σ, M.functional (Close.unit σ).
@@ -251,18 +251,13 @@ Module Clo.
 
   Ltac use_universe_system :=
     match goal with
-    | H : universe_system ?σ, H' : ?σ (?A, ?R) |- _ =>
-      destruct (H A R H')
-    end.
-
-  Ltac discrim_eval :=
-    match goal with
-    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => have: V1 = V2; [apply: determinacy; eauto | discriminate]
+    | H : universe_system ?σ, H' : ?σ ?X |- _ =>
+      destruct (H X H')
     end.
 
   Ltac evals_to_eq :=
-    match goal with
-    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => have: V1 = V2; [apply: determinacy; eauto | move => *]
+    repeat match goal with
+    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => simpl in H1, H2; have: V1 = V2; [apply: determinacy; eauto | move {H1 H2} => *]
   end.
 
   Ltac destruct_eqs :=
@@ -271,18 +266,22 @@ Module Clo.
       | H : _ = _ |- _ => dependent destruction H
       end.
 
-
-  Ltac allrewrite :=
-    repeat match goal with
-           | [ p : _ = _, H : _ |- _ ] => progress (rewrite p in H || rewrite p)
-           end.
-
-
   Ltac rewrite_functionality_ih :=
-    lazymatch goal with
+    repeat match goal with
     | ih : uniquely_valued_body _ _ |- _ => rewrite /uniquely_valued_body in ih; simpl in ih; erewrite ih
     end.
 
+  Ltac functionality_case :=
+    match goal with
+    | ih : uniquely_valued _ |- _ =>
+      move=> [? ?] //= ? ?;
+      rewrite /uniquely_valued_body; rewrite -roll; case => //= ?;
+      try use_universe_system; try by [apply: ih; eauto];
+      T.destruct_conjs; evals_to_eq; destruct_eqs
+    end.
+
+  Ltac moves :=
+    move=> *.
 
   Theorem functionality
     : ∀ σ,
@@ -293,69 +292,31 @@ Module Clo.
     move=> σ σuni σfn.
     move=> A R1 AtσR1.
     apply: (ind (fun X => uniquely_valued_body (t σ) X) AtσR1).
-    + move => [A' R'] A'σR' R'' //= A'tσR''.
-      use_universe_system.
-      rewrite -roll in A'tσR''.
-      case: A'tσR'' => //= H'; first by [apply: σfn; eauto];
-      T.destruct_conjs;
-      discrim_eval.
-
-
-    + move=> [A' R'] //= X R'' //= A'tσR''.
-      T.destruct_conjs.
-      rewrite -roll in A'tσR''.
-      case: A'tσR'' => //= H'; T.destruct_conjs; try use_universe_system; try discrim_eval.
+    + functionality_case.
+    + functionality_case.
       congruence.
-
-    + move=> [A' R'] //= X R'' //= A'tσR''.
-      T.destruct_conjs.
-      rewrite -roll in A'tσR''.
-      case: A'tσR'' => //= H'; T.destruct_conjs; try use_universe_system; try discrim_eval.
+    + functionality_case.
       congruence.
+    + functionality_case.
+      rewrite_functionality_ih; eauto.
 
-    + move=> [A' R'] //= *.
-      T.destruct_conjs.
-      move=> R'' //= A'tσR''.
-      rewrite -roll in A'tσR''.
-      case: A'tσR'' => //= *; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
-      T.destruct_conjs.
-      evals_to_eq.
-      destruct_eqs.
-      repeat rewrite_functionality_ih;
-      eauto.
-
-    + move=> [A' R'] //= *.
-      T.destruct_conjs.
-      move=> R'' //= A'tσR''.
-      rewrite -roll in A'tσR''.
-      case: A'tσR'' => //= *; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
-      T.destruct_conjs.
-      evals_to_eq.
-      destruct_eqs.
-      repeat T.eqcd => ?.
+    + functionality_case.
+      repeat (T.eqcd; moves).
       T.specialize_hyps.
       rewrite_functionality_ih; eauto.
 
-    + move=> [A' R'] //= *.
+    + functionality_case.
+      repeat (T.eqcd; moves).
+      Later.gather => ?.
       T.destruct_conjs.
-      move=> R'' //= A'tσR''.
-      rewrite -roll in A'tσR''.
-      case: A'tσR'' => //= *; try by [try use_universe_system; T.destruct_conjs; try discrim_eval].
-      T.destruct_conjs.
-      evals_to_eq.
-      destruct_eqs.
-      T.eqcd => ?.
-      T.eqcd.
-      Later.gather => *.
-      T.destruct_conjs.
-
       rewrite_functionality_ih; eauto.
   Qed.
 
 
-
-  Theorem functionality : M.functional (t M.empty).
-  Admitted.
+  Theorem functionality2 : uniquely_valued (t M.empty).
+  Proof.
+    apply: functionality => //= *.
+  Qed.
 
   Theorem idempotence : t (t M.empty) = t M.empty.
   Proof.
