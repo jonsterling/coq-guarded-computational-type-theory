@@ -1,7 +1,7 @@
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Equality.
 Require Import Coq.Logic.FunctionalExtensionality.
-
+Require Import Coq.omega.Omega.
 From mathcomp Require Import ssreflect.
 
 From gctt Require Import OrderTheory.
@@ -10,6 +10,7 @@ From gctt Require Import Axioms.
 From gctt Require Import Terms.
 
 
+Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Tactic.
 Module T := Tactic.
@@ -154,21 +155,27 @@ Module Clo.
       auto.
   Qed.
 
-
   Theorem ind :
-    ∀ (σ : M.matrix) (X : Tm.t 0 * M.behavior) (P : Prop),
-      t σ X
-      → (σ X → P)
-      → (Close.unit (t σ) X → P)
-      → (Close.bool (t σ) X → P)
-      → (Close.prod (t σ) X → P)
-      → (Close.isect (t σ) X → P)
-      → (Close.later (t σ) X → P)
-      → P.
+    ∀ Y (σ ρ : M.matrix),
+      t σ Y
+      → (∀ X, σ X → ρ X)
+      → (∀ X, Close.unit ρ X → ρ X)
+      → (∀ X, Close.bool ρ X → ρ X)
+      → (∀ X, Close.prod ρ X → ρ X)
+      → (∀ X, Close.isect ρ X → ρ X)
+      → (∀ X, Close.later ρ X → ρ X)
+      → ρ Y.
   Proof.
-    move=> σ [A R] P C init unit bool prod isect later.
-    rewrite -roll in C.
-    case: C; auto.
+    move=> [A R] σ ρ AcloR init unit bool prod isect later.
+    rewrite /t /lfp in AcloR.
+    simpl in AcloR.
+    rewrite -/M.matrix in AcloR.
+
+    destruct AcloR.
+    destruct H.
+    apply: H.
+    + move=> [A' R']; elim; auto.
+    + auto.
   Qed.
 
 
@@ -176,21 +183,7 @@ Module Clo.
     try by [contradiction];
     rewrite /M.empty;
     move=> *; simpl in *;
-    T.destruct_conjs;
-    T.destruct_evals.
-
-
-  Ltac destruct_clo :=
-    let x := fresh in move=> x; apply: (ind x); clear x;
-    try by [noconfusion].
-
-  Ltac destruct_clos :=
-    repeat
-      match goal with
-      | T : Clo.t _ _ |- _ =>
-        move: T;
-        destruct_clo
-      end.
+    T.destruct_conjs.
 
   Ltac specialize_functionality_ih :=
     repeat
@@ -199,60 +192,126 @@ Module Clo.
   end.
 
 
-  Theorem functionality : M.functional (t M.empty).
+  Theorem monotonicity : ∀ σ1 σ2, (σ1 ⊑ σ2) → t σ1 ⊑ t σ2.
   Proof.
-    elim; rewrite /M.based_functional;
-    move=> *; try by [destruct_clos => //= *; noconfusion];
-    destruct_clos => *; noconfusion.
-    + congruence.
-    + congruence.
-    + specialize_functionality_ih => p1 p2.
-      rewrite p1 p2.
+    move=> σ1 σ2 p [A R] AtR.
+    destruct AtR as [τ ih]; simpl in *.
+    destruct ih as [ih1 ih2].
+    apply ih1; auto.
+    move=> [A' R'] s.
+    rewrite -roll.
+    elim s => A'R'.
+    + apply: Sig.init; auto.
+    + apply: Sig.unit; auto.
+    + apply: Sig.bool; auto.
+    + apply: Sig.prod; auto.
+    + apply: Sig.isect; auto.
+    + apply: Sig.later; auto.
+  Qed.
+
+  Definition universe_system (σ : M.matrix) :=
+    ∀ X, σ X → ∃ i, fst X ⇓ Tm.univ i.
+
+
+  Theorem unit_functionality : ∀ σ, M.functional (Close.unit σ).
+  Proof.
+    move=> σ.
+    move=> A R1 R2 //= *.
+    T.destruct_conjs.
+    congruence.
+  Qed.
+
+  Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.
+
+
+  Theorem prod_functionality : ∀ σ, M.functional σ → M.functional (Close.prod σ).
+    move=> σ σfn A R1 R2 [B [C [R11 [R12 [evA [BR11 [CR12 spR1]]]]]]] [B' [C' [R11' [R12' [evA' [BR11' [CR12' spR1']]]]]]].
+    have: B = B' ∧ C = C'.
+    + have: Tm.prod B C = Tm.prod B' C'.
+      ++ apply: determinacy; eauto.
+      ++ case; eauto.
+
+    + move=> [p q].
+      rewrite -p in BR11'.
+      rewrite -q in CR12'.
+      have : R11 = R11' /\ R12 = R12'.
+      ++ split; apply: σfn; eauto.
+      ++ move=> [p' q'].
+         rewrite -p' in spR1'.
+         rewrite q' in spR1.
+         congruence.
+  Qed.
+
+  Definition uniquely_valued_body (σ : M.matrix) X :=
+    ∀ R', σ (fst X, R') → snd X = R'.
+
+  Definition uniquely_valued (σ : M.matrix) :=
+    ∀ A R, σ (A, R) → uniquely_valued_body σ (A, R).
+
+
+  Ltac use_universe_system :=
+    match goal with
+    | H : universe_system ?σ, H' : ?σ ?X |- _ =>
+      destruct (H X H')
+    end.
+
+  Ltac evals_to_eq :=
+    repeat match goal with
+    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => simpl in H1, H2; have: V1 = V2; [apply: determinacy; eauto | move {H1 H2} => *]
+  end.
+
+  Ltac destruct_eqs :=
+    repeat
+      match goal with
+      | H : _ = _ |- _ => dependent destruction H
+      end.
+
+  Ltac rewrite_functionality_ih :=
+    repeat match goal with
+    | ih : uniquely_valued_body _ _ |- _ => rewrite /uniquely_valued_body in ih; simpl in ih; erewrite ih
+    end.
+
+  Ltac functionality_case :=
+    match goal with
+    | ih : uniquely_valued _ |- _ =>
+      move=> [? ?] //= ? ?;
+      rewrite /uniquely_valued_body; rewrite -roll; case => //= ?;
+      try use_universe_system; try by [apply: ih; eauto];
+      T.destruct_conjs; evals_to_eq; destruct_eqs
+    end.
+
+  Ltac moves :=
+    move=> *.
+
+  Ltac case_clo :=
+    let x := fresh in
+    move=> x;
+    apply: (ind _ x).
+
+  Theorem functionality
+    : ∀ σ,
+      universe_system σ
+      → uniquely_valued σ
+      → uniquely_valued (t σ).
+  Proof.
+    move=> ? ? ? ? ?; case_clo.
+    + functionality_case.
+    + functionality_case.
       congruence.
-    + T.reorient.
-      repeat T.eqcd => *.
-      Later.gather => *; T.destruct_conjs.
-      specialize_functionality_ih => p;
+    + functionality_case.
       congruence.
-    + T.reorient.
-      repeat T.eqcd => *.
+    + functionality_case.
+      rewrite_functionality_ih; eauto.
+
+    + functionality_case.
+      repeat (T.eqcd; moves).
       T.specialize_hyps.
-      specialize_functionality_ih => *.
-      congruence.
+      rewrite_functionality_ih; eauto.
+
+    + functionality_case.
+      repeat (T.eqcd; moves).
+      Later.gather => ?.
+      T.destruct_conjs.
+      rewrite_functionality_ih; eauto.
   Qed.
-
-
-  Theorem idempotence : t (t M.empty) = t M.empty.
-  Proof.
-    apply: functional_extensionality.
-    case; elim; try by [move=> *; apply: propositional_extensionality; T.split; destruct_clo];
-
-    move=> *; apply: propositional_extensionality.
-
-    + T.split; destruct_clo => *; rewrite -roll;
-      apply: Sig.unit; by [Clo.noconfusion].
-
-    + T.split; destruct_clo => *; rewrite -roll;
-      apply: Sig.bool; by [Clo.noconfusion].
-
-
-    + T.split; destruct_clo => //= *;
-      T.destruct_conjs; rewrite -roll; apply: Sig.prod;
-      repeat T.split; eauto; T.destruct_evals;
-      by [congruence].
-
-    + T.split; destruct_clo => //= *;
-      T.destruct_conjs; rewrite -roll;
-      apply: Sig.later;
-      repeat T.split; T.destruct_evals; eauto.
-      ++ by [congruence].
-      ++ by [congruence].
-
-    + T.split; destruct_clo => //= *;
-      T.destruct_conjs; rewrite -roll;
-      apply: Sig.isect;
-      repeat T.split; auto; T.destruct_evals; eauto => *;
-      T.specialize_hyps; by [congruence].
-  Qed.
-
 End Clo.
