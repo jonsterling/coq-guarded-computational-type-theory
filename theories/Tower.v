@@ -75,14 +75,23 @@ End Spine.
 Definition Tower (i : nat) : M.matrix :=
   Clo.t (Spine.t i).
 
-Theorem functionality : ∀ i, M.functional (Tower i).
+Theorem functionality : ∀ i, Clo.uniquely_valued (Tower i).
 Proof.
-  case => *.
+  elim => [*|? ih *].
   + rewrite /Tower //= Clo.idempotence.
-    apply: Clo.functionality; eauto.
-  + admit.
-Admitted.
-
+    apply: Clo.functionality; eauto => //=.
+  + rewrite /Tower; Spine.simplify.
+    apply: Clo.functionality.
+    ++ move=> ?; Spine.simplify=> *.
+       T.destruct_conjs.
+       eexists; eauto.
+    ++ move=> A R Sp R' //= Sp'.
+       rewrite Spine.unfold_S in Sp.
+       rewrite Spine.unfold_S in Sp'.
+       T.destruct_conjs; simpl in *.
+       Clo.evals_to_eq; Clo.destruct_eqs.
+       auto.
+Qed.
 
 Theorem roll {i : nat} : Sig.t (Spine.t i) (Tower i) = Tower i.
 Proof.
