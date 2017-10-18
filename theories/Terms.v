@@ -39,3 +39,7 @@ Inductive eval : Tm.t 0 → Tm.val 0 → Prop :=
 Notation "e ⇓ e'" := (eval e e') (at level 50).
 
 Hint Resolve eval_ret eval_fst eval_snd.
+
+
+(* TODO *)
+Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.

@@ -47,6 +47,18 @@ Ltac destruct_eval :=
   | |- _ ⇓ _ → _ => let x := fresh in move=> x; dependent destruction x
   end.
 
+Ltac evals_to_eq :=
+  repeat match goal with
+         | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => simpl in H1, H2; have: V1 = V2; [apply: determinacy; eauto | move {H1 H2} => *]
+         end.
+
+Ltac destruct_eqs :=
+  repeat
+    match goal with
+    | H : _ = _ |- _ => dependent destruction H
+    end.
+
+
 Ltac backthruhyp :=
   let H := fresh in
   match goal with

@@ -196,27 +196,12 @@ Module Clo.
     + apply: Sig.later; auto.
   Qed.
 
-  Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.
-
-
-
-
   Ltac use_universe_system :=
     match goal with
     | H : M.Law.universe_system ?σ, H' : ?σ ?X |- _ =>
       destruct (H X H')
     end.
 
-  Ltac evals_to_eq :=
-    repeat match goal with
-    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => simpl in H1, H2; have: V1 = V2; [apply: determinacy; eauto | move {H1 H2} => *]
-  end.
-
-  Ltac destruct_eqs :=
-    repeat
-      match goal with
-      | H : _ = _ |- _ => dependent destruction H
-      end.
 
   Local Ltac rewrite_functionality_ih :=
     repeat match goal with
@@ -232,7 +217,7 @@ Module Clo.
       move=> [? ?] //= ? ?;
       rewrite /M.Law.extensional_at; rewrite -roll; case => //= ?;
       try use_universe_system; try by [apply: ih; eauto];
-      T.destruct_conjs; evals_to_eq; destruct_eqs
+      T.destruct_conjs; T.evals_to_eq; T.destruct_eqs
     end.
 
   Local Ltac moves :=
@@ -249,25 +234,20 @@ Module Clo.
       → M.Law.extensional σ
       → M.Law.extensional (t σ).
   Proof.
-    move=> ? ? ? ? ?; case_clo.
-    + functionality_case.
-    + functionality_case.
-      congruence.
-    + functionality_case.
-      congruence.
-    + functionality_case.
-      rewrite_functionality_ih; eauto.
-
-    + functionality_case.
-      repeat (T.eqcd; moves).
+    move=> ? ? ? ? ?; case_clo; functionality_case.
+    + congruence.
+    + congruence.
+    + rewrite_functionality_ih;
+      eauto.
+    + do ?(T.eqcd; moves).
       T.specialize_hyps.
-      rewrite_functionality_ih; eauto.
-
-    + functionality_case.
-      repeat (T.eqcd; moves).
-      Later.gather => ?.
+      rewrite_functionality_ih;
+      eauto.
+    + do ?(T.eqcd; moves).
+      Later.gather => *.
       T.destruct_conjs.
-      rewrite_functionality_ih; eauto.
+      rewrite_functionality_ih;
+      eauto.
   Qed.
 
   Hint Resolve extensionality.

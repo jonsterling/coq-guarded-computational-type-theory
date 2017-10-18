@@ -92,7 +92,7 @@ Module Spine.
     + move=> n ? ? ? ? //= ?.
       simplify.
       T.destruct_conjs; simpl in *.
-      Clo.evals_to_eq; Clo.destruct_eqs.
+      T.evals_to_eq; T.destruct_eqs.
       auto.
   Qed.
 
@@ -124,8 +124,7 @@ Module Tower.
 
   Theorem monotonicity : ∀ i j, i ≤ j → t i ⊑ t j.
   Proof.
-    move=> i j p [A R].
-    Clo.case_clo; move=> ? ?; rewrite /t -Clo.roll.
+    move=> ? ? ? [A R]; Clo.case_clo => ? ?; rewrite /t -Clo.roll.
     + apply: Sig.init; apply: Spine.monotonicity; eauto.
     + by [apply: Sig.unit].
     + by [apply: Sig.bool].
