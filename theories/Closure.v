@@ -178,22 +178,17 @@ Module Clo.
     + auto.
   Qed.
 
+  Local Hint Constructors Sig.t.
+
+  Ltac elim_clo :=
+    let x := fresh in
+    move=> x;
+    apply: (ind _ x).
 
   Theorem monotonicity : ∀ σ1 σ2, (σ1 ⊑ σ2) → t σ1 ⊑ t σ2.
   Proof.
-    move=> σ1 σ2 p [A R] AtR.
-    destruct AtR as [τ ih]; simpl in *.
-    destruct ih as [ih1 ih2].
-    apply ih1; auto.
-    move=> [A' R'] s.
-    rewrite -roll.
-    elim s => A'R'.
-    + apply: Sig.init; auto.
-    + apply: Sig.unit; auto.
-    + apply: Sig.bool; auto.
-    + apply: Sig.prod; auto.
-    + apply: Sig.isect; auto.
-    + apply: Sig.later; auto.
+    move=> ? ? ? ?.
+    elim_clo => *; rewrite -roll; eauto.
   Qed.
 
   Ltac use_universe_system :=
@@ -223,10 +218,7 @@ Module Clo.
   Local Ltac moves :=
     move=> *.
 
-  Ltac elim_clo :=
-    let x := fresh in
-    move=> x;
-    apply: (ind _ x).
+
 
   Theorem extensionality
     : ∀ σ,
@@ -250,5 +242,5 @@ Module Clo.
       eauto.
   Qed.
 
-  Hint Resolve extensionality.
+  Hint Resolve monotonicity extensionality.
 End Clo.

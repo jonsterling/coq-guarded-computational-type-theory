@@ -30,7 +30,7 @@ Ltac print_goal :=
 
 Module Spine.
   Local Obligation Tactic := firstorder.
-  Program Fixpoint t (n : nat) {measure n (lt)} : M.matrix :=
+  Program Fixpoint t (n : nat) {measure n} : M.matrix :=
     match n with
     | 0 => M.empty
     | S n =>
@@ -74,33 +74,29 @@ Module Spine.
   Proof.
     case.
     + simplify; by [firstorder].
-    + move=> n ? ?.
+    + move=> ? ? ?.
       simplify.
       T.destruct_conjs.
       eauto.
   Qed.
 
-
-
   Theorem extensionality : ∀ i, M.Law.extensional (t i).
   Proof.
     case.
     + simplify; by [firstorder].
-    + move=> n ? ? ? ? //= ?.
+    + move=> ? ? ? ? ? ?.
       simplify.
       T.destruct_conjs; simpl in *.
       T.evals_to_eq; T.destruct_eqs.
       auto.
   Qed.
 
-  Theorem monotonicity : ∀ i j, i ≤ j → Spine.t i ⊑ Spine.t j.
+  Theorem monotonicity : ∀ i j, i ≤ j → t i ⊑ t j.
   Proof.
     move=> i j p [A R] T.
-    induction i.
-    + Spine.simplify.
-      contradiction.
-    + Spine.simplify.
-      case: T => [j' [p' //= [evA spR]]].
+    induction i; simplify.
+    + contradiction.
+    + case: T => [j' [p' //= [evA spR]]].
       induction p; Spine.simplify; exists j'; eauto.
       esplit; [omega | eauto].
   Qed.
@@ -119,15 +115,12 @@ Module Tower.
     eauto.
   Qed.
 
+  Local Hint Constructors Sig.t.
+
   Theorem monotonicity : ∀ i j, i ≤ j → t i ⊑ t j.
   Proof.
-    move=> ? ? ? [A R]; Clo.elim_clo => ? ?; rewrite /t -Clo.roll.
-    + apply: Sig.init; apply: Spine.monotonicity; eauto.
-    + by [apply: Sig.unit].
-    + by [apply: Sig.bool].
-    + by [apply: Sig.prod].
-    + by [apply: Sig.isect].
-    + by [apply: Sig.later].
+    move=> ? ? ? [A R]; Clo.elim_clo => ? ?; rewrite /t -Clo.roll;
+    first (apply: Sig.init; apply: Spine.monotonicity); eauto.
   Qed.
 
   Hint Resolve extensionality monotonicity.
