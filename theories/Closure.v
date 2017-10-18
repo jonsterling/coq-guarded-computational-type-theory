@@ -88,22 +88,20 @@ Module Sig.
   | later of Close.later τ X.
 
 
-  Module Monotone.
-    Program Instance t {σ : M.matrix} : Monotone (t σ).
-    Next Obligation.
-      move=> τ1 τ2 p [A R].
-      case => *.
-      + by [apply: init].
-      + by [apply: unit].
-      + by [apply: bool].
-      + apply: prod.
-        apply: Close.Monotone.prod; eauto; eauto.
-      + apply: isect.
-        apply: Close.Monotone.isect; eauto; eauto.
-      + apply: later.
-        apply: Close.Monotone.later; eauto; eauto.
-    Qed.
-  End Monotone.
+  Program Instance monotonicity {σ : M.matrix} : Monotone (t σ).
+  Next Obligation.
+    move=> τ1 τ2 p [A R].
+    case => *.
+    + by [apply: init].
+    + by [apply: unit].
+    + by [apply: bool].
+    + apply: prod.
+      apply: Close.Monotone.prod; eauto; eauto.
+    + apply: isect.
+      apply: Close.Monotone.isect; eauto; eauto.
+    + apply: later.
+      apply: Close.Monotone.later; eauto; eauto.
+  Qed.
 End Sig.
 
 
@@ -149,9 +147,9 @@ Module Clo.
     move=> x;
     apply: (ind x).
 
-  Theorem monotonicity : ∀ σ1 σ2, (σ1 ⊑ σ2) → t σ1 ⊑ t σ2.
+  Instance monotonicity : Monotone t.
   Proof.
-    move=> ? ? ? ?.
+    split; move=> ? ? ? ?.
     elim_clo => *; rewrite -roll; eauto.
   Qed.
 
