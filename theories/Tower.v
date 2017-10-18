@@ -17,9 +17,6 @@ Module T := Tactic.
 
 
 Require Import Coq.Setoids.Setoid.
-Require Import Classes.SetoidClass.
-Require Import Classes.Morphisms.
-Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.omega.Omega.
 Require Import Coq.Program.Equality.
 
@@ -118,9 +115,9 @@ Module Tower.
 
   Theorem extensionality : ∀ i, M.Law.extensional (t i).
   Proof.
-    elim => *; rewrite /t; eauto.
+    rewrite /t => *.
+    eauto.
   Qed.
-
 
   Theorem monotonicity : ∀ i j, i ≤ j → t i ⊑ t j.
   Proof.
