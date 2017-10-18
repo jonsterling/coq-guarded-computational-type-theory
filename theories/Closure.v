@@ -179,19 +179,6 @@ Module Clo.
   Qed.
 
 
-  Ltac noconfusion :=
-    try by [contradiction];
-    rewrite /M.empty;
-    move=> *; simpl in *;
-    T.destruct_conjs.
-
-  Ltac specialize_functionality_ih :=
-    repeat
-      match goal with
-      | H : ∀ R1 R2 : M.behavior, t _ (?X, _) → t _ (?X, _) → _ = _, H' : t _ (?X, ?R1), H'' : t _ (?X, ?R2) |- _ => specialize (H _ _ H' H''); move: H
-  end.
-
-
   Theorem monotonicity : ∀ σ1 σ2, (σ1 ⊑ σ2) → t σ1 ⊑ t σ2.
   Proof.
     move=> σ1 σ2 p [A R] AtR.
@@ -209,49 +196,14 @@ Module Clo.
     + apply: Sig.later; auto.
   Qed.
 
-  Definition universe_system (σ : M.matrix) :=
-    ∀ X, σ X → ∃ i, fst X ⇓ Tm.univ i.
-
-
-  Theorem unit_functionality : ∀ σ, M.functional (Close.unit σ).
-  Proof.
-    move=> σ.
-    move=> A R1 R2 //= *.
-    T.destruct_conjs.
-    congruence.
-  Qed.
-
   Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.
 
 
-  Theorem prod_functionality : ∀ σ, M.functional σ → M.functional (Close.prod σ).
-    move=> σ σfn A R1 R2 [B [C [R11 [R12 [evA [BR11 [CR12 spR1]]]]]]] [B' [C' [R11' [R12' [evA' [BR11' [CR12' spR1']]]]]]].
-    have: B = B' ∧ C = C'.
-    + have: Tm.prod B C = Tm.prod B' C'.
-      ++ apply: determinacy; eauto.
-      ++ case; eauto.
-
-    + move=> [p q].
-      rewrite -p in BR11'.
-      rewrite -q in CR12'.
-      have : R11 = R11' /\ R12 = R12'.
-      ++ split; apply: σfn; eauto.
-      ++ move=> [p' q'].
-         rewrite -p' in spR1'.
-         rewrite q' in spR1.
-         congruence.
-  Qed.
-
-  Definition uniquely_valued_body (σ : M.matrix) X :=
-    ∀ R', σ (fst X, R') → snd X = R'.
-
-  Definition uniquely_valued (σ : M.matrix) :=
-    ∀ A R, σ (A, R) → uniquely_valued_body σ (A, R).
 
 
   Ltac use_universe_system :=
     match goal with
-    | H : universe_system ?σ, H' : ?σ ?X |- _ =>
+    | H : M.Law.universe_system ?σ, H' : ?σ ?X |- _ =>
       destruct (H X H')
     end.
 
@@ -266,21 +218,24 @@ Module Clo.
       | H : _ = _ |- _ => dependent destruction H
       end.
 
-  Ltac rewrite_functionality_ih :=
+  Local Ltac rewrite_functionality_ih :=
     repeat match goal with
-    | ih : uniquely_valued_body _ _ |- _ => rewrite /uniquely_valued_body in ih; simpl in ih; erewrite ih
+    | ih : M.Law.extensional_at _ _ |- _ =>
+      rewrite /M.Law.extensional_at in ih;
+      simpl in ih;
+      erewrite ih
     end.
 
-  Ltac functionality_case :=
+  Local Ltac functionality_case :=
     match goal with
-    | ih : uniquely_valued _ |- _ =>
+    | ih : M.Law.extensional _ |- _ =>
       move=> [? ?] //= ? ?;
-      rewrite /uniquely_valued_body; rewrite -roll; case => //= ?;
+      rewrite /M.Law.extensional_at; rewrite -roll; case => //= ?;
       try use_universe_system; try by [apply: ih; eauto];
       T.destruct_conjs; evals_to_eq; destruct_eqs
     end.
 
-  Ltac moves :=
+  Local Ltac moves :=
     move=> *.
 
   Ltac case_clo :=
@@ -288,11 +243,11 @@ Module Clo.
     move=> x;
     apply: (ind _ x).
 
-  Theorem functionality
+  Theorem extensionality
     : ∀ σ,
-      universe_system σ
-      → uniquely_valued σ
-      → uniquely_valued (t σ).
+      M.Law.universe_system σ
+      → M.Law.extensional σ
+      → M.Law.extensional (t σ).
   Proof.
     move=> ? ? ? ? ?; case_clo.
     + functionality_case.
@@ -314,4 +269,6 @@ Module Clo.
       T.destruct_conjs.
       rewrite_functionality_ih; eauto.
   Qed.
+
+  Hint Resolve extensionality.
 End Clo.

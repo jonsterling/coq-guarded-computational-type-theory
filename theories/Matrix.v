@@ -10,11 +10,17 @@ Definition behavior := Tm.t 0 * Tm.t 0 → Prop.
 (* A 'refinement matrix' (called 'type system' by Allen) is a relation between terms and behaviors. *)
 Definition matrix := Tm.t 0 * behavior → Prop.
 
-Definition functional (σ : matrix) : Prop :=
-  ∀ A R1 R2,
-    σ (A, R1)
-    → σ (A, R2)
-    → R1 = R2.
-
 Definition empty : matrix :=
   fun _ => False.
+
+
+Module Law.
+  Definition universe_system (σ : matrix) :=
+    ∀ X, σ X → ∃ i, fst X ⇓ Tm.univ i.
+
+  Definition extensional_at (σ : matrix) X :=
+    ∀ R', σ (fst X, R') → snd X = R'.
+
+  Definition extensional (σ : matrix) :=
+    ∀ A R, σ (A, R) → extensional_at σ (A, R).
+End Law.

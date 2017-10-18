@@ -45,23 +45,25 @@ Module Spine.
     end.
 
   Theorem unfold_S :
-    ∀ X n,
-      t (S n) X =
-      ∃ (j : nat) (p : j ≤ n),
-        fst X ⇓ Tm.univ j
-        ∧ snd X =
-          fun es =>
-            ∃ S, Clo.t (t j) (fst es, S) ∧ Clo.t (t j) (snd es, S).
+    ∀ n,
+      t (S n) =
+      fun X =>
+        ∃ (j : nat) (p : j ≤ n),
+          fst X ⇓ Tm.univ j
+          ∧ snd X =
+            fun es =>
+              ∃ S, Clo.t (t j) (fst es, S) ∧ Clo.t (t j) (snd es, S).
   Proof.
-    move=> X n.
+    move=> n.
+    T.eqcd => X.
     by [Wf.WfExtensionality.unfold_sub t (t (S n) X)].
   Qed.
 
   Theorem unfold_0 :
-    ∀ X, t 0 X = M.empty X.
+    t 0 = M.empty.
   Proof.
-    move=> X.
-      by [Wf.WfExtensionality.unfold_sub t (t 0 X)].
+    T.eqcd => X.
+    by [Wf.WfExtensionality.unfold_sub t (t 0 X)].
   Qed.
 
   Ltac simplify :=
@@ -70,50 +72,31 @@ Module Spine.
     | X : t (S _) _ |- _ => rewrite unfold_S in X
     | _ => rewrite unfold_S || rewrite unfold_0
     end.
-End Spine.
 
-Definition Tower (i : nat) : M.matrix :=
-  Clo.t (Spine.t i).
+  Theorem universe_system : ∀ i, M.Law.universe_system (t i).
+  Proof.
+    case.
+    + simplify; by [firstorder].
+    + move=> n ? ?.
+      simplify.
+      T.destruct_conjs.
+      eauto.
+  Qed.
 
-Theorem functionality : ∀ i, Clo.uniquely_valued (Tower i).
-Proof.
-  elim => [*|? ih *].
-  + rewrite /Tower //=.
-    apply: Clo.functionality; eauto => //=.
-  + rewrite /Tower; Spine.simplify.
-    apply: Clo.functionality.
-    ++ move=> ?; Spine.simplify=> *.
-       T.destruct_conjs.
-       eexists; eauto.
-    ++ move=> A R Sp R' //= Sp'.
-       rewrite Spine.unfold_S in Sp.
-       rewrite Spine.unfold_S in Sp'.
-       T.destruct_conjs; simpl in *.
-       Clo.evals_to_eq; Clo.destruct_eqs.
-       auto.
-Qed.
 
-Theorem roll {i : nat} : Sig.t (Spine.t i) (Tower i) = Tower i.
-Proof.
-  apply: binrel_extensionality => A R.
-  split => H.
-  + rewrite /Tower /Clo.t.
-    match goal with
-    | |- lfp ?m ?x =>
-      case: (lfp_fixed_point M.matrix (PowerSetCompleteLattice (Tm.t 0 * M.behavior)) m x)
-    end.
-    auto.
-  + rewrite /Tower /Clo.t in H.
-    match goal with
-    | H : lfp ?m ?x |- _ =>
-      case: (lfp_fixed_point M.matrix (PowerSetCompleteLattice (Tm.t 0 * M.behavior)) m x) => _
-    end.
-    apply.
-    auto.
-Qed.
 
-Module Monotone.
-  Theorem spine : ∀ i j, i ≤ j → Spine.t i ⊑ Spine.t j.
+  Theorem extensionality : ∀ i, M.Law.extensional (t i).
+  Proof.
+    case.
+    + simplify; by [firstorder].
+    + move=> n ? ? ? ? //= ?.
+      simplify.
+      T.destruct_conjs; simpl in *.
+      Clo.evals_to_eq; Clo.destruct_eqs.
+      auto.
+  Qed.
+
+  Theorem monotonicity : ∀ i j, i ≤ j → Spine.t i ⊑ Spine.t j.
   Proof.
     move=> i j p [A R] T.
     induction i.
@@ -121,23 +104,36 @@ Module Monotone.
       contradiction.
     + Spine.simplify.
       case: T => [j' [p' //= [evA spR]]].
-      induction p.
-      ++ Spine.simplify.
-         exists j'; eauto.
-      ++ Spine.simplify.
-         exists j'; esplit; eauto.
-         omega.
+      induction p; Spine.simplify; exists j'; eauto.
+      esplit; [omega | eauto].
   Qed.
 
-  Theorem tower : ∀ i j, i ≤ j → Tower i ⊑ Tower j.
+  Hint Resolve universe_system extensionality monotonicity.
+End Spine.
+
+Module Tower.
+
+  Definition t (i : nat) : M.matrix :=
+    Clo.t (Spine.t i).
+
+  Theorem extensionality : ∀ i, M.Law.extensional (t i).
+  Proof.
+    elim => *; rewrite /t; eauto.
+  Qed.
+
+
+  Theorem monotonicity : ∀ i j, i ≤ j → t i ⊑ t j.
   Proof.
     move=> i j p [A R].
-    Clo.case_clo; move=> ? ?; rewrite /Tower -Clo.roll.
-    + apply: Sig.init; apply: spine; eauto.
+    Clo.case_clo; move=> ? ?; rewrite /t -Clo.roll.
+    + apply: Sig.init; apply: Spine.monotonicity; eauto.
     + by [apply: Sig.unit].
     + by [apply: Sig.bool].
     + by [apply: Sig.prod].
     + by [apply: Sig.isect].
     + by [apply: Sig.later].
   Qed.
-End Monotone.
+
+  Hint Resolve extensionality monotonicity.
+
+End Tower.
