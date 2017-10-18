@@ -56,14 +56,13 @@ Module Univ.
   Notation "⊧ A ∼ B" := (∃ R, Towerω (A, R) ∧ Towerω (B, R)) (at level 0, A at level 0, only parsing).
 
   Module ClosedRules.
-
     Local Ltac simplify :=
-      simpl; Spine.simplify; simpl;
+      Close.simplify; Spine.simplify; simpl;
       repeat
-        (match goal with
+        (lazymatch goal with
          | |- ?i ≤ ?j => omega
-         | |- ∃ (x : ?A), ?P => eexists
          | |- ?P ∧ ?Q => split
+         | |- ∃ (x : ?A), ?P => eexists
          | |- ?P ↔ ?Q => split
          end); eauto.
 

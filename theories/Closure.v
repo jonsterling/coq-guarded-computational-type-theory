@@ -2,6 +2,7 @@ Require Import Unicode.Utf8.
 Require Import Coq.Program.Equality.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.omega.Omega.
+Require Import Coq.Classes.Morphisms.
 From mathcomp Require Import ssreflect.
 
 From gctt Require Import OrderTheory.
@@ -19,87 +20,59 @@ Module M := Matrix.
 
 Set Implicit Arguments.
 
-Local Ltac make_morphism :=
-  unshelve refine {| mon_func := _ |}.
-
-Local Ltac morphism_monotone :=
-  match goal with
-  | |- @mon_func _ _ _ _ ?m _ _ =>
-    apply: (@mon_prop _ _ _ _ m);
-    eauto
-  end.
-
-
 Hint Resolve Later.map.
 
 Module Close.
   Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 ∧ e2 ⇓ e3) (at level 0).
 
+  Definition unit (τ : M.matrix) X :=
+    fst X ⇓ Tm.unit
+    ∧ snd X = fun es => [fst es, snd es] ⇓ Tm.ax.
+
+  Definition bool (τ : M.matrix) X :=
+    fst X ⇓ Tm.bool
+    ∧ snd X = fun es => ([fst es, snd es] ⇓ Tm.tt ∨ [fst es, snd es] ⇓ Tm.ff).
+
+  Definition prod τ X :=
+    ∃ B C R1 R2,
+      fst X ⇓ Tm.prod B C
+      ∧ τ (B, R1)
+      ∧ τ (C, R2)
+      ∧ snd X =
+        fun es =>
+          ∃ e11 e12 e21 e22,
+            (fst es ⇓ Tm.pair e11 e12)
+            ∧ (snd es ⇓ Tm.pair e21 e22)
+            ∧ R1 (e11, e21)
+            ∧ R2 (e12, e22).
+
+  Definition later (τ : M.matrix) X :=
+    ∃ κ B R',
+      fst X ⇓ Tm.ltr κ B
+      ∧ ▷[ κ ] (τ (B, R'))
+      /\ snd X = fun e12 => ▷[ κ ] (R' e12).
+
+  Definition isect (τ : M.matrix) X :=
+    ∃ B S,
+      fst X ⇓ Tm.isect B
+      ∧ (∀ κ, τ (B κ, S κ))
+      ∧ snd X = fun es => ∀ κ, S κ es.
+
   Ltac prove_monotone :=
-    simpl; move=> *; T.destruct_conjs;
+    compute; move=> *; T.destruct_conjs;
     repeat T.split; eauto.
 
-  Definition unit : monotone M.matrix M.matrix.
-  Proof.
-    make_morphism.
-    + move=> τ [A R].
-      exact
-        (A ⇓ Tm.unit
-         ∧ R = fun e12 => [fst e12, snd e12] ⇓ Tm.ax).
-    + prove_monotone.
-  Defined.
+  Module Monotone.
+    Local Obligation Tactic := prove_monotone.
+    Program Instance unit : Proper (Poset.order ==> Poset.order) unit.
+    Program Instance bool : Proper (Poset.order ==> Poset.order) bool.
+    Program Instance prod : Proper (Poset.order ==> Poset.order) prod.
+    Program Instance isect : Proper (Poset.order ==> Poset.order) isect.
+    Program Instance later : Proper (Poset.order ==> Poset.order) later.
+  End Monotone.
 
-  Definition bool : monotone M.matrix M.matrix.
-  Proof.
-    make_morphism.
-    + move=> τ [A R].
-      exact
-       (A ⇓ Tm.bool
-        ∧ R = fun e12 => ([fst e12, snd e12] ⇓ Tm.tt ∨ [fst e12, snd e12] ⇓ Tm.ff)).
-    + prove_monotone.
-  Defined.
-
-  Definition later : monotone M.matrix M.matrix.
-  Proof.
-    make_morphism.
-    + move=> τ [A R].
-      exact
-        (∃ κ B R',
-            A ⇓ Tm.ltr κ B
-            ∧ ▷[ κ ] (τ (B, R'))
-            /\ R = fun e12 => ▷[ κ ] (R' e12)).
-    + prove_monotone.
-  Defined.
-
-  Definition prod : monotone M.matrix M.matrix.
-  Proof.
-    make_morphism.
-    + move=> τ [A R].
-      exact
-        (∃ B C R1 R2,
-            A ⇓ Tm.prod B C
-            ∧ τ (B, R1)
-            ∧ τ (C, R2)
-            ∧ R = fun es =>
-                    ∃ e11 e12 e21 e22,
-                      (fst es ⇓ Tm.pair e11 e12)
-                      ∧ (snd es ⇓ Tm.pair e21 e22)
-                      ∧ R1 (e11, e21)
-                      ∧ R2 (e12, e22)).
-    + prove_monotone.
-  Defined.
-
-  Definition isect : monotone M.matrix M.matrix.
-  Proof.
-    make_morphism.
-    + move=> τ [A R].
-      exact
-        (∃ B S,
-            A ⇓ Tm.isect B
-            ∧ (∀ κ, τ (B κ, S κ))
-            ∧ R = fun es => ∀ κ, S κ es).
-    + prove_monotone.
-  Defined.
+  Global Ltac simplify :=
+    unfold unit, bool, prod, later, isect in *.
 End Close.
 
 Module Sig.
@@ -114,45 +87,36 @@ Module Sig.
   | isect of Close.isect τ X
   | later of Close.later τ X.
 
-  (* The map defined above really is monotone. *)
-  Definition mono (σ : M.matrix) : monotone M.matrix M.matrix.
-  Proof.
-    make_morphism.
-    + exact (t σ).
-    + move=> τ1 τ2 P X tQ; case tQ => Q;
-      [ apply: init; eauto
-      | apply: unit
-      | apply: bool
-      | apply: prod
-      | apply: isect
-      | apply: later
-      ]; morphism_monotone.
-  Defined.
+
+  Module Monotone.
+    Program Instance t {σ : M.matrix} : Monotone (t σ).
+    Next Obligation.
+      move=> τ1 τ2 p [A R].
+      case => *.
+      + by [apply: init].
+      + by [apply: unit].
+      + by [apply: bool].
+      + apply: prod.
+        apply: Close.Monotone.prod; eauto; eauto.
+      + apply: isect.
+        apply: Close.Monotone.isect; eauto; eauto.
+      + apply: later.
+        apply: Close.Monotone.later; eauto; eauto.
+    Qed.
+  End Monotone.
 End Sig.
 
 
 Module Clo.
-  Definition t (σ : M.matrix) := lfp (Sig.mono σ).
-
+  Program Definition t (σ : M.matrix) := LFP.t (Sig.t σ).
 
   Theorem roll : ∀ σ, Sig.t σ (t σ) = t σ.
   Proof.
     move=> σ.
     apply: binrel_extensionality => [A R].
-    T.split => [X | X].
-    + rewrite /t.
-      match goal with
-      | |- lfp ?m ?x =>
-        case: (lfp_fixed_point M.matrix (PowerSetCompleteLattice (Tm.t 0 * M.behavior)) m x)
-      end.
-      auto.
-    + rewrite /t in X.
-      match goal with
-      | H : lfp ?m ?x |- _ =>
-        case: (lfp_fixed_point M.matrix (PowerSetCompleteLattice (Tm.t 0 * M.behavior)) m x) => _ Q'
-      end.
-      apply: Q'.
-      auto.
+    T.split => [X | X]; [rewrite /t|];
+    edestruct (LFP.roll (Sig.t σ));
+    auto.
   Qed.
 
   Theorem ind :
@@ -167,7 +131,7 @@ Module Clo.
       → ρ Y.
   Proof.
     move=> [A R] σ ρ AcloR init unit bool prod isect later.
-    rewrite /t /lfp in AcloR.
+    rewrite /t /LFP.t in AcloR.
     simpl in AcloR.
     rewrite -/M.matrix in AcloR.
 
@@ -183,7 +147,7 @@ Module Clo.
   Ltac elim_clo :=
     let x := fresh in
     move=> x;
-    apply: (ind _ x).
+    apply: (ind x).
 
   Theorem monotonicity : ∀ σ1 σ2, (σ1 ⊑ σ2) → t σ1 ⊑ t σ2.
   Proof.
@@ -211,13 +175,14 @@ Module Clo.
     | ih : M.Law.extensional _ |- _ =>
       move=> [? ?] //= ? ?;
       rewrite /M.Law.extensional_at; rewrite -roll; case => //= ?;
+      Close.simplify;
       try use_universe_system; try by [apply: ih; eauto];
-      T.destruct_conjs; T.evals_to_eq; T.destruct_eqs
+      T.destruct_conjs; T.evals_to_eq; T.destruct_eqs;
+      simpl in *
     end.
 
   Local Ltac moves :=
     move=> *.
-
 
 
   Theorem extensionality
@@ -229,13 +194,15 @@ Module Clo.
     move=> ? ? ? ? ?; elim_clo; functionality_case.
     + congruence.
     + congruence.
-    + rewrite_functionality_ih;
-      eauto.
-    + do ?(T.eqcd; moves).
+    + do 2 T.reorient.
+      rewrite_functionality_ih; eauto.
+    + do 2 T.reorient.
+      do ?(T.eqcd; moves).
       T.specialize_hyps.
       rewrite_functionality_ih;
       eauto.
-    + do ?(T.eqcd; moves).
+    + do 2 T.reorient.
+      do ?(T.eqcd; moves).
       Later.gather => *.
       T.destruct_conjs.
       rewrite_functionality_ih;

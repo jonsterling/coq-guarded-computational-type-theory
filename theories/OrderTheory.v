@@ -14,8 +14,8 @@ Module Poset.
   Class t A : Type :=
     { eq :> Setoid A;
       order : A -> A -> Prop;
-      order_proper : Proper (equiv ==> (equiv ==> iff)) order;
-      refl : ∀ x y,  x==y -> order x y;
+      order_proper : Proper (equiv ==> equiv ==> iff) order;
+      refl : ∀ x y,  x == y -> order x y;
       antisym : ∀ x y, order x y -> order y x -> x == y;
       trans : ∀ x y z, order x y -> order y z -> order x z
     }.
@@ -27,6 +27,7 @@ Class subset A `{Setoid A} : Type :=
   { carrier : A -> Prop;
     subset_comp_eq : ∀ x y:A, x == y -> carrier x -> carrier y
   }.
+
 Coercion carrier : subset >-> Funclass.
 
 Module CompleteLattice.
@@ -42,9 +43,8 @@ Module CompleteLattice.
   Next Obligation.
     apply: Poset.trans; last eauto.
     apply: Poset.refl.
-      by [symmetry].
+    by [symmetry].
   Defined.
-
 
   Definition meet {A} {L:t A} (S:subset A) : A := join (subset_meet A S).
 
@@ -58,7 +58,7 @@ Module CompleteLattice.
   Lemma meet_glb : forall A (L:t A), ∀f:subset A, ∀z, (∀ x, f x -> z ⊑ x) -> z ⊑ meet f.
   Proof.
     firstorder;
-      by [apply: join_bound].
+    by [apply: join_bound].
   Qed.
 End CompleteLattice.
 
@@ -89,43 +89,36 @@ Program Instance PowerSetCompleteLattice A : CompleteLattice.t (℘ A) :=
 Solve Obligations with firstorder.
 
 
+Class Monotone {A} `{P : CompleteLattice.t A} (f : A → A) :=
+  { mono_proper : Proper (Poset.order ==> Poset.order) f }.
 
-Class monotone A `{Poset.t A} B `{Poset.t B} : Type :=
-  { mon_func : A -> B;
-    mon_prop : ∀ a1 a2, a1 ⊑ a2 -> (mon_func a1) ⊑ (mon_func a2)
-  }.
+Module LFP.
+  Section LFP.
+    Context {L : Type} `{CL : CompleteLattice.t L} (f : L → L) `{Mf : Monotone L f}.
 
-Coercion mon_func : monotone >-> Funclass.
-Hint Resolve @mon_prop.
-Coercion mon_prop : monotone >-> Funclass.
-Arguments Build_monotone [A H B H0].
+    Program Definition postfix : subset L :=
+      {| carrier := fun a => (f a) ⊑ a |}.
+    Next Obligation.
+    Proof.
+      do 2 (apply: Poset.trans; eauto).
+      apply: mono_proper.
+      apply: Poset.refl.
+      by [symmetry].
+    Defined.
 
-Program Definition PostFix {L P} `(f:@monotone L P L P) : subset L :=
-  {| carrier := (fun a:L => (f a) ⊑ a) |}.
-Next Obligation.
-  apply: (Poset.trans _ x); eauto.
-  apply: (Poset.trans _ (f x)).
-  + eauto.
-    apply: mon_prop.
-    apply: Poset.refl.
-    symmetry.
-    auto.
-  + auto.
-Defined.
+    Definition t : L := CompleteLattice.meet postfix.
 
-Definition lfp {L} `{CompleteLattice.t L} (f:monotone L L) : L :=
-  CompleteLattice.meet (PostFix f).
-
-Section KnasterTarski.
-  Lemma lfp_fixed_point (L : Type) (_ : CompleteLattice.t L) (f : monotone L L): f (lfp f) == lfp f.
-  Proof.
-    have into : f (lfp f) ⊑ lfp f.
-    + apply: CompleteLattice.meet_glb.
-      move=> x PF.
-      apply: (Poset.trans _ (f x));
-        rewrite /lfp; auto.
-    + apply: Poset.antisym; auto; rewrite /lfp.
-      apply: CompleteLattice.meet_bound.
-        by [apply: mon_prop].
-  Qed.
-End KnasterTarski.
+    Theorem roll : f t == t.
+    Proof.
+      have into : f t ⊑ t.
+      + apply: CompleteLattice.meet_glb.
+        move=> x PF.
+        apply: (Poset.trans _ (f x));
+        rewrite /t; auto.
+        apply: mono_proper; auto.
+      + apply: Poset.antisym; auto; rewrite /t.
+        apply: CompleteLattice.meet_bound.
+        by [apply: mono_proper].
+    Qed.
+  End LFP.
+End LFP.
