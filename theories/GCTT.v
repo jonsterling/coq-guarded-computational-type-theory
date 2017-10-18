@@ -142,10 +142,12 @@ Module Univ.
         ⊧ A type
         → ⊧ A ∼ (Tm.ret (Tm.isect (fun _ => A))).
     Proof.
-      move=> A [R [n AR]].
-      eexists; split; eauto; exists n; eauto.
+      rewrite /Towerω.
+      move=> A [R ?].
+      T.destruct_conjs.
+      repeat T.split; eauto.
       rewrite /Tower.t -Clo.roll; apply: Sig.isect.
-      exists (fun _ => A), (fun _ => R).
+      do 2 eexists (fun _ => _).
       repeat T.split; eauto.
       T.eqcd => *.
       case: LocalClock => ? _.
