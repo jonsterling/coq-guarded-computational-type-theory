@@ -124,7 +124,7 @@ Module Tower.
 
   Theorem monotonicity : ∀ i j, i ≤ j → t i ⊑ t j.
   Proof.
-    move=> ? ? ? [A R]; Clo.case_clo => ? ?; rewrite /t -Clo.roll.
+    move=> ? ? ? [A R]; Clo.elim_clo => ? ?; rewrite /t -Clo.roll.
     + apply: Sig.init; apply: Spine.monotonicity; eauto.
     + by [apply: Sig.unit].
     + by [apply: Sig.bool].

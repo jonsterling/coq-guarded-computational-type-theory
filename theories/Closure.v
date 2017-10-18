@@ -223,7 +223,7 @@ Module Clo.
   Local Ltac moves :=
     move=> *.
 
-  Ltac case_clo :=
+  Ltac elim_clo :=
     let x := fresh in
     move=> x;
     apply: (ind _ x).
@@ -234,7 +234,7 @@ Module Clo.
       → M.Law.extensional σ
       → M.Law.extensional (t σ).
   Proof.
-    move=> ? ? ? ? ?; case_clo; functionality_case.
+    move=> ? ? ? ? ?; elim_clo; functionality_case.
     + congruence.
     + congruence.
     + rewrite_functionality_ih;
