@@ -57,13 +57,7 @@ Module Univ.
 
   Module ClosedRules.
 
-    (* A nice hack from Adam Chlipala Theory, to force the resolution
-        of some existential variables. *)
-    Ltac equate M N :=
-      let r := constr:(eq_refl M : M = N)
-      in idtac.
-
-    Ltac simplify :=
+    Local Ltac simplify :=
       simpl; Spine.simplify; simpl;
       repeat
         (match goal with
@@ -75,7 +69,7 @@ Module Univ.
 
     (* A tactic to prove a rule by appealing to one of
         the constructors of the refinement matrix closure operator. *)
-    Ltac prove_rule con :=
+    Local Ltac prove_rule con :=
       match goal with
       | |- ?n ⊩ ?A type => eexists; rewrite /Tower.t -Clo.roll; apply: con; simplify; try reflexivity
       end.
