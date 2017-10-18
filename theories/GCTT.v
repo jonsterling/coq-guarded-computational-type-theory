@@ -70,6 +70,7 @@ Module Univ.
     (* A tactic to prove a rule by appealing to one of
         the constructors of the refinement matrix closure operator. *)
     Local Ltac prove_rule con :=
+      move=> *; T.destruct_conjs;
       match goal with
       | |- ?n ⊩ ?A type => eexists; rewrite /Tower.t -Clo.roll; apply: con; simplify; try reflexivity
       end.
@@ -106,7 +107,6 @@ Module Univ.
         → n ⊩ B type
         → n ⊩ (Tm.ret (Tm.prod A B)) type.
     Proof.
-      move=> A B [R1 D] [R2 E].
       prove_rule Sig.prod.
     Qed.
 
