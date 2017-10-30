@@ -28,27 +28,46 @@ Module Tm.
   Arguments univ [n] i.
 End Tm.
 
-Inductive val : Tm.t 0 → Prop :=
-| val_bool : val Tm.bool
-| val_unit : val Tm.unit
-| val_prod : ∀ {e1 e2}, val (Tm.prod e1 e2)
-| val_arr : ∀ {e1 e2}, val (Tm.arr e1 e2)
-| val_ltr : ∀ {κ e}, val (Tm.ltr κ e)
-| val_isect : ∀ {e}, val (Tm.isect e)
-| val_univ : ∀ {i}, val (Tm.univ i)
-| val_ax : val Tm.ax
-| val_tt : val Tm.tt
-| val_ff : val Tm.ff
-| val_pair : ∀ {e1 e2}, val (Tm.pair e1 e2).
+
+Reserved Notation "e 'val'" (at level 50).
+Reserved Notation "e ⇓ e'" (at level 50).
+
+Inductive is_val : Tm.t 0 → Prop :=
+| val_bool : Tm.bool val
+| val_unit : Tm.unit val
+| val_prod : ∀ {e1 e2}, Tm.prod e1 e2 val
+| val_arr : ∀ {e1 e2}, Tm.arr e1 e2 val
+| val_ltr : ∀ {κ e}, Tm.ltr κ e val
+| val_isect : ∀ {e}, Tm.isect e val
+| val_univ : ∀ {i}, Tm.univ i val
+| val_ax : Tm.ax val
+| val_tt : Tm.tt val
+| val_ff : Tm.ff val
+| val_pair : ∀ {e1 e2}, Tm.pair e1 e2 val
+where "v 'val'" := (is_val v).
 
 Inductive eval : Tm.t 0 → Tm.t 0 → Prop :=
-| eval_val : ∀ {v}, val v → eval v v
-| eval_fst : ∀ {e e1 e2 v}, eval e (Tm.pair e1 e2) → eval e1 v → eval (Tm.fst e) v
-| eval_snd : ∀ {e e1 e2 v}, eval e (Tm.pair e1 e2) → eval e2 v → eval (Tm.snd e) v.
+| eval_val :
+    ∀ {v},
+      v val
+      → v ⇓ v
 
-Notation "e ⇓ e'" := (eval e e') (at level 50).
+| eval_fst :
+    ∀ {e e1 e2 v},
+      e ⇓ Tm.pair e1 e2
+      → e1 ⇓ v
+      → Tm.fst e ⇓ v
 
-Hint Constructors val.
+| eval_snd :
+    ∀ {e e1 e2 v},
+      e ⇓ Tm.pair e1 e2
+      → e2 ⇓ v
+      → Tm.snd e ⇓ v
+
+where "e ⇓ e'" := (eval e e').
+
+
+Hint Constructors is_val.
 Hint Constructors eval.
 
 
