@@ -74,20 +74,20 @@ Module Univ.
       | |- ?n ⊩ ?A type => eexists; rewrite /Tower.t -Clo.roll; apply: con; simplify; try reflexivity
       end.
 
-    Theorem unit_formation {n : nat} : n ⊩ (Tm.ret Tm.unit) type.
+    Theorem unit_formation {n : nat} : n ⊩ Tm.unit type.
     Proof.
       prove_rule Sig.unit.
     Qed.
 
     Lemma univ_formation_S {n : nat}
-      : (S n) ⊩ (Tm.ret (Tm.univ n)) type.
+      : (S n) ⊩ (Tm.univ n) type.
     Proof.
       prove_rule Sig.init.
     Qed.
 
     Theorem univ_formation {n i : nat} :
       i < n
-      → n ⊩ (Tm.ret (Tm.univ i)) type.
+      → n ⊩ (Tm.univ i) type.
     Proof.
       case => [| j q ].
       + apply: univ_formation_S.
@@ -97,14 +97,14 @@ Module Univ.
         Spine.simplify.
         exists i. repeat split.
         ++ omega.
-        ++ constructor.
+        ++ eauto.
     Qed.
 
     Theorem prod_formation {n : nat} :
       ∀ A B,
         n ⊩ A type
         → n ⊩ B type
-        → n ⊩ (Tm.ret (Tm.prod A B)) type.
+        → n ⊩ (Tm.prod A B) type.
     Proof.
       prove_rule Sig.prod.
     Qed.
@@ -123,7 +123,7 @@ Module Univ.
     Theorem isect_formation {n : nat} :
       forall B,
         (∀ κ, n ⊩ (B κ) type)
-        → n ⊩ (Tm.ret (Tm.isect B)) type.
+        → n ⊩ (Tm.isect B) type.
     Proof.
       move=> B Q.
       case: (TowerChoice Q) => S Q'.
@@ -133,7 +133,7 @@ Module Univ.
     Theorem isect_irrelevance :
       forall A,
         ⊧ A type
-        → ⊧ A ∼ (Tm.ret (Tm.isect (fun _ => A))).
+        → ⊧ A ∼ (Tm.isect (fun _ => A)).
     Proof.
       rewrite /Towerω.
       move=> A [R ?].
@@ -177,13 +177,12 @@ Module Univ.
 
 
 
-  Coercion Tm.ret : Tm.val >-> Tm.t.
-  Theorem test : ∃ n, n ⊩ (Tm.ret (Tm.prod Tm.unit (Tm.univ 0))) type.
+  Theorem test : ∃ n, n ⊩ (Tm.prod Tm.unit (Tm.univ 0)) type.
   Proof.
     eauto.
   Qed.
 
-  Theorem test2 : ⊧ (Tm.ret (Tm.univ 0)) ∼ (Tm.ret (Tm.isect (fun _ => Tm.univ 0))).
+  Theorem test2 : ⊧ (Tm.univ 0) ∼ (Tm.isect (fun _ => Tm.univ 0)).
     eauto.
   Qed.
 
