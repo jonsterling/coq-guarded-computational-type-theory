@@ -36,10 +36,6 @@ Program Definition interp_clk {l : nat} (k : FTm.clk l) (ρ : Env l) : CLK :=
 
 Reserved Notation "⟦ e ⟧ ρ" (at level 50).
 Notation "K⟦ k ⟧ ρ" := (interp_clk k ρ) (at level 50).
-
-Definition extend {l : nat} (κ : CLK) (ρ : Env l) : Env (S l) :=
-  Vector.cons _ κ _ ρ.
-
 Notation "κ ∷ ρ" := (Vector.cons _ κ _ ρ) (at level 30).
 
 Program Fixpoint interp {l n : nat} (e : FTm.t l n) (ρ : Env l) : Tm.t n :=
