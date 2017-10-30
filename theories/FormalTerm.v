@@ -29,7 +29,7 @@ End FTm.
 Definition Env := Vector.t CLK.
 
 
-Program Definition interp_clk {l : nat} (k : FTm.clk l) (ρ : Env l) : CLK :=
+Definition interp_clk {l : nat} (k : FTm.clk l) (ρ : Env l) : CLK :=
   match k with
   | FTm.cref _ p => Vector.nth_order ρ p
   end.
@@ -38,7 +38,7 @@ Reserved Notation "⟦ e ⟧ ρ" (at level 50).
 Notation "K⟦ k ⟧ ρ" := (interp_clk k ρ) (at level 50).
 Notation "κ ∷ ρ" := (Vector.cons _ κ _ ρ) (at level 30).
 
-Program Fixpoint interp {l n : nat} (e : FTm.t l n) (ρ : Env l) : Tm.t n :=
+Fixpoint interp {l n : nat} (e : FTm.t l n) (ρ : Env l) : Tm.t n :=
   match e with
   | FTm.var i p => Tm.var p
   | FTm.fst e => Tm.fst (⟦e⟧ ρ)
