@@ -155,6 +155,15 @@ Module Jdg.
       by dependent induction x.
   Qed.
 
+
+  Ltac nuke_eqs :=
+    repeat
+      (simplify_eqs; simpl in *; simplify_eqs;
+       try match goal with
+       | H : _ = _ |- _ => induction H; simplify_eqs
+       end).
+
+
   Program Definition interp_clk_wk :
     ∀ l n (e : FTm.t l n) (σ : Env l) (κ : CLK),
       ⟦ e ⟧ σ = ⟦ FTm.kwkTm e ⟧ (κ ∷ σ) :=
@@ -166,32 +175,14 @@ Module Jdg.
     f_equal.
     T.eqcd => x.
     simplify_eqs.
-    induction l.
-    + by simplify_eqs.
-    + simplify_eqs.
-      simpl in *.
-      induction eqH1.
-      simplify_eqs.
-      induction eqH0.
-      simplify_eqs.
-      auto.
-  Qed.
-  Next Obligation.
-    simplify_eqs.
-    induction l.
-    + simplify_eqs.
-      simpl in *.
-      simpl.
-      unfold FTm.kwkTm.
-      by simplify_eqs.
-    + unfold FTm.kwkTm.
-      simplify_eqs.
-      induction eqH1.
-      simpl in *.
-      induction eqH0.
-      by simplify_eqs.
+    induction l; by nuke_eqs.
   Qed.
 
+  Next Obligation.
+    simplify_eqs.
+    rewrite /FTm.kwkTm.
+    induction l; by nuke_eqs.
+  Qed.
 
 
   Theorem test3 :
