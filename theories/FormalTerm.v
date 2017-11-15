@@ -3,6 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Equality.
+Require Import Coq.Program.Tactics.
 Require Import Coq.omega.Omega.
 From gctt Require Import Terms.
 From gctt Require Import Axioms.
@@ -45,12 +46,11 @@ Module FTm.
       | Fin.FS _ y => Fin.FS (ρ y)
       end.
 
-  Program Fixpoint weak (l1 l2 : nat) : Ren l1 (l1 + l2) :=
+  Program Fixpoint weak (l1 l2 : nat) : Ren l1 (l2 + l1) :=
     match l2 with
     | 0 => fun x => x
     | S n => fun x => weak n (Fin.FS x)
     end.
-
 
   Program Fixpoint map {l1 l2 n} (ρ : Ren l1 l2) (e : t l1 n) : t l2 n :=
     match e with
@@ -69,15 +69,6 @@ Module FTm.
     | isect A => isect (map (wkr ρ) A)
     | univ i => univ i
     end.
-
-  Program Definition kwkTm {l n} (e : t l n) : t (S l) n :=
-    map (weak 1) e.
-  Next Obligation.
-    generalize l.
-    move; elim; first by auto.
-    move=> ? IH.
-    by rewrite -{2} IH.
-  Defined.
 End FTm.
 
 Definition Env l := Fin.t l → CLK.
@@ -152,44 +143,21 @@ Module Jdg.
       by dependent induction x.
   Qed.
 
-
-  Ltac nuke_eqs :=
-    repeat
-      (simplify_eqs; simpl in *; simplify_eqs;
-       try match goal with
-       | H : _ = _ |- _ => induction H; simplify_eqs
-       end).
-
-
-  Program Definition interp_clk_wk :
-    ∀ l n (e : FTm.t l n) (σ : Env l) (κ : CLK),
-      ⟦ e ⟧ σ = ⟦ FTm.kwkTm e ⟧ (κ ∷ σ) :=
-    fun l n e σ κ => @interp_naturality l (S l) n e (FTm.weak 1) (κ ∷ σ).
+  Program Definition interp_clk_wk l n (e : FTm.t l n) (σ : Env l) (κ : CLK) :
+    ⟦ e ⟧ σ = ⟦ FTm.map (FTm.weak 1) e ⟧ (κ ∷ σ)
+    := interp_naturality e (FTm.weak 1) (κ ∷ σ).
   Next Obligation.
-    omega.
-  Defined.
-  Next Obligation.
-    f_equal.
-    T.eqcd => x.
-    simplify_eqs.
-    induction l; by nuke_eqs.
+    by simplify_eqs.
   Qed.
-
-  Next Obligation.
-    simplify_eqs.
-    rewrite /FTm.kwkTm.
-    induction l; by nuke_eqs.
-  Qed.
-
 
   Theorem test3 :
     ∀ (l : nat) (A : FTm.t l 0),
       ⟦ l ∣ eq_ty A A ⟧
-      → ⟦ l ∣ eq_ty A (FTm.isect (FTm.kwkTm A)) ⟧.
+      → ⟦ l ∣ eq_ty A (FTm.isect (FTm.map (FTm.weak 1) A)) ⟧.
   Proof.
     move=> l A D ρ.
     simpl.
-    have : (λ κ : CLK, ⟦ FTm.kwkTm A ⟧ κ ∷ ρ) = (fun κ => ⟦A⟧ ρ).
+    have : (λ κ : CLK, ⟦ FTm.map (FTm.weak 1) A ⟧ κ ∷ ρ) = (fun κ => ⟦A⟧ ρ).
     + T.eqcd => κ.
       by [rewrite -interp_clk_wk].
     + move=> Q.
