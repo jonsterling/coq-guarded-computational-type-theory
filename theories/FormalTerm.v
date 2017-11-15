@@ -29,55 +29,62 @@ Module FTm.
   | isect : t (S l) n -> t l n
   | univ : nat -> t l n.
 
+  Arguments unit [l n].
+  Arguments bool [l n].
+  Arguments ax [l n].
+  Arguments tt [l n].
+  Arguments ff [l n].
+  Arguments univ [l n] i.
 
-  Fixpoint liftVar n (x : Fin.t n) : Fin.t (pred n) -> Fin.t n :=
-    match x with
-    | Fin.F1 _ => fun y => Fin.FS y
-    | Fin.FS _ x' => fun y =>
-                    match y in Fin.t n' return Fin.t n' -> (Fin.t (pred n') -> Fin.t n')
-                                             -> Fin.t (S n') with
-                    | Fin.F1 _ => fun x' _ => Fin.F1
-                    | Fin.FS _ y' => fun _ fx' => Fin.FS (fx' y')
-                    end x' (liftVar x')
+  Definition Ren (l1 l2 : nat) : Type :=
+    Fin.t l1 → Fin.t l2.
+
+  Program Definition wkr (l1 l2 : nat) (ρ : Ren l1 l2) : Ren (S l1) (S l2) :=
+    fun x =>
+      match x with
+      | Fin.F1 _ => Fin.F1
+      | Fin.FS _ y => Fin.FS (ρ y)
+      end.
+
+  Program Fixpoint weak (l1 l2 : nat) (x : Fin.t l1) : Fin.t (l1 + l2) :=
+    match l2 with
+    | 0 => x
+    | S n => weak n (Fin.FS x)
     end.
 
-  Fixpoint liftFin n (x : Fin.t n) : Fin.t (pred n) -> Fin.t n :=
-    match x with
-    | Fin.F1 _ => fun y => Fin.FS y
-    | Fin.FS _ x' =>
-      fun y =>
-        match y in Fin.t n' return Fin.t n' -> (Fin.t (pred n') -> Fin.t n') -> Fin.t (S n') with
-        | Fin.F1 _ => fun x' _ => Fin.F1
-        | Fin.FS _ y' => fun _ fx' => Fin.FS (fx' y')
-        end x' (liftFin x')
-    end.
 
-  Fixpoint kliftTm {l n} (e : t l n) (k : Fin.t (S l)) : t (S l) n :=
+  Program Fixpoint map {l1 l2 n} (ρ : Ren l1 l2) (e : t l1 n) : t l2 n :=
     match e with
-    | var _ p => var _ p
-    | fst e => fst (kliftTm e k)
-    | snd e => snd (kliftTm e k)
-    | unit => unit _ _
-    | bool => bool _ _
-    | ax => ax _ _
-    | tt => tt _ _
-    | ff => ff _ _
-    | prod a b => prod (kliftTm a k) (kliftTm b k)
-    | arr a b => arr (kliftTm a k) (kliftTm b k)
-    | pair a b => pair (kliftTm a k) (kliftTm b k)
-    | ltr k' a => ltr (liftVar k k') (kliftTm a k)
-    | isect a => isect (kliftTm a (Fin.FS k))
-    | univ i => univ _ _ i
+    | var i p => @var l2 n i p
+    | fst e => fst (map ρ e)
+    | snd e => snd (map ρ e)
+    | unit => unit
+    | bool => bool
+    | ax => ax
+    | tt => tt
+    | ff => ff
+    | prod A B => prod (map ρ A) (map ρ B)
+    | arr A B => arr (map ρ A) (map ρ B)
+    | pair e1 e2 => pair (map ρ e1) (map ρ e2)
+    | ltr k A => ltr (ρ k) (map ρ A)
+    | isect A => isect (map (wkr ρ) A)
+    | univ i => univ i
     end.
 
-  Definition kwkTm {l n} (e : t l n) : t (S l) n :=
-    kliftTm e Fin.F1.
+  Program Definition kwkTm {l n} (e : t l n) : t (S l) n :=
+    map (weak 1) e.
+  Next Obligation.
+    omega.
+  Defined.
+
 End FTm.
 
 Definition Env := Vector.t CLK.
 
 Reserved Notation "⟦ e ⟧ ρ" (at level 50).
 Notation "κ ∷ ρ" := (Vector.cons _ κ _ ρ) (at level 30).
+
+Print Vector.t.
 
 Fixpoint interp {l n : nat} (e : FTm.t l n) (ρ : Env l) : Tm.t n :=
   match e with
@@ -115,24 +122,26 @@ Module Jdg.
 
   Notation "⟦ n ∣ J ⟧" := (@meaning n J) (at level 50).
 
-  Lemma test :
-    ∀ l n (e : FTm.t l n) (ρ : Env (S l)),
-      ⟦ FTm.isect (FTm.kwkTm (FTm.ltr Fin.F1 (FTm.tt _ n))) ⟧ ρ
-      =
-      Tm.isect (fun κ => Tm.ltr (nth ρ Fin.F1) Tm.tt).
-  Proof.
-    move=> l n e ρ.
-    simpl.
-    auto.
-  Qed.
+  Theorem welp : ∀ n m : nat, S (n + m) = n + S m.
+    move=> n m.
+    induction n; simpl; auto.
+  Defined.
+  Print welp.
 
+  Program Fixpoint insert_at {l} (ρ : Env l) (i : Fin.t l) (κ : CLK) : Env (S l) :=
+    match i with
+    | Fin.F1 _ => κ ∷ ρ
+    | Fin.FS _ j =>
+      match ρ with
+      | nil => _
+      | κ' ∷ ρ' => κ' ∷ insert_at ρ' j κ
+      end
+    end.
 
-  (* This should be true, just a little gnarly to prove. *)
-  Lemma interp_clk_wk :
+  (* TODO *)
+  Axiom interp_clk_wk :
     ∀ l n (e : FTm.t l n) (ρ : Env l) (κ : CLK),
       ⟦ e ⟧ ρ = ⟦ FTm.kwkTm e ⟧ (κ ∷ ρ).
-  Proof.
-  Admitted.
 
 
   Theorem test3 :
@@ -154,6 +163,5 @@ Module Jdg.
       case: D => R [D1 D2].
       eauto.
   Qed.
-
 
 End Jdg.
