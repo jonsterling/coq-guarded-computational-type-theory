@@ -132,24 +132,28 @@ Module Jdg.
   Notation "⟦ n ∣ J ⟧" := (@meaning n J) (at level 50).
 
 
-  (* TODO *)
   Theorem interp_naturality :
     ∀ l1 l2 n (e : FTm.t l1 n) (ρ : FTm.Ren l1 l2) (σ : Env l2),
       ⟦ e ⟧ (fun x => σ (ρ x)) = ⟦ FTm.map ρ e ⟧ σ.
   Proof.
-    move=> l1 l2 n e ρ σ.
+    move=> l1 l2 n e; move: l2.
     induction e; eauto; simpl.
-    + by rewrite -IHe.
-    + by rewrite -IHe.
-    + by rewrite -IHe1 -IHe2.
-    + by rewrite -IHe1 -IHe2.
-    + by rewrite -IHe1 -IHe2.
-    + by rewrite -IHe.
-    + f_equal.
+    + move=> *. by rewrite -IHe.
+    + move=> *. by rewrite -IHe.
+    + move=> *. by rewrite -IHe1 -IHe2.
+    + move=> *. by rewrite -IHe1 -IHe2.
+    + move=> *. by rewrite -IHe1 -IHe2.
+    + move=> *. by rewrite -IHe.
+    + move=> l2 ρ σ.
+      f_equal.
       T.eqcd => κ.
-      admit.
-  Admitted.
-
+      specialize (IHe (S l2) (FTm.wkr ρ) (κ ∷ σ)).
+      rewrite -IHe.
+      f_equal.
+      rewrite /cons.
+      T.eqcd => x.
+      by dependent induction x.
+  Qed.
 
   Program Definition interp_clk_wk :
     ∀ l n (e : FTm.t l n) (σ : Env l) (κ : CLK),
