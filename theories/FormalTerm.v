@@ -2,7 +2,6 @@ From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 Require Import Unicode.Utf8.
-Require Import Coq.Vectors.Vector.
 Require Import Coq.Program.Equality.
 Require Import Coq.omega.Omega.
 From gctt Require Import Terms.
@@ -92,8 +91,6 @@ Program Definition cons {l} (κ : CLK) (σ : Env l) : Env (S l) :=
 
 Reserved Notation "⟦ e ⟧ σ" (at level 50).
 Notation "κ ∷ σ" := (cons κ σ) (at level 30).
-
-Print Vector.t.
 
 Fixpoint interp {l n : nat} (e : FTm.t l n) (σ : Env l) : Tm.t n :=
   match e with
