@@ -81,28 +81,35 @@ Module FTm.
   Defined.
 End FTm.
 
-Definition Env := Vector.t CLK.
+Definition Env l := Fin.t l → CLK.
 
-Reserved Notation "⟦ e ⟧ ρ" (at level 50).
-Notation "κ ∷ ρ" := (Vector.cons _ κ _ ρ) (at level 30).
+Program Definition cons {l} (κ : CLK) (σ : Env l) : Env (S l) :=
+  fun x =>
+    match x with
+    | Fin.F1 _ => κ
+    | Fin.FS _ x => σ x
+    end.
+
+Reserved Notation "⟦ e ⟧ σ" (at level 50).
+Notation "κ ∷ σ" := (cons κ σ) (at level 30).
 
 Print Vector.t.
 
-Fixpoint interp {l n : nat} (e : FTm.t l n) (ρ : Env l) : Tm.t n :=
+Fixpoint interp {l n : nat} (e : FTm.t l n) (σ : Env l) : Tm.t n :=
   match e with
   | FTm.var i p => Tm.var p
-  | FTm.fst e => Tm.fst (⟦e⟧ ρ)
-  | FTm.snd e => Tm.snd (⟦e⟧ ρ)
+  | FTm.fst e => Tm.fst (⟦e⟧ σ)
+  | FTm.snd e => Tm.snd (⟦e⟧ σ)
   | FTm.unit => Tm.unit
   | FTm.bool => Tm.bool
   | FTm.ax => Tm.ax
   | FTm.tt => Tm.tt
   | FTm.ff => Tm.ff
-  | FTm.prod A B => Tm.prod (⟦A⟧ ρ) (⟦B⟧ ρ)
-  | FTm.arr A B => Tm.arr (⟦A⟧ ρ) (⟦B⟧ ρ)
-  | FTm.pair A B => Tm.pair (⟦A⟧ ρ) (⟦B⟧ ρ)
-  | FTm.ltr r A => Tm.ltr (nth ρ r) (⟦A⟧ ρ)
-  | FTm.isect A => Tm.isect (fun κ => ⟦A⟧ (κ ∷ ρ))
+  | FTm.prod A B => Tm.prod (⟦A⟧ σ) (⟦B⟧ σ)
+  | FTm.arr A B => Tm.arr (⟦A⟧ σ) (⟦B⟧ σ)
+  | FTm.pair A B => Tm.pair (⟦A⟧ σ) (⟦B⟧ σ)
+  | FTm.ltr r A => Tm.ltr (σ r) (⟦A⟧ σ)
+  | FTm.isect A => Tm.isect (fun κ => ⟦A⟧ (κ ∷ σ))
   | FTm.univ i => Tm.univ i
   end
 where "⟦ e ⟧ ρ" := (interp e ρ).
@@ -118,26 +125,69 @@ Module Jdg.
   Definition meaning (l : nat) (J : atomic l 0) : Prop :=
     match J with
     | eq_ty A B =>
-      ∀ (ρ : Env l),
-        ⊧ ⟦ A ⟧ ρ ∼ ⟦ B ⟧ ρ
+      ∀ (σ : Env l),
+        ⊧ ⟦ A ⟧ σ ∼ ⟦ B ⟧ σ
     end.
 
   Notation "⟦ n ∣ J ⟧" := (@meaning n J) (at level 50).
 
-  Program Fixpoint insert_at {l} (ρ : Env l) (i : Fin.t l) (κ : CLK) : Env (S l) :=
-    match i with
-    | Fin.F1 _ => κ ∷ ρ
-    | Fin.FS _ j =>
-      match ρ with
-      | nil => _
-      | κ' ∷ ρ' => κ' ∷ insert_at ρ' j κ
-      end
-    end.
 
   (* TODO *)
-  Axiom interp_clk_wk :
-    ∀ l n (e : FTm.t l n) (ρ : Env l) (κ : CLK),
-      ⟦ e ⟧ ρ = ⟦ FTm.kwkTm e ⟧ (κ ∷ ρ).
+  Theorem interp_naturality :
+    ∀ l1 l2 n (e : FTm.t l1 n) (ρ : FTm.Ren l1 l2) (σ : Env l2),
+      ⟦ e ⟧ (fun x => σ (ρ x)) = ⟦ FTm.map ρ e ⟧ σ.
+  Proof.
+    move=> l1 l2 n e ρ σ.
+    induction e; eauto; simpl.
+    + by rewrite -IHe.
+    + by rewrite -IHe.
+    + by rewrite -IHe1 -IHe2.
+    + by rewrite -IHe1 -IHe2.
+    + by rewrite -IHe1 -IHe2.
+    + by rewrite -IHe.
+    + f_equal.
+      T.eqcd => κ.
+      admit.
+  Admitted.
+
+
+  Program Definition interp_clk_wk :
+    ∀ l n (e : FTm.t l n) (σ : Env l) (κ : CLK),
+      ⟦ e ⟧ σ = ⟦ FTm.kwkTm e ⟧ (κ ∷ σ) :=
+    fun l n e σ κ => @interp_naturality l (S l) n e (FTm.weak 1) (κ ∷ σ).
+  Next Obligation.
+    omega.
+  Defined.
+  Next Obligation.
+    f_equal.
+    T.eqcd => x.
+    simplify_eqs.
+    induction l.
+    + by simplify_eqs.
+    + simplify_eqs.
+      simpl in *.
+      induction eqH1.
+      simplify_eqs.
+      induction eqH0.
+      simplify_eqs.
+      auto.
+  Qed.
+  Next Obligation.
+    simplify_eqs.
+    induction l.
+    + simplify_eqs.
+      simpl in *.
+      simpl.
+      unfold FTm.kwkTm.
+      by simplify_eqs.
+    + unfold FTm.kwkTm.
+      simplify_eqs.
+      induction eqH1.
+      simpl in *.
+      induction eqH0.
+      by simplify_eqs.
+  Qed.
+
 
 
   Theorem test3 :
