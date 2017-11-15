@@ -46,10 +46,10 @@ Module FTm.
       | Fin.FS _ y => Fin.FS (ρ y)
       end.
 
-  Program Fixpoint weak (l1 l2 : nat) (x : Fin.t l1) : Fin.t (l1 + l2) :=
+  Program Fixpoint weak (l1 l2 : nat) : Ren l1 (l1 + l2) :=
     match l2 with
-    | 0 => x
-    | S n => weak n (Fin.FS x)
+    | 0 => fun x => x
+    | S n => fun x => weak n (Fin.FS x)
     end.
 
 
@@ -74,9 +74,11 @@ Module FTm.
   Program Definition kwkTm {l n} (e : t l n) : t (S l) n :=
     map (weak 1) e.
   Next Obligation.
-    omega.
+    generalize l.
+    move; elim; first by auto.
+    move=> ? IH.
+    by rewrite -{2} IH.
   Defined.
-
 End FTm.
 
 Definition Env := Vector.t CLK.
@@ -121,12 +123,6 @@ Module Jdg.
     end.
 
   Notation "⟦ n ∣ J ⟧" := (@meaning n J) (at level 50).
-
-  Theorem welp : ∀ n m : nat, S (n + m) = n + S m.
-    move=> n m.
-    induction n; simpl; auto.
-  Defined.
-  Print welp.
 
   Program Fixpoint insert_at {l} (ρ : Env l) (i : Fin.t l) (κ : CLK) : Env (S l) :=
     match i with
