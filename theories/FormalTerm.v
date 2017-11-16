@@ -4,7 +4,8 @@ Set Bullet Behavior "Strict Subproofs".
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
-Require Import Coq.omega.Omega.
+Require Import Coq.Program.Basics.
+
 From gctt Require Import Terms.
 From gctt Require Import Axioms.
 From gctt Require Import GCTT.
@@ -126,10 +127,11 @@ Module Jdg.
       | x : _ |- _ => rewrite -x
       end.
 
+  Local Open Scope program_scope.
 
   Theorem interp_naturality :
     ∀ l1 l2 n (e : FTm.t l1 n) (ρ : FTm.Ren l1 l2) (σ : Env l2),
-      ⟦ e ⟧ (fun x => σ (ρ x)) = ⟦ FTm.map ρ e ⟧ σ.
+      ⟦ e ⟧ σ ∘ ρ = ⟦ FTm.map ρ e ⟧ σ.
   Proof.
     move=> l1 l2 n e; move: l2.
     elim e => *; eauto; simpl;
@@ -148,23 +150,21 @@ Module Jdg.
     by simplify_eqs.
   Qed.
 
+  Ltac rewrite_ :=
+    let x := fresh in
+    move=> x; rewrite x; clear x.
+
   Theorem test3 :
     ∀ (l : nat) (A : FTm.t l 0),
       ⟦ l ∣ eq_ty A A ⟧
       → ⟦ l ∣ eq_ty A (FTm.isect (FTm.map (FTm.weak 1) A)) ⟧.
   Proof.
-    move=> l A D ρ.
-    simpl.
+    move=> l A D ρ //=.
     have : (λ κ : CLK, ⟦ FTm.map (FTm.weak 1) A ⟧ κ ∷ ρ) = (fun κ => ⟦A⟧ ρ).
-    + T.eqcd => κ.
+    + T.eqcd => *.
       by [rewrite -interp_clk_wk].
-    + move=> Q.
-      rewrite Q.
-      simpl.
-      apply: ClosedRules.isect_irrelevance.
-      simpl in D.
-      specialize (D ρ).
-      case: D => R [D1 D2].
+    + rewrite_; apply: ClosedRules.isect_irrelevance.
+      case: (D ρ) => ? [? ?];
       eauto.
   Qed.
 
