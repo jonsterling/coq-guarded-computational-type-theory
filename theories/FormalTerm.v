@@ -120,27 +120,25 @@ Module Jdg.
   Notation "⟦ n ∣ J ⟧" := (@meaning n J) (at level 50).
 
 
+  Ltac rewrite_all_hyps :=
+    repeat
+      match goal with
+      | x : _ |- _ => rewrite -x
+      end.
+
+
   Theorem interp_naturality :
     ∀ l1 l2 n (e : FTm.t l1 n) (ρ : FTm.Ren l1 l2) (σ : Env l2),
       ⟦ e ⟧ (fun x => σ (ρ x)) = ⟦ FTm.map ρ e ⟧ σ.
   Proof.
     move=> l1 l2 n e; move: l2.
-    induction e; eauto; simpl.
-    + move=> *. by rewrite -IHe.
-    + move=> *. by rewrite -IHe.
-    + move=> *. by rewrite -IHe1 -IHe2.
-    + move=> *. by rewrite -IHe1 -IHe2.
-    + move=> *. by rewrite -IHe1 -IHe2.
-    + move=> *. by rewrite -IHe.
-    + move=> l2 ρ σ.
-      f_equal.
-      T.eqcd => κ.
-      specialize (IHe (S l2) (FTm.wkr ρ) (κ ∷ σ)).
-      rewrite -IHe.
-      f_equal.
-      rewrite /cons.
-      T.eqcd => x.
-      by dependent induction x.
+    elim e => *; eauto; simpl;
+    try by [rewrite_all_hyps].
+
+    + f_equal; T.eqcd => κ.
+      rewrite_all_hyps.
+      f_equal; T.eqcd => i; rewrite /cons.
+      by dependent induction i.
   Qed.
 
   Program Definition interp_clk_wk l n (e : FTm.t l n) (σ : Env l) (κ : CLK) :
