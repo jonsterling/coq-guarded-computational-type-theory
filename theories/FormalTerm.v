@@ -104,6 +104,7 @@ Fixpoint interp {l n : nat} (e : FTm.t l n) (σ : Env l) : Tm.t n :=
 where "⟦ e ⟧ ρ" := (interp e ρ).
 
 Module Jdg.
+  (* TODO: replace with open judgments *)
   Inductive atomic l n :=
   | eq_ty : FTm.t l n → FTm.t l n → atomic l n.
 
@@ -137,9 +138,9 @@ Module Jdg.
     elim e => *; eauto; simpl;
     try by [rewrite_all_hyps].
 
-    + f_equal; T.eqcd => κ.
+    + f_equal; T.eqcd => ?.
       rewrite_all_hyps.
-      f_equal; T.eqcd => i; rewrite /cons.
+      f_equal; T.eqcd => i.
       by dependent induction i.
   Qed.
 
