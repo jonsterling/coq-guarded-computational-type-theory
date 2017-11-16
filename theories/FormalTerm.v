@@ -150,10 +150,6 @@ Module Jdg.
     by simplify_eqs.
   Qed.
 
-  Ltac rewrite_ :=
-    let x := fresh in
-    move=> x; rewrite x; clear x.
-
   Theorem test3 :
     ∀ (l : nat) (A : FTm.t l 0),
       ⟦ l ∣ eq_ty A A ⟧
@@ -163,7 +159,7 @@ Module Jdg.
     have : (λ κ : CLK, ⟦ FTm.map (FTm.weak 1) A ⟧ κ ∷ ρ) = (fun κ => ⟦A⟧ ρ).
     + T.eqcd => *.
       by [rewrite -interp_clk_wk].
-    + rewrite_; apply: ClosedRules.isect_irrelevance.
+    + T.rewrite_; apply: ClosedRules.isect_irrelevance.
       case: (D ρ) => ? [? ?];
       eauto.
   Qed.
