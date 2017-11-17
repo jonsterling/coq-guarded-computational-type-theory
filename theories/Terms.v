@@ -1,11 +1,12 @@
 From gctt Require Import Axioms.
 Require Import Unicode.Utf8.
+Require Import Fin.
 
 Set Implicit Arguments.
 
 Module Tm.
   Inductive t (n : nat) :=
-  | var : forall i, i < n -> t n
+  | var : Fin.t n -> t n
   | fst : t n -> t n
   | snd : t n → t n
   | unit : t n

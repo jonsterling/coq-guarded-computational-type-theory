@@ -15,7 +15,7 @@ Set Implicit Arguments.
 
 Module FTm.
   Inductive t (l n : nat) :=
-  | var : forall i, i < n -> t l n
+  | var : Fin.t n -> t l n
   | fst : t l n -> t l n
   | snd : t l n → t l n
   | unit : t l n
@@ -55,7 +55,7 @@ Module FTm.
 
   Program Fixpoint map {l1 l2 n} (ρ : Ren l1 l2) (e : t l1 n) : t l2 n :=
     match e with
-    | var i p => @var l2 n i p
+    | var i => var _ i
     | fst e => fst (map ρ e)
     | snd e => snd (map ρ e)
     | unit => unit
@@ -86,7 +86,7 @@ Notation "κ ∷ σ" := (cons κ σ) (at level 30).
 
 Fixpoint interp {l n : nat} (e : FTm.t l n) (σ : Env l) : Tm.t n :=
   match e with
-  | FTm.var i p => Tm.var p
+  | FTm.var i => Tm.var i
   | FTm.fst e => Tm.fst (⟦e⟧ σ)
   | FTm.snd e => Tm.snd (⟦e⟧ σ)
   | FTm.unit => Tm.unit
