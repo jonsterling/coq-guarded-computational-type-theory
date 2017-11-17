@@ -103,12 +103,40 @@ Fixpoint interp {l n : nat} (e : FTm.t l n) (σ : Env l) : Tm.t n :=
   end
 where "⟦ e ⟧ ρ" := (interp e ρ).
 
+
+Ltac rewrite_all_hyps :=
+  repeat
+    match goal with
+    | x : _ |- _ => rewrite -x
+    end.
+
+Local Open Scope program_scope.
+
+Theorem interp_naturality :
+  ∀ l1 l2 n (e : FTm.t l1 n) (ρ : FTm.Ren l1 l2) (σ : Env l2),
+    ⟦ e ⟧ σ ∘ ρ = ⟦ FTm.map ρ e ⟧ σ.
+Proof.
+  move=> l1 l2 n e; move: l2.
+  elim e => *; eauto; simpl; try by [rewrite_all_hyps].
+  + f_equal; T.eqcd => ?.
+    rewrite_all_hyps.
+    f_equal; T.eqcd => i.
+    by dependent induction i.
+Qed.
+
+Program Definition interp_clk_wk l n (e : FTm.t l n) (σ : Env l) (κ : CLK) :
+  ⟦ e ⟧ σ = ⟦ FTm.map (FTm.weak 1) e ⟧ (κ ∷ σ)
+  := interp_naturality e (FTm.weak 1) (κ ∷ σ).
+Next Obligation.
+  by simplify_eqs.
+Qed.
+
+
 Module Jdg.
   (* TODO: replace with open judgments *)
   Inductive atomic l n :=
   | eq_ty : FTm.t l n → FTm.t l n → atomic l n.
 
-  Reserved Notation "J⟦ J ⟧" (at level 50).
 
   Import Univ.
 
@@ -119,37 +147,8 @@ Module Jdg.
         ⊧ ⟦ A ⟧ σ ∼ ⟦ B ⟧ σ
     end.
 
+
   Notation "⟦ n ∣ J ⟧" := (@meaning n J) (at level 50).
-
-
-  Ltac rewrite_all_hyps :=
-    repeat
-      match goal with
-      | x : _ |- _ => rewrite -x
-      end.
-
-  Local Open Scope program_scope.
-
-  Theorem interp_naturality :
-    ∀ l1 l2 n (e : FTm.t l1 n) (ρ : FTm.Ren l1 l2) (σ : Env l2),
-      ⟦ e ⟧ σ ∘ ρ = ⟦ FTm.map ρ e ⟧ σ.
-  Proof.
-    move=> l1 l2 n e; move: l2.
-    elim e => *; eauto; simpl;
-    try by [rewrite_all_hyps].
-
-    + f_equal; T.eqcd => ?.
-      rewrite_all_hyps.
-      f_equal; T.eqcd => i.
-      by dependent induction i.
-  Qed.
-
-  Program Definition interp_clk_wk l n (e : FTm.t l n) (σ : Env l) (κ : CLK) :
-    ⟦ e ⟧ σ = ⟦ FTm.map (FTm.weak 1) e ⟧ (κ ∷ σ)
-    := interp_naturality e (FTm.weak 1) (κ ∷ σ).
-  Next Obligation.
-    by simplify_eqs.
-  Qed.
 
   Theorem test3 :
     ∀ (l : nat) (A : FTm.t l 0),
