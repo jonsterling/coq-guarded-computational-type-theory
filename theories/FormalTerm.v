@@ -156,12 +156,12 @@ Module Jdg.
       ⟦ l ∣ eq_ty A A ⟧
       → ⟦ l ∣ eq_ty A (FTm.isect (FTm.map (FTm.weak 1) A)) ⟧.
   Proof.
-    move=> l A D ρ //=.
-    have : (λ κ : CLK, ⟦ FTm.map (FTm.weak 1) A ⟧ κ ∷ ρ) = (fun κ => ⟦A⟧ ρ).
+    move=> l A D σ //=.
+    have : (λ κ : CLK, ⟦ FTm.map (FTm.weak 1) A ⟧ κ ∷ σ) = (fun κ => ⟦A⟧ σ).
     + T.eqcd => *.
       by [rewrite -interp_clk_wk].
     + T.rewrite_; apply: ClosedRules.isect_irrelevance.
-      case: (D ρ) => ? [? ?];
+      case: (D σ) => ? [? ?];
       eauto.
   Qed.
 
