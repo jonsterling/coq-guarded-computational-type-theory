@@ -61,6 +61,7 @@ Definition seq_eq_mem {Ψ} τ Γ (A e1 e2 : Tm.t Ψ) :=
 
 Notation "τ ⊧ Γ ≫ A ∋ e1 ∼ e2" := (seq_eq_mem τ Γ A e1 e2) (at level 10).
 
+(* The following are versions of the sequent judgments that impose presuppositions. *)
 Definition full_seq_eq_ty {Ψ} τ Γ (A B : Tm.t Ψ) `{τ ⊧ Γ ctx} :=
   τ ⊧ Γ ≫ A ∼ B.
 
