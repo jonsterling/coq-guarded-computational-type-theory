@@ -9,4 +9,5 @@ theories/Term.v
 theories/FormalTerm.v
 theories/Closure.v
 theories/Tower.v
+theories/Sequent.v
 theories/GCTT.v
