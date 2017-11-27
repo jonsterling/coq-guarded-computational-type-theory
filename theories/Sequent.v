@@ -32,7 +32,7 @@ Program Fixpoint atomic_eq_env {Ψ} τ Γ (γ1 γ2 : Tm.Sub.t Ψ 0) : Prop :=
   | ⋄ => True
   | Γ ; A =>
     τ ⊧ Γ ∋⋆ (γ1 ∘ Fin.FS) ∼ (γ2 ∘ Fin.FS)
-    ∧ τ ⊧ (Tm.subst (γ1 ∘ Fin.FS) A) ∼ (Tm.subst (γ2 ∘ Fin.FS) A)
+    ∧ τ ⊧ (A ⫽ (γ1 ∘ Fin.FS)) ∼ (A ⫽ (γ2 ∘ Fin.FS))
   end
 where "τ ⊧ Γ ∋⋆ γ1 ∼ γ2" := (atomic_eq_env τ Γ γ1 γ2).
 
@@ -50,14 +50,14 @@ with
 seq_eq_ty {Ψ} τ Γ (A B : Tm.t Ψ) : Prop :=
   ∀ γ1 γ2,
     τ ⊧ Γ ∋⋆ γ1 ∼ γ2
-    → τ ⊧ (Tm.subst γ1 A) ∼ (Tm.subst γ2 B)
+    → τ ⊧ (A ⫽ γ1) ∼ (B ⫽ γ2)
 where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ)
 and "τ ⊧ Γ ≫ A ∼ B" := (seq_eq_ty τ Γ A B).
 
 Definition seq_eq_mem {Ψ} τ Γ (A e1 e2 : Tm.t Ψ) :=
   ∀ γ1 γ2,
     τ ⊧ Γ ∋⋆ γ1 ∼ γ2
-    → τ ⊧ (Tm.subst γ1 A) ∋ (Tm.subst γ1 e1) ∼ (Tm.subst γ2 e2).
+    → τ ⊧ (A ⫽ γ1) ∋ (e1 ⫽ γ1) ∼ (e2 ⫽ γ2).
 
 Notation "τ ⊧ Γ ≫ A ∋ e1 ∼ e2" := (seq_eq_mem τ Γ A e1 e2) (at level 10).
 

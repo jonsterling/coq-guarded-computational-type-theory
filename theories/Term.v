@@ -56,9 +56,9 @@ Module Tm.
 
   Definition map {Ψ1 Ψ2} (ρ : Ren.t Ψ1 Ψ2) : t Ψ1 → t Ψ2 :=
     subst (Sub.ren ρ).
-
 End Tm.
 
+Notation "e ⫽ σ" := (Tm.subst σ e) (at level 20, left associativity).
 
 Reserved Notation "e 'val'" (at level 50).
 Reserved Notation "e ⇓ e'" (at level 50).
