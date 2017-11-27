@@ -103,6 +103,7 @@ endif
 ######################
 
 VFILES:=theories/Tactic.v\
+  theories/Var.v\
   theories/Matrix.v\
   theories/OrderTheory.v\
   theories/Axioms.v\

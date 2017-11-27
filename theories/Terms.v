@@ -1,32 +1,32 @@
 From gctt Require Import Axioms.
+From gctt Require Import Var.
 Require Import Unicode.Utf8.
-Require Import Fin.
 
 Set Implicit Arguments.
 
 Module Tm.
-  Inductive t (n : nat) :=
-  | var : Fin.t n -> t n
-  | fst : t n -> t n
-  | snd : t n → t n
-  | unit : t n
-  | bool : t n
-  | ax : t n
-  | tt : t n
-  | ff : t n
-  | prod : t n -> t n -> t n
-  | arr : t n -> t n -> t n
-  | pair : t n -> t n -> t n
-  | ltr : CLK -> t n -> t n
-  | isect : (CLK -> t n) -> t n
-  | univ : nat -> t n.
+  Inductive t (Ψ : nat) :=
+  | var : Var Ψ -> t Ψ
+  | fst : t Ψ -> t Ψ
+  | snd : t Ψ → t Ψ
+  | unit : t Ψ
+  | bool : t Ψ
+  | ax : t Ψ
+  | tt : t Ψ
+  | ff : t Ψ
+  | prod : t Ψ -> t Ψ -> t Ψ
+  | arr : t Ψ -> t Ψ -> t Ψ
+  | pair : t Ψ -> t Ψ -> t Ψ
+  | ltr : CLK -> t Ψ -> t Ψ
+  | isect : (CLK -> t Ψ) -> t Ψ
+  | univ : nat -> t Ψ.
 
-  Arguments unit [n].
-  Arguments bool [n].
-  Arguments ax [n].
-  Arguments tt [n].
-  Arguments ff [n].
-  Arguments univ [n] i.
+  Arguments unit [Ψ].
+  Arguments bool [Ψ].
+  Arguments ax [Ψ].
+  Arguments tt [Ψ].
+  Arguments ff [Ψ].
+  Arguments univ [Ψ] i.
 End Tm.
 
 

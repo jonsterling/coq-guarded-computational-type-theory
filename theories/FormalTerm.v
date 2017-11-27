@@ -9,72 +9,60 @@ Require Import Coq.Program.Basics.
 From gctt Require Import Terms.
 From gctt Require Import Axioms.
 From gctt Require Import GCTT.
+From gctt Require Import Var.
 
 
 Set Implicit Arguments.
 
 Module FTm.
-  Inductive t (l n : nat) :=
-  | var : Fin.t n -> t l n
-  | fst : t l n -> t l n
-  | snd : t l n → t l n
-  | unit : t l n
-  | bool : t l n
-  | ax : t l n
-  | tt : t l n
-  | ff : t l n
-  | prod : t l n -> t l n -> t l n
-  | arr : t l n -> t l n -> t l n
-  | pair : t l n -> t l n -> t l n
-  | ltr : Fin.t l → t l n -> t l n
-  | isect : t (S l) n -> t l n
-  | univ : nat -> t l n.
+  Inductive t (Λ Ψ : nat) :=
+  | var : Var Ψ -> t Λ Ψ
+  | fst : t Λ Ψ -> t Λ Ψ
+  | snd : t Λ Ψ → t Λ Ψ
+  | unit : t Λ Ψ
+  | bool : t Λ Ψ
+  | ax : t Λ Ψ
+  | tt : t Λ Ψ
+  | ff : t Λ Ψ
+  | prod : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
+  | arr : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
+  | pair : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
+  | ltr : Var Λ → t Λ Ψ -> t Λ Ψ
+  | isect : t (S Λ) Ψ -> t Λ Ψ
+  | univ : nat -> t Λ Ψ.
 
-  Arguments unit [l n].
-  Arguments bool [l n].
-  Arguments ax [l n].
-  Arguments tt [l n].
-  Arguments ff [l n].
-  Arguments univ [l n] i.
+  Arguments unit [Λ Ψ].
+  Arguments bool [Λ Ψ].
+  Arguments ax [Λ Ψ].
+  Arguments tt [Λ Ψ].
+  Arguments ff [Λ Ψ].
+  Arguments univ [Λ Ψ] i.
 
-  Definition Ren (l1 l2 : nat) : Type :=
-    Fin.t l1 → Fin.t l2.
-
-  Program Definition wkr (l1 l2 : nat) (ρ : Ren l1 l2) : Ren (S l1) (S l2) :=
-    fun x =>
-      match x with
-      | Fin.F1 _ => Fin.F1
-      | Fin.FS _ y => Fin.FS (ρ y)
-      end.
-
-  Program Fixpoint weak (l1 l2 : nat) : Ren l1 (l2 + l1) :=
-    match l2 with
-    | 0 => fun x => x
-    | S n => fun x => weak n (Fin.FS x)
-    end.
-
-  Program Fixpoint map {l1 l2 n} (ρ : Ren l1 l2) (e : t l1 n) : t l2 n :=
+  Program Fixpoint map {Λ1 Λ2 Ψ1 Ψ2} (ρΛ : Ren.t Λ1 Λ2) (ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
     match e with
-    | var i => var _ i
-    | fst e => fst (map ρ e)
-    | snd e => snd (map ρ e)
+    | var i => var _ (ρΨ i)
+    | fst e => fst (map ρΛ ρΨ e)
+    | snd e => snd (map ρΛ ρΨ e)
     | unit => unit
     | bool => bool
     | ax => ax
     | tt => tt
     | ff => ff
-    | prod A B => prod (map ρ A) (map ρ B)
-    | arr A B => arr (map ρ A) (map ρ B)
-    | pair e1 e2 => pair (map ρ e1) (map ρ e2)
-    | ltr k A => ltr (ρ k) (map ρ A)
-    | isect A => isect (map (wkr ρ) A)
+    | prod A B => prod (map ρΛ ρΨ A) (map ρΛ ρΨ B)
+    | arr A B => arr (map ρΛ ρΨ A) (map ρΛ ρΨ B)
+    | pair e1 e2 => pair (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
+    | ltr k A => ltr (ρΛ k) (map ρΛ ρΨ A)
+    | isect A => isect (map (Ren.cong ρΛ) ρΨ A)
     | univ i => univ i
     end.
+
+  Definition mapk {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) : t Λ1 Ψ → t Λ2 Ψ :=
+    map ρ (fun x => x).
 End FTm.
 
-Definition Env l := Fin.t l → CLK.
+Definition Env Λ := Var Λ → CLK.
 
-Program Definition cons {l} (κ : CLK) (σ : Env l) : Env (S l) :=
+Program Definition cons {Λ} (κ : CLK) (σ : Env Λ) : Env (S Λ) :=
   fun x =>
     match x with
     | Fin.F1 _ => κ
@@ -84,7 +72,7 @@ Program Definition cons {l} (κ : CLK) (σ : Env l) : Env (S l) :=
 Reserved Notation "⟦ e ⟧ σ" (at level 50).
 Notation "κ ∷ σ" := (cons κ σ) (at level 30).
 
-Fixpoint interp {l n : nat} (e : FTm.t l n) (σ : Env l) : Tm.t n :=
+Fixpoint interp {Λ Ψ} (e : FTm.t Λ Ψ) (σ : Env Λ) : Tm.t Ψ :=
   match e with
   | FTm.var i => Tm.var i
   | FTm.fst e => Tm.fst (⟦e⟧ σ)
@@ -113,10 +101,10 @@ Ltac rewrite_all_hyps :=
 Local Open Scope program_scope.
 
 Theorem interp_naturality :
-  ∀ l1 l2 n (e : FTm.t l1 n) (ρ : FTm.Ren l1 l2) (σ : Env l2),
-    ⟦ e ⟧ σ ∘ ρ = ⟦ FTm.map ρ e ⟧ σ.
+  ∀ Λ1 Λ2 Ψ (e : FTm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (σ : Env Λ2),
+    ⟦ e ⟧ σ ∘ ρ = ⟦ FTm.mapk ρ e ⟧ σ.
 Proof.
-  move=> l1 l2 n e; move: l2.
+  move=> Λ1 Λ2 Ψ e; move: Λ2.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
   + f_equal; T.eqcd => ?.
     rewrite_all_hyps.
@@ -124,9 +112,9 @@ Proof.
     by dependent induction i.
 Qed.
 
-Program Definition interp_clk_wk l n (e : FTm.t l n) (σ : Env l) (κ : CLK) :
-  ⟦ e ⟧ σ = ⟦ FTm.map (FTm.weak 1) e ⟧ (κ ∷ σ)
-  := interp_naturality e (FTm.weak 1) (κ ∷ σ).
+Program Definition interp_clk_wk Λ Ψ (e : FTm.t Λ Ψ) (σ : Env Λ) (κ : CLK) :
+  ⟦ e ⟧ σ = ⟦ FTm.mapk (Ren.weak 1) e ⟧ (κ ∷ σ)
+  := interp_naturality e (Ren.weak 1) (κ ∷ σ).
 Next Obligation.
   by simplify_eqs.
 Qed.
@@ -134,29 +122,29 @@ Qed.
 
 Module Jdg.
   (* TODO: replace with open judgments *)
-  Inductive atomic l n :=
-  | eq_ty : FTm.t l n → FTm.t l n → atomic l n.
+  Inductive atomic Λ Ψ :=
+  | eq_ty : FTm.t Λ Ψ → FTm.t Λ Ψ → atomic Λ Ψ.
 
 
   Import Univ.
 
-  Definition meaning (l : nat) (J : atomic l 0) : Prop :=
+  Definition meaning (Λ : nat) (J : atomic Λ 0) : Prop :=
     match J with
     | eq_ty A B =>
-      ∀ (σ : Env l),
+      ∀ (σ : Env Λ),
         ⊧ ⟦ A ⟧ σ ∼ ⟦ B ⟧ σ
     end.
 
 
-  Notation "⟦ n ∣ J ⟧" := (@meaning n J) (at level 50).
+  Notation "⟦ Λ ∣ J ⟧" := (@meaning Λ J) (at level 50).
 
   Theorem test3 :
-    ∀ (l : nat) (A : FTm.t l 0),
-      ⟦ l ∣ eq_ty A A ⟧
-      → ⟦ l ∣ eq_ty A (FTm.isect (FTm.map (FTm.weak 1) A)) ⟧.
+    ∀ (Λ : nat) (A : FTm.t Λ 0),
+      ⟦ Λ ∣ eq_ty A A ⟧
+      → ⟦ Λ ∣ eq_ty A (FTm.isect (FTm.mapk (Ren.weak 1) A)) ⟧.
   Proof.
-    move=> l A D σ //=.
-    have : (λ κ : CLK, ⟦ FTm.map (FTm.weak 1) A ⟧ κ ∷ σ) = (fun κ => ⟦A⟧ σ).
+    move=> Λ A D σ //=.
+    have : (λ κ : CLK, ⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ σ) = (fun κ => ⟦A⟧ σ).
     + T.eqcd => *.
       by [rewrite -interp_clk_wk].
     + T.rewrite_; apply: ClosedRules.isect_irrelevance.
