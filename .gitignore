@@ -2,6 +2,8 @@
 .#*
 *~
 
+html/
+
 ### https://raw.github.com/github/gitignore/1a92ca87b787b6a0c68eb10371ebd0bfd823db9b/Coq.gitignore
 
 .*.aux
