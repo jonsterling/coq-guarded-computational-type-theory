@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8.
 
-From gctt Require Import Terms.
+From gctt Require Import Term.
 
 
 (* A behavior is a binary relations on terms; later we will show this to be symmetric

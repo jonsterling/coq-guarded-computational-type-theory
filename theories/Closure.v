@@ -8,7 +8,7 @@ From mathcomp Require Import ssreflect.
 From gctt Require Import OrderTheory.
 From gctt Require Matrix.
 From gctt Require Import Axioms.
-From gctt Require Import Terms.
+From gctt Require Import Term.
 
 
 Set Bullet Behavior "Strict Subproofs".

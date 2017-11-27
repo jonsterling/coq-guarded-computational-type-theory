@@ -4,7 +4,7 @@ Require Import Coq.Logic.FunctionalExtensionality.
 
 From mathcomp Require Import ssreflect.
 From gctt Require Import Axioms.
-From gctt Require Import Terms.
+From gctt Require Import Term.
 
 
 Local Ltac mysplit :=

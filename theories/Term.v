@@ -5,7 +5,7 @@ Require Import Unicode.Utf8.
 Set Implicit Arguments.
 
 Module Tm.
-  Inductive t (Ψ : nat) :=
+  Inductive t (Ψ : Ctx) :=
   | var : Var Ψ -> t Ψ
   | fst : t Ψ -> t Ψ
   | snd : t Ψ → t Ψ

@@ -7,7 +7,7 @@ Set Bullet Behavior "Strict Subproofs".
 From gctt Require Import OrderTheory.
 From gctt Require Matrix.
 From gctt Require Import Axioms.
-From gctt Require Import Terms.
+From gctt Require Import Term.
 From gctt Require Import Closure.
 From gctt Require Import Tower.
 

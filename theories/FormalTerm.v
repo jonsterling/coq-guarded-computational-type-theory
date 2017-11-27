@@ -6,7 +6,7 @@ Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Coq.Program.Basics.
 
-From gctt Require Import Terms.
+From gctt Require Import Term.
 From gctt Require Import Axioms.
 From gctt Require Import GCTT.
 From gctt Require Import Var.

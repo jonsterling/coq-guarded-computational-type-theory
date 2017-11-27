@@ -107,7 +107,7 @@ VFILES:=theories/Tactic.v\
   theories/Matrix.v\
   theories/OrderTheory.v\
   theories/Axioms.v\
-  theories/Terms.v\
+  theories/Term.v\
   theories/FormalTerm.v\
   theories/Closure.v\
   theories/Tower.v\
