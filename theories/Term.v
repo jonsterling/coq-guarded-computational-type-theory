@@ -27,6 +27,36 @@ Module Tm.
   Arguments tt [Ψ].
   Arguments ff [Ψ].
   Arguments univ [Ψ] i.
+
+  Module Sub.
+    Definition t (Ψ1 Ψ2 : Ctx) := Var Ψ1 → t Ψ2.
+
+    Definition ren {Ψ1 Ψ2} (ρ : Ren.t Ψ1 Ψ2) : t Ψ1 Ψ2 :=
+      fun x =>
+        var (ρ x).
+  End Sub.
+
+  Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
+    match e with
+    | var i => σ i
+    | fst e => fst (subst σ e)
+    | snd e => snd (subst σ e)
+    | unit => unit
+    | bool => bool
+    | ax => ax
+    | tt => tt
+    | ff => ff
+    | prod A B => prod (subst σ A) (subst σ B)
+    | arr A B => arr (subst σ A) (subst σ B)
+    | pair e1 e2 => pair (subst σ e1) (subst σ e2)
+    | ltr κ A => ltr κ (subst σ A)
+    | isect A => isect (fun κ => subst σ (A κ))
+    | univ i => univ i
+    end.
+
+  Definition map {Ψ1 Ψ2} (ρ : Ren.t Ψ1 Ψ2) : t Ψ1 → t Ψ2 :=
+    subst (Sub.ren ρ).
+
 End Tm.
 
 
