@@ -63,7 +63,7 @@ Module FTm.
     end.
 
   Definition mapk {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) : t Λ1 Ψ → t Λ2 Ψ :=
-    map ρ (fun x => x).
+    map ρ (λ x, x).
 End FTm.
 
 Module FCtx.
@@ -93,7 +93,7 @@ Module Env.
   Definition t Λ := Var Λ → CLK.
 
   Program Definition cons {Λ} (κ : CLK) (σ : t Λ) : t (S Λ) :=
-    fun x =>
+    λ x,
       match x with
       | Fin.F1 _ => κ
       | Fin.FS _ x => σ x
@@ -119,7 +119,7 @@ Fixpoint interp_tm {Λ Ψ} (e : FTm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   | FTm.arr A B => Tm.arr (T⟦A⟧ κs) (T⟦B⟧ κs)
   | FTm.pair A B => Tm.pair (T⟦A⟧ κs) (T⟦B⟧ κs)
   | FTm.ltr r A => Tm.ltr (κs r) (T⟦A⟧ κs)
-  | FTm.isect A => Tm.isect (fun κ => T⟦A⟧ (κ ∷ κs))
+  | FTm.isect A => Tm.isect (λ κ, T⟦A⟧ (κ ∷ κs))
   | FTm.univ i => Tm.univ i
   end
 where "T⟦ e ⟧ κs" := (interp_tm e κs).
@@ -180,7 +180,7 @@ Proof.
   move=> Λ Ψ Γ A D κs Γctx; rewrite unfold_seq_eq_ty => γ0 γ1 γ01;
   specialize (D κs); rewrite unfold_seq_eq_ty in D; specialize (D Γctx γ0 γ1 γ01).
 
-  have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (fun κ => (T⟦A⟧ κs) ⫽ γ1).
+  have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
   + T.eqcd => *.
     by rewrite -interp_clk_wk.
   + simplify_eqs; T.rewrite_;
