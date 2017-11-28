@@ -170,8 +170,8 @@ Theorem open_clock_irrelevance :
     J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
     → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ FTm.isect (FTm.mapk (Ren.weak 1) A) ⌋ ⟧.
 Proof.
-  move=> Λ Ψ Γ A D κs Γctx; rewrite unfold_seq_eq_ty => γ0 γ1 γ01;
-  specialize (D κs); rewrite unfold_seq_eq_ty in D; specialize (D Γctx γ0 γ1 γ01).
+  move=> Λ Ψ Γ A D κs Γctx γ0 γ1 γ01;
+  specialize (D κs Γctx γ0 γ1 γ01).
 
   have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
   + T.eqcd => *.

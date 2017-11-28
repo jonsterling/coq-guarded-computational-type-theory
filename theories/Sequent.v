@@ -40,29 +40,26 @@ Program Fixpoint atomic_eq_env {Ψ} τ Γ (γ1 γ2 : Tm.Sub.t Ψ 0) : Prop :=
 where "τ ⊧ Γ ∋⋆ γ1 ∼ γ2" := (atomic_eq_env τ Γ γ1 γ2).
 
 
-Reserved Notation "τ ⊧ Γ 'ctx'" (at level 10).
-Reserved Notation "τ ⊧ Γ ≫ A ∼ B" (at level 10).
-
-Program Fixpoint is_ctx {Ψ} (τ : matrix) (Γ : Prectx Ψ) : Prop :=
-  match Γ with
-  | ⋄ => True
-  | Γ ; A => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A
-  end
-
-with
-seq_eq_ty {Ψ} τ Γ (A B : Tm.t Ψ) : Prop :=
+Definition seq_eq_ty {Ψ} τ Γ (A B : Tm.t Ψ) : Prop :=
   ∀ γ1 γ2,
     τ ⊧ Γ ∋⋆ γ1 ∼ γ2
-    → τ ⊧ (A ⫽ γ1) ∼ (B ⫽ γ2)
-where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ)
-and "τ ⊧ Γ ≫ A ∼ B" := (seq_eq_ty τ Γ A B).
+    → τ ⊧ (A ⫽ γ1) ∼ (B ⫽ γ2).
 
 Definition seq_eq_mem {Ψ} τ Γ (A e1 e2 : Tm.t Ψ) :=
   ∀ γ1 γ2,
     τ ⊧ Γ ∋⋆ γ1 ∼ γ2
     → τ ⊧ (A ⫽ γ1) ∋ (e1 ⫽ γ1) ∼ (e2 ⫽ γ2).
 
+Reserved Notation "τ ⊧ Γ 'ctx'" (at level 10).
+Notation "τ ⊧ Γ ≫ A ∼ B" := (seq_eq_ty τ Γ A B) (at level 10).
 Notation "τ ⊧ Γ ≫ A ∋ e1 ∼ e2" := (seq_eq_mem τ Γ A e1 e2) (at level 10).
+
+Program Fixpoint is_ctx {Ψ} (τ : matrix) (Γ : Prectx Ψ) : Prop :=
+  match Γ with
+  | ⋄ => True
+  | Γ ; A => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A
+  end
+where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ).
 
 (* The following are versions of the sequent judgments that impose presuppositions. *)
 Definition pml_seq_eq_ty {Ψ} τ Γ (A B : Tm.t Ψ) `{τ ⊧ Γ ctx} :=
@@ -73,15 +70,3 @@ Definition pml_seq_eq_mem {Ψ} τ Γ (A e1 e2 : Tm.t Ψ) `{τ ⊧ Γ ctx} `{τ �
 
 Notation "τ ⊧ Γ ≫ A ≐ B" := (pml_seq_eq_ty τ Γ A B) (at level 10).
 Notation "τ ⊧ Γ ≫ A ∋ e1 ≐ e2" := (pml_seq_eq_mem τ Γ A e1 e2) (at level 10).
-
-(* To work around Coq's weird mutual definitions. *)
-Lemma unfold_seq_eq_ty :
-  ∀ {Ψ} τ Γ (A B : Tm.t Ψ),
-    (τ ⊧ Γ ≫ A ∼ B) =
-    ∀ γ1 γ2,
-      τ ⊧ Γ ∋⋆ γ1 ∼ γ2
-      → τ ⊧ (A ⫽ γ1) ∼ (B ⫽ γ2).
-Proof.
-  move=> Ψ τ Γ A B.
-  by induction Γ.
-Qed.
