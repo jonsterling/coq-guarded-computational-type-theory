@@ -1,4 +1,3 @@
--Q theories gctt
 -arg -w -arg -notation-overridden,-redundant-canonical-projection,-several-object-files
 theories/Tactic.v
 theories/Var.v
@@ -10,4 +9,4 @@ theories/FormalTerm.v
 theories/Closure.v
 theories/Tower.v
 theories/Sequent.v
-theories/GCTT.v
+theories/Rules.v

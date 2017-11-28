@@ -112,6 +112,7 @@ VFILES:=theories/Tactic.v\
   theories/Closure.v\
   theories/Tower.v\
   theories/Sequent.v\
+  theories/Rules.v\
   theories/GCTT.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)

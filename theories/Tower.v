@@ -126,3 +126,22 @@ Module Tower.
   Hint Resolve extensionality monotonicity.
 
 End Tower.
+
+
+Definition τω : M.matrix :=
+  fun X =>
+    ∃ n, Tower.t n X.
+
+Notation "'τ[' n ']'" := (Tower.t n).
+
+Theorem Towerω_extensionality : M.Law.extensional τω.
+Proof.
+  move=> A R.
+  rewrite /τω.
+  move=> [n1 AR] R' //= [n2 AR'].
+  apply: Tower.extensionality.
+  + apply: (@Tower.monotonicity _ (n1 + n2)); last eauto.
+    omega.
+  + apply: (@Tower.monotonicity _ (n1 + n2)); last eauto.
+    omega.
+Qed.
