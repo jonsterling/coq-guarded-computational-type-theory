@@ -178,16 +178,14 @@ Theorem test :
     → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ FTm.isect (FTm.mapk (Ren.weak 1) A) ⌋ ⟧.
 Proof.
   move=> Λ Ψ Γ A D κs Γctx.
-  induction Γ; move=> γ0 γ1 γ01;
-  specialize (D κs Γctx γ0 γ1 γ01).
-  + have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (fun κ => (T⟦A⟧ κs) ⫽ γ1).
-    ++ T.eqcd => *.
-       by rewrite -interp_clk_wk.
-    ++ simplify_eqs; T.rewrite_.
-       by apply: Closed.isect_irrelevance.
-  + have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (fun κ => (T⟦A⟧ κs) ⫽ γ1).
-    ++ T.eqcd => *.
-       by rewrite -interp_clk_wk.
-    ++ simplify_eqs; T.rewrite_.
-       by apply: Closed.isect_irrelevance.
+  rewrite unfold_seq_eq_ty => γ0 γ1 γ01.
+  specialize (D κs).
+  rewrite unfold_seq_eq_ty in D.
+  specialize (D Γctx γ0 γ1 γ01).
+
+  have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (fun κ => (T⟦A⟧ κs) ⫽ γ1).
+  + T.eqcd => *.
+    by rewrite -interp_clk_wk.
+  + simplify_eqs; T.rewrite_;
+    by apply Closed.isect_irrelevance.
 Qed.

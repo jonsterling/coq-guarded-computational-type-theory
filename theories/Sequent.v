@@ -1,3 +1,6 @@
+From mathcomp Require Import ssreflect.
+Set Bullet Behavior "Strict Subproofs".
+
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Basics.
@@ -70,3 +73,15 @@ Definition pml_seq_eq_mem {Ψ} τ Γ (A e1 e2 : Tm.t Ψ) `{τ ⊧ Γ ctx} `{τ �
 
 Notation "τ ⊧ Γ ≫ A ≐ B" := (pml_seq_eq_ty τ Γ A B) (at level 10).
 Notation "τ ⊧ Γ ≫ A ∋ e1 ≐ e2" := (pml_seq_eq_mem τ Γ A e1 e2) (at level 10).
+
+(* To work around Coq's weird mutual definitions. *)
+Lemma unfold_seq_eq_ty :
+  ∀ {Ψ} τ Γ (A B : Tm.t Ψ),
+    (τ ⊧ Γ ≫ A ∼ B) =
+    ∀ γ1 γ2,
+      τ ⊧ Γ ∋⋆ γ1 ∼ γ2
+      → τ ⊧ (A ⫽ γ1) ∼ (B ⫽ γ2).
+Proof.
+  move=> Ψ τ Γ A B.
+  by induction Γ.
+Qed.
