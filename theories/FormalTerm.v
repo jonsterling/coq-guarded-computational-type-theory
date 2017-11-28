@@ -12,6 +12,7 @@ From gctt Require Import Axioms.
 From gctt Require Import Var.
 From gctt Require Import Sequent.
 From gctt Require Import Tower.
+From gctt Require Import Rules.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -170,6 +171,30 @@ Program Definition interp_clk_wk Λ Ψ (e : FTm.t Λ Ψ) (κs : Env.t Λ) (κ : 
 Next Obligation.
   by simplify_eqs.
 Qed.
+
+Theorem test :
+  ∀ Λ A,
+    J⟦ ⌊ Λ ∣ `⋄ ≫ A ≐ A ⌋ ⟧
+    → J⟦ ⌊ Λ ∣ `⋄ ≫ A ≐ (FTm.isect (FTm.mapk (Ren.weak 1) A)) ⌋ ⟧.
+Proof.
+  move=> Λ A D κs is_ctx γ0 γ1 γ01.
+  specialize (D κs is_ctx γ0 γ1 γ01).
+  have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (fun κ => (T⟦A⟧ κs) ⫽ γ1).
+  + T.eqcd => *.
+    by [rewrite -interp_clk_wk].
+  + simplify_eqs; T.rewrite_.
+
+    (* need to commute the substitution *)
+    (* Then I could do 'apply: Closed.isect_irrelevance' *)
+Admitted.
+
+
+
+
+
+
+
+
 
 (*
 Module Jdg.

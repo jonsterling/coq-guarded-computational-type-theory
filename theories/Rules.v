@@ -23,7 +23,7 @@ Require Import Coq.omega.Omega.
 
 Set Implicit Arguments.
 
-Module Rules.
+Module Closed.
   Local Ltac simplify :=
     Close.simplify; Spine.simplify; simpl;
     repeat
@@ -154,4 +154,4 @@ Module Rules.
     eauto.
   Qed.
 
-End Rules.
+End Closed.
