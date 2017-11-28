@@ -165,13 +165,6 @@ Proof.
     by dependent induction i.
 Qed.
 
-Program Definition interp_clk_wk Λ Ψ (e : FTm.t Λ Ψ) (κs : Env.t Λ) (κ : CLK) :
-  T⟦ e ⟧ κs = T⟦ FTm.mapk (Ren.weak 1) e ⟧ (κ ∷ κs)
-  := interp_tm_naturality e (Ren.weak 1) (κ ∷ κs).
-Next Obligation.
-  by simplify_eqs.
-Qed.
-
 Theorem open_clock_irrelevance :
   ∀ Λ Ψ Γ (A : FTm.t Λ Ψ),
     J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
@@ -182,7 +175,8 @@ Proof.
 
   have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
   + T.eqcd => *.
-    by rewrite -interp_clk_wk.
+    rewrite -interp_tm_naturality;
+    by simplify_eqs.
   + simplify_eqs; T.rewrite_;
     by apply Closed.isect_irrelevance.
 Qed.
