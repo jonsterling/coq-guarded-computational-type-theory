@@ -112,12 +112,12 @@ Module Closed.
 
 
     Theorem isect_irrelevance :
-      forall A,
-        τω ⊧ A ∼ A
-        → τω ⊧ A ∼ (Tm.isect (fun _ => A)).
+      forall A B,
+        τω ⊧ A ∼ B
+        → τω ⊧ A ∼ (Tm.isect (fun _ => B)).
     Proof.
       rewrite /τω.
-      move=> A [R ?].
+      move=> A B [R ?].
       T.destruct_conjs.
       rewrite /atomic_eq_ty.
       repeat T.split; eauto.
