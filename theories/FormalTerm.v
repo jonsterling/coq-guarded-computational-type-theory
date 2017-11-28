@@ -5,10 +5,13 @@ Require Import Unicode.Utf8.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Coq.Program.Basics.
+Require Import Vectors.Fin.
 
 From gctt Require Import Term.
 From gctt Require Import Axioms.
 From gctt Require Import Var.
+From gctt Require Import Sequent.
+From gctt Require Import Tower.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -62,37 +65,84 @@ Module FTm.
     map ρ (fun x => x).
 End FTm.
 
-Definition Env Λ := Var Λ → CLK.
+Module FCtx.
+  Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
+  | nil : t Λ 0
+  | snoc : ∀ {Ψ}, t Λ Ψ → FTm.t Λ Ψ → t Λ (S Ψ).
 
-Program Definition cons {Λ} (κ : CLK) (σ : Env Λ) : Env (S Λ) :=
-  fun x =>
-    match x with
-    | Fin.F1 _ => κ
-    | Fin.FS _ x => σ x
-    end.
+  Arguments nil [Λ].
+End FCtx.
 
-Reserved Notation "⟦ e ⟧ σ" (at level 50).
-Notation "κ ∷ σ" := (cons κ σ) (at level 30).
+Notation "`⋄" := FCtx.nil.
+Infix "`;" := (FCtx.snoc) (at level 50, left associativity).
 
-Fixpoint interp {Λ Ψ} (e : FTm.t Λ Ψ) (σ : Env Λ) : Tm.t Ψ :=
+Module FJdg.
+  Inductive t Λ :=
+  | eq_ty : ∀ {Ψ}, FCtx.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ
+  | eq_mem : ∀ {Ψ}, FCtx.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ.
+End FJdg.
+
+Notation "⌊ Λ ∣ Γ ≫ A ≐ B ⌋" := (@FJdg.eq_ty Λ _ Γ A B).
+Notation "⌊ Λ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋" := (@FJdg.eq_mem Λ _ Γ A e1 e2).
+
+
+Example example_judgment :=  ⌊ 1 ∣ `⋄ ≫ FTm.ltr Fin.F1 FTm.unit ≐ FTm.ltr Fin.F1 FTm.unit ⌋.
+
+Module Env.
+  Definition t Λ := Var Λ → CLK.
+
+  Program Definition cons {Λ} (κ : CLK) (σ : t Λ) : t (S Λ) :=
+    fun x =>
+      match x with
+      | Fin.F1 _ => κ
+      | Fin.FS _ x => σ x
+      end.
+End Env.
+
+Notation "κ ∷ σ" := (Env.cons κ σ) (at level 30).
+
+Reserved Notation "T⟦ e ⟧ κs" (at level 50).
+Reserved Notation "Γ⟦ Γ ⟧ κs" (at level 50).
+
+Fixpoint interp_tm {Λ Ψ} (e : FTm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   match e with
   | FTm.var i => Tm.var i
-  | FTm.fst e => Tm.fst (⟦e⟧ σ)
-  | FTm.snd e => Tm.snd (⟦e⟧ σ)
+  | FTm.fst e => Tm.fst (T⟦e⟧ κs)
+  | FTm.snd e => Tm.snd (T⟦e⟧ κs)
   | FTm.unit => Tm.unit
   | FTm.bool => Tm.bool
   | FTm.ax => Tm.ax
   | FTm.tt => Tm.tt
   | FTm.ff => Tm.ff
-  | FTm.prod A B => Tm.prod (⟦A⟧ σ) (⟦B⟧ σ)
-  | FTm.arr A B => Tm.arr (⟦A⟧ σ) (⟦B⟧ σ)
-  | FTm.pair A B => Tm.pair (⟦A⟧ σ) (⟦B⟧ σ)
-  | FTm.ltr r A => Tm.ltr (σ r) (⟦A⟧ σ)
-  | FTm.isect A => Tm.isect (fun κ => ⟦A⟧ (κ ∷ σ))
+  | FTm.prod A B => Tm.prod (T⟦A⟧ κs) (T⟦B⟧ κs)
+  | FTm.arr A B => Tm.arr (T⟦A⟧ κs) (T⟦B⟧ κs)
+  | FTm.pair A B => Tm.pair (T⟦A⟧ κs) (T⟦B⟧ κs)
+  | FTm.ltr r A => Tm.ltr (κs r) (T⟦A⟧ κs)
+  | FTm.isect A => Tm.isect (fun κ => T⟦A⟧ (κ ∷ κs))
   | FTm.univ i => Tm.univ i
   end
-where "⟦ e ⟧ ρ" := (interp e ρ).
+where "T⟦ e ⟧ κs" := (interp_tm e κs).
 
+Program Fixpoint interp_ctx {Λ Ψ} (Γ : FCtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
+  match Γ with
+  | `⋄ => ⋄
+  | Γ `; A => Γ⟦ Γ ⟧ κs ; T⟦ A ⟧ κs
+  end
+where "Γ⟦ Γ ⟧ κs" := (interp_ctx Γ κs).
+
+Definition interp_jdg {Λ} (J : FJdg.t Λ) : Prop :=
+  ∀ (κs : Env.t Λ),
+    match J with
+    | ⌊ _ ∣ Γ ≫ A ≐ B ⌋ =>
+      τω ⊧ Γ⟦ Γ ⟧ κs ctx
+      → τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A ⟧ κs ∼ T⟦ B ⟧ κs
+    | ⌊ _ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋ =>
+      τω ⊧ Γ⟦ Γ ⟧ κs ctx
+      → τω ⊧ Γ⟦ Γ ⟧ κs ≫ (T⟦ A ⟧ κs) ∼ (T⟦ A ⟧ κs)
+      → τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A ⟧ κs ∋ T⟦ e1 ⟧ κs ∼ T⟦ e2 ⟧ κs
+    end.
+
+Notation "J⟦ J ⟧" := (interp_jdg J) (at level 50).
 
 Ltac rewrite_all_hyps :=
   repeat
@@ -102,9 +152,9 @@ Ltac rewrite_all_hyps :=
 
 Local Open Scope program_scope.
 
-Theorem interp_naturality :
-  ∀ Λ1 Λ2 Ψ (e : FTm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (σ : Env Λ2),
-    ⟦ e ⟧ σ ∘ ρ = ⟦ FTm.mapk ρ e ⟧ σ.
+Theorem interp_tm_naturality :
+  ∀ Λ1 Λ2 Ψ (e : FTm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
+    T⟦ e ⟧ κs ∘ ρ = T⟦ FTm.mapk ρ e ⟧ κs.
 Proof.
   move=> Λ1 Λ2 Ψ e; move: Λ2.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
@@ -114,9 +164,9 @@ Proof.
     by dependent induction i.
 Qed.
 
-Program Definition interp_clk_wk Λ Ψ (e : FTm.t Λ Ψ) (σ : Env Λ) (κ : CLK) :
-  ⟦ e ⟧ σ = ⟦ FTm.mapk (Ren.weak 1) e ⟧ (κ ∷ σ)
-  := interp_naturality e (Ren.weak 1) (κ ∷ σ).
+Program Definition interp_clk_wk Λ Ψ (e : FTm.t Λ Ψ) (κs : Env.t Λ) (κ : CLK) :
+  T⟦ e ⟧ κs = T⟦ FTm.mapk (Ren.weak 1) e ⟧ (κ ∷ κs)
+  := interp_tm_naturality e (Ren.weak 1) (κ ∷ κs).
 Next Obligation.
   by simplify_eqs.
 Qed.
