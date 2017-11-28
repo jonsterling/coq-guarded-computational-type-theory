@@ -172,7 +172,7 @@ Next Obligation.
   by simplify_eqs.
 Qed.
 
-Theorem test :
+Theorem open_clock_irrelevance :
   ∀ Λ Ψ Γ (A : FTm.t Λ Ψ),
     J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
     → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ FTm.isect (FTm.mapk (Ren.weak 1) A) ⌋ ⟧.
