@@ -8,8 +8,10 @@ Require Import Coq.Program.Basics.
 
 From gctt Require Import Term.
 From gctt Require Import Axioms.
-From gctt Require Import GCTT.
 From gctt Require Import Var.
+From gctt Require Tactic.
+
+Module T := Tactic.
 
 
 Set Implicit Arguments.
@@ -119,14 +121,12 @@ Next Obligation.
   by simplify_eqs.
 Qed.
 
-
+(*
 Module Jdg.
   (* TODO: replace with open judgments *)
   Inductive atomic Λ Ψ :=
   | eq_ty : FTm.t Λ Ψ → FTm.t Λ Ψ → atomic Λ Ψ.
 
-
-  Import Univ.
 
   Definition meaning (Λ : nat) (J : atomic Λ 0) : Prop :=
     match J with
@@ -153,3 +153,4 @@ Module Jdg.
   Qed.
 
 End Jdg.
+*)
