@@ -220,8 +220,12 @@ Qed.
 Theorem conv_fst_pair : ∀ Λ Ψ e1 e2, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair e1 e2) ≃ e1 ⌋ ⟧.
   move=> Λ Ψ e1 e2 κs γ v.
   split => //= D; inversion D; eauto.
-  + by inversion H.
-  + inversion H0.
+  + match goal with
+    | X : _ val |- _ => inversion X
+    end.
+  + match goal with
+    | X : Tm.pair _ _ ⇓ _ |- _ => inversion X
+    end.
     by congruence.
 Qed.
 
