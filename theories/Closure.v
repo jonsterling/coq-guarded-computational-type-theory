@@ -175,7 +175,7 @@ Module Clo.
       rewrite /M.Law.extensional_at; rewrite -roll; case => //= ?;
       Close.simplify;
       try use_universe_system; try by [apply: ih; eauto];
-      T.destruct_conjs; T.evals_to_eq; T.destruct_eqs;
+      T.destruct_conjs; Term.evals_to_eq; T.destruct_eqs;
       simpl in *
     end.
 

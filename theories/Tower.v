@@ -87,7 +87,7 @@ Module Spine.
     + move=> ? ? ? ? ? ?.
       simplify.
       T.destruct_conjs; simpl in *.
-      T.evals_to_eq; T.destruct_eqs.
+      Term.evals_to_eq; T.destruct_eqs.
       auto.
   Qed.
 
