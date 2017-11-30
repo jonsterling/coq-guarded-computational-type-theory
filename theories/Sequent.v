@@ -60,13 +60,3 @@ Program Fixpoint is_ctx {Ψ} (τ : matrix) (Γ : Prectx Ψ) : Prop :=
   | Γ ; A => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A
   end
 where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ).
-
-(* The following are versions of the sequent judgments that impose presuppositions. *)
-Definition pml_seq_eq_ty {Ψ} τ Γ (A B : Tm.t Ψ) `{τ ⊧ Γ ctx} :=
-  τ ⊧ Γ ≫ A ∼ B.
-
-Definition pml_seq_eq_mem {Ψ} τ Γ (A e1 e2 : Tm.t Ψ) `{τ ⊧ Γ ctx} `{τ ⊧ Γ ≫ A ∼ A} :=
-  τ ⊧ Γ ≫ A ∋ e1 ∼ e2.
-
-Notation "τ ⊧ Γ ≫ A ≐ B" := (pml_seq_eq_ty τ Γ A B) (at level 10).
-Notation "τ ⊧ Γ ≫ A ∋ e1 ≐ e2" := (pml_seq_eq_mem τ Γ A e1 e2) (at level 10).
