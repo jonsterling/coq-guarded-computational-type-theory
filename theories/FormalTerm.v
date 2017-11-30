@@ -12,6 +12,7 @@ From gctt Require Import Axioms.
 From gctt Require Import Var.
 From gctt Require Import Sequent.
 From gctt Require Import Tower.
+From gctt Require Import Closure.
 From gctt Require Import Rules.
 From gctt Require Tactic.
 
@@ -178,5 +179,14 @@ Proof.
     rewrite -interp_tm_naturality;
     by simplify_eqs.
   + simplify_eqs; T.rewrite_;
-    by apply Closed.isect_irrelevance.
+    eauto.
+Qed.
+
+Theorem open_ax_equality :
+  ∀ Λ Ψ (Γ : FCtx.t Λ Ψ),
+    J⟦ ⌊ Λ ∣ Γ ≫ FTm.unit ∋ FTm.ax ≐ FTm.ax ⌋ ⟧.
+Proof.
+  move=> Λ Ψ Γ κs Γctx unit_ty γ0 γ1 γ01.
+  unshelve eauto.
+  exact 0.
 Qed.
