@@ -145,9 +145,7 @@ Definition interp_jdg {Λ} (J : FJdg.t Λ) : Prop :=
       → τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A ⟧ κs ∋ T⟦ e1 ⟧ κs ∼ T⟦ e2 ⟧ κs
     | ⌊ _ ∣ Ψ ⊢ e1 ≃ e2 ⌋ =>
       ∀ γ : Tm.Sub.t Ψ 0,
-        ∃ v,
-          (T⟦ e1 ⟧ κs) ⫽ γ ⇓ v
-          ∧ (T⟦ e2 ⟧ κs) ⫽ γ ⇓ v
+        ∀ v, (T⟦ e1 ⟧ κs) ⫽ γ ⇓ v ↔ (T⟦ e2 ⟧ κs) ⫽ γ ⇓ v
     end.
 
 Notation "J⟦ J ⟧" := (interp_jdg J) (at level 50).
@@ -202,9 +200,9 @@ Theorem compute_symmetry :
     J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋ ⟧
     → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e1 ⌋ ⟧.
 Proof.
-  move=> Λ Ψ e1 e2 D κs γ.
-  specialize (D κs γ).
-  T.destruct_conjs; eauto.
+  move=> Λ Ψ e1 e2 D κs γ v.
+  specialize (D κs γ v).
+  intuition.
 Qed.
 
 Theorem compute_transitivity :
@@ -213,21 +211,29 @@ Theorem compute_transitivity :
     → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e3 ⌋ ⟧
     → J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e3 ⌋ ⟧.
 Proof.
-  move=> Λ Ψ e1 e2 e3 D E κs γ.
-  specialize (D κs γ).
-  specialize (E κs γ).
-  case: D => vD [D1 D2].
-  case: E => vE [E1 E2].
-  have: vD = vE.
-  + apply: determinacy; eauto.
-  + move=> vDvE.
-    rewrite vDvE in D1 D2.
-    eauto.
+  move=> Λ Ψ e1 e2 e3 D E κs γ v.
+  specialize (D κs γ v).
+  specialize (E κs γ v).
+  intuition.
 Qed.
 
-Example compute_test : ∀ Λ Ψ, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair FTm.tt FTm.ff) ≃ FTm.snd (FTm.pair FTm.ff FTm.tt) ⌋ ⟧.
+Theorem conv_fst_pair : ∀ Λ Ψ e1 e2, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair e1 e2) ≃ e1 ⌋ ⟧.
+  move=> Λ Ψ e1 e2 κs γ v.
+  split => //= D; inversion D; eauto.
+  + by inversion H.
+  + inversion H0.
+    by rewrite H3.
+Qed.
+
+
+Example conv_test : ∀ Λ Ψ, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair FTm.tt FTm.ff) ≃ FTm.snd (FTm.pair FTm.ff FTm.tt) ⌋ ⟧.
 Proof.
-  move=> κs γ.
-  eexists.
-  split; simpl; eauto.
+  move=> Λ Ψ κs γ v //=.
+  split => D.
+  + have: v = Tm.tt.
+    ++ apply: determinacy; eauto.
+    ++ T.rewrite_; eauto.
+  + have: v = Tm.tt.
+    ++ apply: determinacy; eauto.
+    ++ T.rewrite_; eauto.
 Qed.
