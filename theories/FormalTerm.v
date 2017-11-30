@@ -170,12 +170,11 @@ Proof.
     by dependent induction i.
 Qed.
 
-Theorem open_clock_irrelevance :
-  ∀ Λ Ψ Γ (A : FTm.t Λ Ψ),
-    J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
-    → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ FTm.isect (FTm.mapk (Ren.weak 1) A) ⌋ ⟧.
+Theorem open_clock_irrelevance Λ Ψ Γ (A : FTm.t Λ Ψ) :
+  J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ FTm.isect (FTm.mapk (Ren.weak 1) A) ⌋ ⟧.
 Proof.
-  move=> Λ Ψ Γ A D κs Γctx γ0 γ1 γ01;
+  move=> D κs Γctx γ0 γ1 γ01;
   specialize (D κs Γctx γ0 γ1 γ01).
 
   have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
@@ -186,39 +185,38 @@ Proof.
     eauto.
 Qed.
 
-Theorem open_ax_equality :
-  ∀ Λ Ψ (Γ : FCtx.t Λ Ψ),
-    J⟦ ⌊ Λ ∣ Γ ≫ FTm.unit ∋ FTm.ax ≐ FTm.ax ⌋ ⟧.
+Theorem open_ax_equality Λ Ψ (Γ : FCtx.t Λ Ψ) :
+  J⟦ ⌊ Λ ∣ Γ ≫ FTm.unit ∋ FTm.ax ≐ FTm.ax ⌋ ⟧.
 Proof.
-  move=> Λ Ψ Γ κs Γctx unit_ty γ0 γ1 γ01.
+  move=> κs Γctx unit_ty γ0 γ1 γ01.
   unshelve eauto.
   exact 0.
 Qed.
 
-Theorem compute_symmetry :
-  ∀ Λ Ψ e1 e2,
-    J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋ ⟧
-    → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e1 ⌋ ⟧.
+Theorem compute_symmetry Λ Ψ e1 e2 :
+  J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e1 ⌋ ⟧.
 Proof.
-  move=> Λ Ψ e1 e2 D κs γ v.
+  move=> D κs γ v.
   specialize (D κs γ v).
   intuition.
 Qed.
 
-Theorem compute_transitivity :
-  ∀ Λ Ψ e1 e2 e3,
-    J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋ ⟧
-    → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e3 ⌋ ⟧
-    → J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e3 ⌋ ⟧.
+Theorem compute_transitivity Λ Ψ e1 e2 e3 :
+  J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e3 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e3 ⌋ ⟧.
 Proof.
-  move=> Λ Ψ e1 e2 e3 D E κs γ v.
+  move=> D E κs γ v.
   specialize (D κs γ v).
   specialize (E κs γ v).
   intuition.
 Qed.
 
-Theorem conv_fst_pair : ∀ Λ Ψ e1 e2, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair e1 e2) ≃ e1 ⌋ ⟧.
-  move=> Λ Ψ e1 e2 κs γ v.
+Theorem conv_fst_pair Λ Ψ e1 e2 :
+  J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair e1 e2) ≃ e1 ⌋ ⟧.
+Proof.
+  move=> κs γ v.
   split => //= D; inversion D; eauto.
   + match goal with
     | X : _ val |- _ => inversion X
@@ -230,9 +228,10 @@ Theorem conv_fst_pair : ∀ Λ Ψ e1 e2, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pai
 Qed.
 
 
-Example conv_test : ∀ Λ Ψ, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair FTm.tt FTm.ff) ≃ FTm.snd (FTm.pair FTm.ff FTm.tt) ⌋ ⟧.
+Example conv_test Λ Ψ :
+  J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair FTm.tt FTm.ff) ≃ FTm.snd (FTm.pair FTm.ff FTm.tt) ⌋ ⟧.
 Proof.
-  move=> Λ Ψ κs γ v //=.
+  move=> κs γ v //=.
   split => D.
   + have: v = Tm.tt.
     ++ apply: determinacy; eauto.
