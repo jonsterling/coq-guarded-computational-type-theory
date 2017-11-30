@@ -81,12 +81,13 @@ Infix "`;" := (FCtx.snoc) (at level 50, left associativity).
 Module FJdg.
   Inductive t Λ :=
   | eq_ty : ∀ {Ψ}, FCtx.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ
-  | eq_mem : ∀ {Ψ}, FCtx.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ.
+  | eq_mem : ∀ {Ψ}, FCtx.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ
+  | conv : ∀ {Ψ}, FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ.
 End FJdg.
 
 Notation "⌊ Λ ∣ Γ ≫ A ≐ B ⌋" := (@FJdg.eq_ty Λ _ Γ A B).
 Notation "⌊ Λ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋" := (@FJdg.eq_mem Λ _ Γ A e1 e2).
-
+Notation "⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋" := (@FJdg.conv Λ Ψ e1 e2).
 
 Example example_judgment :=  ⌊ 1 ∣ `⋄ ≫ FTm.ltr Fin.F1 FTm.unit ≐ FTm.ltr Fin.F1 FTm.unit ⌋.
 
@@ -142,6 +143,11 @@ Definition interp_jdg {Λ} (J : FJdg.t Λ) : Prop :=
       τω ⊧ Γ⟦ Γ ⟧ κs ctx
       → τω ⊧ Γ⟦ Γ ⟧ κs ≫ (T⟦ A ⟧ κs) ∼ (T⟦ A ⟧ κs)
       → τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A ⟧ κs ∋ T⟦ e1 ⟧ κs ∼ T⟦ e2 ⟧ κs
+    | ⌊ _ ∣ Ψ ⊢ e1 ≃ e2 ⌋ =>
+      ∀ γ : Tm.Sub.t Ψ 0,
+        ∃ v,
+          (T⟦ e1 ⟧ κs) ⫽ γ ⇓ v
+          ∧ (T⟦ e2 ⟧ κs) ⫽ γ ⇓ v
     end.
 
 Notation "J⟦ J ⟧" := (interp_jdg J) (at level 50).
@@ -189,4 +195,39 @@ Proof.
   move=> Λ Ψ Γ κs Γctx unit_ty γ0 γ1 γ01.
   unshelve eauto.
   exact 0.
+Qed.
+
+Theorem compute_symmetry :
+  ∀ Λ Ψ e1 e2,
+    J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋ ⟧
+    → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e1 ⌋ ⟧.
+Proof.
+  move=> Λ Ψ e1 e2 D κs γ.
+  specialize (D κs γ).
+  T.destruct_conjs; eauto.
+Qed.
+
+Theorem compute_transitivity :
+  ∀ Λ Ψ e1 e2 e3,
+    J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋ ⟧
+    → J⟦ ⌊ Λ ∣ Ψ ⊢ e2 ≃ e3 ⌋ ⟧
+    → J⟦ ⌊ Λ ∣ Ψ ⊢ e1 ≃ e3 ⌋ ⟧.
+Proof.
+  move=> Λ Ψ e1 e2 e3 D E κs γ.
+  specialize (D κs γ).
+  specialize (E κs γ).
+  case: D => vD [D1 D2].
+  case: E => vE [E1 E2].
+  have: vD = vE.
+  + apply: determinacy; eauto.
+  + move=> vDvE.
+    rewrite vDvE in D1 D2.
+    eauto.
+Qed.
+
+Example compute_test : ∀ Λ Ψ, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair FTm.tt FTm.ff) ≃ FTm.snd (FTm.pair FTm.ff FTm.tt) ⌋ ⟧.
+Proof.
+  move=> κs γ.
+  eexists.
+  split; simpl; eauto.
 Qed.
