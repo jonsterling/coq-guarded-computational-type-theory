@@ -222,7 +222,7 @@ Theorem conv_fst_pair : ∀ Λ Ψ e1 e2, J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pai
   split => //= D; inversion D; eauto.
   + by inversion H.
   + inversion H0.
-    by rewrite H3.
+    by congruence.
 Qed.
 
 
