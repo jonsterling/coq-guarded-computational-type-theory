@@ -73,13 +73,24 @@ Module Closed.
     + Tac.prove.
   Qed.
 
-  Theorem prod_formation {n A0 A1 B0 B1}:
+  Theorem prod_formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
     → τ[n] ⊧ B0 ∼ B1
     → τ[n] ⊧ (Tm.prod A0 B0) ∼ (Tm.prod A1 B1).
   Proof.
     move => 𝒟 ℰ.
     rewrite /Tower.t /atomic_eq_ty in 𝒟 ℰ.
+    T.destruct_conjs.
+    Tac.prove; eauto.
+  Qed.
+
+  Theorem prod_intro {n A B e00 e01 e10 e11} :
+    τ[n] ⊧ A ∋ e00 ∼ e10
+    → τ[n] ⊧ B ∋ e01 ∼ e11
+    → τ[n] ⊧ (Tm.prod A B) ∋ (Tm.pair e00 e01) ∼ (Tm.pair e10 e11).
+  Proof.
+    move=> 𝒟 ℰ.
+    rewrite /Tower.t /atomic_eq_mem in 𝒟 ℰ.
     T.destruct_conjs.
     Tac.prove; eauto.
   Qed.
