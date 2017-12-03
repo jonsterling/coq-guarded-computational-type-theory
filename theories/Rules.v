@@ -34,16 +34,21 @@ Module Closed.
     Ltac prove_step :=
       try by [eassumption];
       match goal with
-      | |- τ[?n] ⊧ _ ∼ _ => tower_intro; esplit; split
-      | |- τ[?n] ⊧ _ ∋ _ ∼ _ => tower_intro; esplit; split
+      | |- _ ⊧ _ ∼ _ => esplit; split
+      | |- _ ⊧ _ ∋ _ ∼ _ => esplit; split
+      | |- τ[_] _ => tower_intro
       | |- Sig.t _ _ (Tm.univ _, _) => apply: Sig.init
-      | |- Sig.t _ _ (_, _) => apply: Sig.conn; econstructor
+      | |- Sig.t _ _ (_, _) => apply: Sig.conn
       | |- Spine.t _ (Tm.univ _, _) => Spine.simplify; repeat T.split; [idtac | eauto | reflexivity] ; eauto
       | |- Connective.cext _ _ => repeat econstructor
+      | |- Connective.has _ _ _ => econstructor
       | |- _ val => econstructor
+      | |- _ ⇓ _ => econstructor
       | |- _ ≤ _ => omega
+      | |- ∃ _ : nat, _ => esplit
       | |- (_ ⊧ _ ∼ _) → _ => move=> [? [? ?]]
       | |- (_ ⊧ _ ∋ _ ∼ _) → _ => move=> [? [? ?]]
+      | |- CLK → _ => move=> ?
       end.
 
     Ltac prove := repeat prove_step.
@@ -111,7 +116,7 @@ Module Closed.
   Proof.
     move=> 𝒟.
     case: (TowerChoice 𝒟) => S ℰ.
-    Tac.prove => ?;
+    Tac.prove;
     T.specialize_hyps;
     rewrite /Tower.t in ℰ;
     T.destruct_conjs; eauto.
@@ -123,18 +128,14 @@ Module Closed.
   Proof.
     rewrite /τω.
     move=> [R ?]; T.destruct_conjs.
-    rewrite /atomic_eq_ty.
-    repeat T.split; eauto.
-    Tac.tower_intro.
-    apply: Sig.conn; eauto.
+    Tac.prove.
     replace R with (fun e0e1 => ∀ κ:CLK, R e0e1).
-    + constructor; eauto.
+    + Tac.prove.
     + T.eqcd => ?.
       apply: propositional_extensionality.
       case: LocalClock => ? _.
       T.split; eauto.
   Qed.
-
 
   Theorem eq_ty_from_level {n A B}:
     τ[n] ⊧ A ∼ B
