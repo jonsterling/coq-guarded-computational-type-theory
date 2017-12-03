@@ -121,6 +121,7 @@ Module Tower.
   Proof.
     move=> ? ? ? [A R]; Clo.elim_clo => ? ?; rewrite /t -Clo.roll;
     first (apply: Sig.init; apply: Spine.monotonicity); eauto.
+    by [econstructor; eauto; rewrite -Clo.roll; eauto].
   Qed.
 
   Hint Resolve extensionality monotonicity.

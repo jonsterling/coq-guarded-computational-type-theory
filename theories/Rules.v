@@ -24,46 +24,44 @@ Require Import Coq.omega.Omega.
 Set Implicit Arguments.
 
 Module Closed.
-  Local Ltac simplify :=
-    Close.simplify; Spine.simplify; simpl;
-    repeat
-      (lazymatch goal with
-       | |- ?i ≤ ?j => omega
-       | |- ?P ∧ ?Q => split
-       | |- ∃ (x : ?A), ?P => eexists
-       | |- ?P ↔ ?Q => split
-       end); eauto.
+  Module Tac.
+    Ltac tower_intro :=
+      rewrite /Tower.t -Clo.roll.
 
-  (* A tactic to prove a rule by appealing to one of
-     the constructors of the refinement matrix closure operator. *)
-  Ltac prove_rule con :=
-    T.destruct_conjs;
-    lazymatch goal with
-    | |- τ[ ?n ] ⊧ ?A ∼ ?A =>
-      eexists; rewrite /Tower.t -Clo.roll; split;
-      apply: con; simplify; try reflexivity
-    | |- τ[ ?n ] ⊧ ?A ∋ ?e1 ∼ ?e2 =>
-      eexists; rewrite /Tower.t -Clo.roll; split;
-      [apply: con; simplify; try reflexivity | simpl; eauto]
-    end.
+    Ltac connective_eq_type :=
+      apply: Sig.conn; eauto; constructor.
 
+    Ltac prove_step :=
+      match goal with
+      | |- τ[?n] ⊧ _ ∼ _ => tower_intro; esplit; split
+      | |- τ[?n] ⊧ _ ∋ _ ∼ _ => tower_intro; esplit; split
+      | |- Sig.t _ _ (Tm.univ _, _) => apply: Sig.init
+      | |- Sig.t _ _ (_, _) => apply: Sig.conn; econstructor
+      | |- Spine.t _ (Tm.univ _, _) => Spine.simplify; repeat T.split; [idtac | eauto | reflexivity] ; eauto
+      | |- Connective.cext _ _ => repeat econstructor
+      | |- _ val => econstructor
+      | |- _ ≤ _ => omega
+      end.
+
+    Ltac prove := repeat prove_step.
+  End Tac.
 
   Theorem unit_formation {n : nat} :
     τ[n] ⊧ Tm.unit ∼ Tm.unit.
   Proof.
-    prove_rule Sig.unit.
+    Tac.prove.
   Qed.
 
   Theorem unit_ax_equality {n : nat} :
     τ[n] ⊧ Tm.unit ∋ Tm.ax ∼ Tm.ax.
   Proof.
-    prove_rule Sig.unit.
+    Tac.prove.
   Qed.
 
   Lemma univ_formation_S {n : nat} :
     τ[S n] ⊧ (Tm.univ n) ∼ (Tm.univ n).
   Proof.
-    prove_rule Sig.init.
+    Tac.prove.
   Qed.
 
   Theorem univ_formation {n i : nat} :
@@ -72,25 +70,20 @@ Module Closed.
   Proof.
     case => [| j q ].
     + apply: univ_formation_S.
-    + eexists.
-      rewrite /Tower.t -Clo.roll; split;
-      apply: Sig.init;
-      Spine.simplify;
-      exists i; repeat split;
-        [omega | eauto | omega | eauto].
+    + Tac.prove.
   Qed.
 
-
-  Theorem prod_formation {n : nat} :
-    ∀ A B,
-      τ[n] ⊧ A ∼ A
-      → τ[n] ⊧ B ∼ B
-      → τ[n] ⊧ (Tm.prod A B) ∼ (Tm.prod A B).
+  Theorem prod_formation {n A0 A1 B0 B1}:
+    τ[n] ⊧ A0 ∼ A1
+    → τ[n] ⊧ B0 ∼ B1
+    → τ[n] ⊧ (Tm.prod A0 B0) ∼ (Tm.prod A1 B1).
   Proof.
-    move=> A B D E.
-    rewrite /Tower.t /atomic_eq_ty in D E.
-    prove_rule Sig.prod.
+    move => 𝒟 ℰ.
+    rewrite /Tower.t /atomic_eq_ty in 𝒟 ℰ.
+    T.destruct_conjs.
+    Tac.prove; eauto.
   Qed.
+
 
   Lemma TowerChoice {n : nat} {A1 A2 : CLK → Tm.t 0} :
     (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
@@ -104,60 +97,55 @@ Module Closed.
     T.destruct_conjs; eauto.
   Qed.
 
-  Theorem isect_formation {n : nat} :
-    forall B,
-      (∀ κ, τ[n] ⊧ (B κ) ∼ (B κ))
-      → τ[n] ⊧ (Tm.isect B) ∼ (Tm.isect B).
+  Theorem isect_formation {n B0 B1} :
+    (∀ κ, τ[n] ⊧ (B1 κ) ∼ (B0 κ))
+    → τ[n] ⊧ (Tm.isect B0) ∼ (Tm.isect B1).
   Proof.
-    move=> B D.
-    rewrite /Tower.t /atomic_eq_ty in D.
-    case: (TowerChoice D) => S E'.
-    prove_rule Sig.isect => κ;
-    specialize (E' κ);
-    rewrite /Tower.t in E';
-    T.destruct_conjs;
-    eauto.
+    move=> 𝒟 .
+    rewrite /Tower.t /atomic_eq_ty in 𝒟.
+    case: (TowerChoice 𝒟) => S ℰ.
+    Tac.prove => ?;
+    T.specialize_hyps;
+    rewrite /Tower.t in ℰ;
+    T.destruct_conjs; eauto.
   Qed.
 
 
-  Theorem isect_irrelevance :
-    forall A B,
-      τω ⊧ A ∼ B
-      → τω ⊧ A ∼ (Tm.isect (fun _ => B)).
+  Theorem isect_irrelevance {A B}:
+    τω ⊧ A ∼ B
+    → τω ⊧ A ∼ (Tm.isect (fun _ => B)).
   Proof.
     rewrite /τω.
-    move=> A B [R ?].
-    T.destruct_conjs.
+    move=> [R ?]; T.destruct_conjs.
     rewrite /atomic_eq_ty.
     repeat T.split; eauto.
-    rewrite /Tower.t -Clo.roll; apply: Sig.isect.
-    do 2 eexists (fun _ => _).
-    repeat T.split; eauto.
-    T.eqcd => *.
-    case: LocalClock => ? _.
-    apply: propositional_extensionality.
-    T.split; auto.
+    Tac.tower_intro.
+    apply: Sig.conn; eauto.
+    replace R with (fun e0e1 => ∀ κ:CLK, R e0e1).
+    + constructor; eauto.
+    + T.eqcd => ?.
+      apply: propositional_extensionality.
+      case: LocalClock => ? _.
+      T.split; eauto.
   Qed.
 
 
-  Theorem eq_ty_from_level :
-    ∀ n A B,
-      τ[n] ⊧ A ∼ B
-      → τω ⊧ A ∼ B.
+  Theorem eq_ty_from_level {n A B}:
+    τ[n] ⊧ A ∼ B
+    → τω ⊧ A ∼ B.
   Proof.
-    move=> n A B [R [TA TB]].
+    move=> [R [TA TB]].
     eexists.
     split.
     + eexists; eauto.
     + eexists; eauto.
   Qed.
 
-  Theorem eq_mem_from_level :
-    ∀ n A e1 e2,
-      τ[n] ⊧ A ∋ e1 ∼ e2
-      → τω ⊧ A ∋ e1 ∼ e2.
+  Theorem eq_mem_from_level {n A e1 e2} :
+    τ[n] ⊧ A ∋ e1 ∼ e2
+    → τω ⊧ A ∋ e1 ∼ e2.
   Proof.
-    move=> n A e1 e2 [R [TA e1e2]].
+    move=> [R [TA e1e2]].
     eexists.
     split.
     + eexists; eauto.
