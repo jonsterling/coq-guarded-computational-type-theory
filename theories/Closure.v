@@ -22,85 +22,93 @@ Set Implicit Arguments.
 
 Hint Resolve Later.map.
 
-Module Close.
+Module Connective.
   Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 ∧ e2 ⇓ e3) (at level 0).
 
-  Definition unit (τ : M.matrix) X :=
-    fst X ⇓ Tm.unit
-    ∧ snd X = fun es => [fst es, snd es] ⇓ Tm.ax.
+  Inductive ctor :=
+  | unit
+  | bool
+  | prod
+  | later
+  | isect.
 
-  Definition bool (τ : M.matrix) X :=
-    fst X ⇓ Tm.bool
-    ∧ snd X = fun es => ([fst es, snd es] ⇓ Tm.tt ∨ [fst es, snd es] ⇓ Tm.ff).
+  Inductive unit_val : M.behavior :=
+  | ax : unit_val (Tm.ax, Tm.ax).
 
-  Definition prod τ X :=
-    ∃ B C R1 R2,
-      fst X ⇓ Tm.prod B C
-      ∧ τ (B, R1)
-      ∧ τ (C, R2)
-      ∧ snd X =
-        fun es =>
-          ∃ e11 e12 e21 e22,
-            (fst es ⇓ Tm.pair e11 e12)
-            ∧ (snd es ⇓ Tm.pair e21 e22)
-            ∧ R1 (e11, e21)
-            ∧ R2 (e12, e22).
+  Inductive bool_val : M.behavior :=
+  | tt : bool_val (Tm.tt, Tm.tt)
+  | ff : bool_val (Tm.ff, Tm.ff).
 
-  Definition later (τ : M.matrix) X :=
-    ∃ κ B R',
-      fst X ⇓ Tm.ltr κ B
-      ∧ ▷[ κ ] (τ (B, R'))
-      /\ snd X = fun e12 => ▷[ κ ] (R' e12).
+  Inductive prod_val (R0 R1 : M.behavior) : M.behavior :=
+  | pair :
+      ∀ e00 e01 e10 e11,
+        R0 (e00, e10)
+        → R1 (e01, e11)
+        → prod_val R0 R1 (Tm.pair e00 e01, Tm.pair e10 e11).
 
-  Definition isect (τ : M.matrix) X :=
-    ∃ B S,
-      fst X ⇓ Tm.isect B
-      ∧ (∀ κ, τ (B κ, S κ))
-      ∧ snd X = fun es => ∀ κ, S κ es.
+  Inductive cext (R : M.behavior) : M.behavior :=
+  | mk_cext :
+      ∀ e0 e1 v0 v1,
+        e0 ⇓ v0
+        → e1 ⇓ v1
+        → R (v0, v1)
+        → cext R (e0, e1).
+
+  Inductive has (τ : M.matrix) : ctor → Tm.t 0 * M.behavior → Prop :=
+  | has_unit : has τ unit (Tm.unit, cext unit_val)
+  | has_bool : has τ bool (Tm.bool, cext bool_val)
+  | has_prod :
+      ∀ A0 A1 R0 R1,
+        τ (A0, R0)
+        → τ (A1, R1)
+        → has τ prod (Tm.prod A0 A1, cext (prod_val R0 R1))
+  | has_later :
+      ∀ κ B R,
+        ▷[κ] (τ (B, R))
+        → has τ later (Tm.ltr κ B, fun e0e1 => ▷[κ] (R e0e1))
+  | has_isect :
+      ∀ B S,
+        (∀ κ, τ (B κ, S κ))
+        → has τ isect (Tm.isect B, fun e0e1 => ∀ κ, S κ e0e1).
 
   Ltac prove_monotone :=
-    compute; move=> *; T.destruct_conjs;
-    repeat T.split; eauto.
+      move=> τ0 τ1 τ01 [A R] Aτ0R;
+      dependent induction Aτ0R;
+      constructor; eauto.
 
-  Module Monotone.
-    Local Obligation Tactic := prove_monotone.
-    Program Instance unit : Proper (Poset.order ==> Poset.order) unit.
-    Program Instance bool : Proper (Poset.order ==> Poset.order) bool.
-    Program Instance prod : Proper (Poset.order ==> Poset.order) prod.
-    Program Instance isect : Proper (Poset.order ==> Poset.order) isect.
-    Program Instance later : Proper (Poset.order ==> Poset.order) later.
-  End Monotone.
-
-  Global Ltac simplify :=
-    unfold unit, bool, prod, later, isect in *.
-End Close.
+  Theorem monotone : ∀ ι, Proper (Poset.order ==> Poset.order) (fun τ => has τ ι).
+  Proof.
+    move=> ι τ0 τ1 τ01 [A R] H.
+    dependent induction H; constructor; eauto.
+  Qed.
+End Connective.
 
 Module Sig.
   (* For each refinement matrix σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/behaviors. *)
-  Inductive t (σ τ : M.matrix) (X : Tm.t 0 * M.behavior) : Prop :=
-  | init of σ X
-  | unit of Close.unit τ X
-  | bool of Close.bool τ X
-  | prod of Close.prod τ X
-  | isect of Close.isect τ X
-  | later of Close.later τ X.
+  Inductive t (σ τ : M.matrix) : (Tm.t 0 * M.behavior) → Prop :=
+  | init :
+      ∀ X,
+        σ X
+        → t σ τ X
 
+  | conn :
+      ∀ ι A A0 R,
+        A ⇓ A0
+        → Connective.has τ ι (A0, R)
+        → t σ τ (A, R).
 
   Program Instance monotonicity {σ : M.matrix} : Monotone (t σ).
   Next Obligation.
     move=> τ1 τ2 p [A R].
     case => *.
     + by [apply: init].
-    + by [apply: unit].
-    + by [apply: bool].
-    + apply: prod.
-      apply: Close.Monotone.prod; eauto; eauto.
-    + apply: isect.
-      apply: Close.Monotone.isect; eauto; eauto.
-    + apply: later.
-      apply: Close.Monotone.later; eauto; eauto.
+    + apply: conn.
+      ++ eassumption.
+      ++ apply: Connective.monotone.
+         +++ exact p.
+         +++ eassumption.
   Qed.
 End Sig.
 
@@ -121,14 +129,10 @@ Module Clo.
     ∀ Y (σ ρ : M.matrix),
       t σ Y
       → (∀ X, σ X → ρ X)
-      → (∀ X, Close.unit ρ X → ρ X)
-      → (∀ X, Close.bool ρ X → ρ X)
-      → (∀ X, Close.prod ρ X → ρ X)
-      → (∀ X, Close.isect ρ X → ρ X)
-      → (∀ X, Close.later ρ X → ρ X)
+      → (∀ ι A A0 R, A ⇓ A0 → Connective.has ρ ι (A0, R) → ρ (A, R))
       → ρ Y.
   Proof.
-    move=> [A R] σ ρ AcloR init unit bool prod isect later.
+    move=> [A R] σ ρ AcloR init conn.
     rewrite /t /LFP.t in AcloR.
     simpl in AcloR.
     rewrite -/M.matrix in AcloR.
@@ -168,20 +172,28 @@ Module Clo.
       erewrite ih
     end.
 
-  Local Ltac functionality_case :=
-    match goal with
-    | ih : M.Law.extensional _ |- _ =>
-      move=> [? ?] //= ? ?;
-      rewrite /M.Law.extensional_at; rewrite -roll; case => //= ?;
-      Close.simplify;
-      try use_universe_system; try by [apply: ih; eauto];
-      T.destruct_conjs; Term.evals_to_eq; T.destruct_eqs;
-      simpl in *
-    end.
-
   Local Ltac moves :=
     move=> *.
 
+  Local Ltac destruct_sig :=
+    match goal with
+    | H : Sig.t _ _ _ |- _ => dependent destruction H
+    end.
+
+  Local Ltac ind_sig :=
+    match goal with
+    | H : Sig.t _ _ _ |- _ => dependent induction H
+    end.
+
+  Local Ltac destruct_has :=
+    match goal with
+    | H : Connective.has _ _ _ |- _ => dependent destruction H
+    end.
+
+  Local Ltac destruct_t :=
+    match goal with
+    | H : t _ _ |- _ => rewrite -roll in H; dependent destruction H
+    end.
 
   Theorem extensionality
     : ∀ σ,
@@ -189,22 +201,23 @@ Module Clo.
       → M.Law.extensional σ
       → M.Law.extensional (t σ).
   Proof.
-    move=> ? ? ? ? ?; elim_clo; functionality_case.
-    + congruence.
-    + congruence.
-    + do 2 T.reorient.
-      rewrite_functionality_ih; eauto.
-    + do 2 T.reorient.
-      do ?(T.eqcd; moves).
-      T.specialize_hyps.
-      rewrite_functionality_ih;
-      eauto.
-    + do 2 T.reorient.
-      do ?(T.eqcd; moves).
-      Later.gather => *.
-      T.destruct_conjs.
-      rewrite_functionality_ih;
-      eauto.
+    move=> σ univ_sys ext A R; elim_clo.
+    + move=> [? ?] ? ? ?.
+      destruct_t.
+      ++ apply: ext; eauto.
+      ++ use_universe_system.
+         destruct_has; by Term.evals_to_eq.
+
+    + move=> ? ? ? ? ? ?.
+      destruct_has => ? ? //=;
+      destruct_t; try by [use_universe_system; Term.evals_to_eq];
+      destruct_has; Term.evals_to_eq; T.destruct_eqs; rewrite_functionality_ih; eauto.
+      ++ do ? (T.eqcd; moves).
+         Later.gather => *; T.destruct_conjs.
+         rewrite_functionality_ih; eauto.
+      ++ do ? (T.eqcd; moves).
+         T.specialize_hyps.
+         rewrite_functionality_ih; eauto.
   Qed.
 
   Hint Resolve monotonicity extensionality.
