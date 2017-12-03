@@ -32,6 +32,7 @@ Module Closed.
       apply: Sig.conn; eauto; constructor.
 
     Ltac prove_step :=
+      try by [eassumption];
       match goal with
       | |- τ[?n] ⊧ _ ∼ _ => tower_intro; esplit; split
       | |- τ[?n] ⊧ _ ∋ _ ∼ _ => tower_intro; esplit; split
@@ -41,6 +42,8 @@ Module Closed.
       | |- Connective.cext _ _ => repeat econstructor
       | |- _ val => econstructor
       | |- _ ≤ _ => omega
+      | |- (_ ⊧ _ ∼ _) → _ => move=> [? [? ?]]
+      | |- (_ ⊧ _ ∋ _ ∼ _) → _ => move=> [? [? ?]]
       end.
 
     Ltac prove := repeat prove_step.
@@ -78,10 +81,7 @@ Module Closed.
     → τ[n] ⊧ B0 ∼ B1
     → τ[n] ⊧ (Tm.prod A0 B0) ∼ (Tm.prod A1 B1).
   Proof.
-    move => 𝒟 ℰ.
-    rewrite /Tower.t /atomic_eq_ty in 𝒟 ℰ.
-    T.destruct_conjs.
-    Tac.prove; eauto.
+    Tac.prove.
   Qed.
 
   Theorem prod_intro {n A B e00 e01 e10 e11} :
@@ -89,10 +89,7 @@ Module Closed.
     → τ[n] ⊧ B ∋ e01 ∼ e11
     → τ[n] ⊧ (Tm.prod A B) ∋ (Tm.pair e00 e01) ∼ (Tm.pair e10 e11).
   Proof.
-    move=> 𝒟 ℰ.
-    rewrite /Tower.t /atomic_eq_mem in 𝒟 ℰ.
-    T.destruct_conjs.
-    Tac.prove; eauto.
+    Tac.prove.
   Qed.
 
 
@@ -112,15 +109,13 @@ Module Closed.
     (∀ κ, τ[n] ⊧ (B1 κ) ∼ (B0 κ))
     → τ[n] ⊧ (Tm.isect B0) ∼ (Tm.isect B1).
   Proof.
-    move=> 𝒟 .
-    rewrite /Tower.t /atomic_eq_ty in 𝒟.
+    move=> 𝒟.
     case: (TowerChoice 𝒟) => S ℰ.
     Tac.prove => ?;
     T.specialize_hyps;
     rewrite /Tower.t in ℰ;
     T.destruct_conjs; eauto.
   Qed.
-
 
   Theorem isect_irrelevance {A B}:
     τω ⊧ A ∼ B
