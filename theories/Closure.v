@@ -172,16 +172,6 @@ Module Clo.
       erewrite ih
     end.
 
-  Local Ltac functionality_case :=
-    match goal with
-    | ih : M.Law.extensional _ |- _ =>
-      move=> [? ?] //= ? ?;
-      rewrite /M.Law.extensional_at; rewrite -roll; case => //= ?;
-      try use_universe_system; try by [apply: ih; eauto];
-      T.destruct_conjs; Term.evals_to_eq; T.destruct_eqs;
-      simpl in *
-    end.
-
   Local Ltac moves :=
     move=> *.
 
@@ -194,7 +184,6 @@ Module Clo.
     match goal with
     | H : Sig.t _ _ _ |- _ => dependent induction H
     end.
-
 
   Local Ltac destruct_has :=
     match goal with
