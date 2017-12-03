@@ -46,9 +46,12 @@ Module Closed.
       | |- _ ⇓ _ => econstructor
       | |- _ ≤ _ => omega
       | |- ∃ _ : nat, _ => esplit
-      | |- (_ ⊧ _ ∼ _) → _ => move=> [? [? ?]]
-      | |- (_ ⊧ _ ∋ _ ∼ _) → _ => move=> [? [? ?]]
-      | |- CLK → _ => move=> ?
+      | |- τω _ => rewrite /τω
+      | |- (_ ⊧ _ ∼ _) → _ => case => [?]
+      | |- (_ ⊧ _ ∋ _ ∼ _) → _ => move=> [?]
+      | |- (_ ∧ _) → _ => case
+      | |- τω _ → _ => move=> [?]
+      | |- _ → _ => move=> ?
       end.
 
     Ltac prove := repeat prove_step.
@@ -126,10 +129,13 @@ Module Closed.
     τω ⊧ A ∼ B
     → τω ⊧ A ∼ (Tm.isect (fun _ => B)).
   Proof.
-    rewrite /τω.
-    move=> [R ?]; T.destruct_conjs.
     Tac.prove.
-    replace R with (fun e0e1 => ∀ κ:CLK, R e0e1).
+
+    match goal with
+    | |- Connective.has _ _ (_, ?R) =>
+      replace R with (fun e0e1 => ∀ κ:CLK, R e0e1)
+    end.
+
     + Tac.prove.
     + T.eqcd => ?.
       apply: propositional_extensionality.
