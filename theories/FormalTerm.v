@@ -307,7 +307,7 @@ Proof.
   - admit.
 Admitted.
 
-(* need to prove transitivity lemma in the semantics first! )
+(* need to prove transitivity lemma in the semantics first! *)
 Theorem ty_eq_trans `{Γ : FCtx.t Λ Ψ} {A0 A1 A2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ A2 ⌋ ⟧
