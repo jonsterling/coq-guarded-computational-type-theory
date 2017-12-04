@@ -178,8 +178,7 @@ Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} :
 Proof.
   move=> e ρ γ κs.
   induction e; eauto; simpl; try by [rewrite_all_hyps].
-  f_equal.
-  T.eqcd => κ.
+  f_equal; T.eqcd => ?.
   rewrite IHe.
   by rewrite Ren.cong_id.
 Qed.
