@@ -324,7 +324,6 @@ Proof.
   - by apply: ty_eq_sym.
 Qed.
 
-(* This theorem goes through as soon as we have symmetry of environment equality. *)
 Theorem rewrite_ty_in_mem `{Γ : FCtx.t Λ Ψ} {A0 A1 e1 e2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⌋ ⟧
@@ -332,14 +331,7 @@ Theorem rewrite_ty_in_mem `{Γ : FCtx.t Λ Ψ} {A0 A1 e1 e2} :
 Proof.
   move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01.
   specialize (ℰ κs Γctx (ty_eq_refl_left 𝒟 κs Γctx) γ0 γ1 γ01).
-  have 𝒢 := 𝒟.
   specialize (𝒟 κs Γctx γ0 γ1 γ01).
-
-  (* TODO *)
-  have WELP : τω ⊧ Γ⟦ Γ ⟧ κs ∋⋆ γ1 ∼ γ0.
-  admit.
-
-  specialize (𝒢 κs Γctx γ1 γ0 WELP).
 
   case: (ℱ γ0 γ1 γ01) => [Rℱ [ℱ0 ℱ1]].
   exists Rℱ; repeat T.split; auto.
@@ -363,4 +355,4 @@ Proof.
       * exact ℰ0''.
       * replace Rℱ with R𝒟; auto.
         apply: Tower.extensionality; eauto.
-Admitted.
+Qed.
