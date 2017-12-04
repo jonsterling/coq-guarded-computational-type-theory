@@ -93,3 +93,13 @@ Ltac eqcd :=
   apply: universal_extensionality
   || apply: later_extensionality
   || apply: functional_extensionality.
+
+
+
+Ltac use H :=
+  match goal with
+  | |- ?ty1 =>
+    let ty2 := type of H in
+    replace ty1 with ty2;
+    [ exact H | idtac ]
+  end.

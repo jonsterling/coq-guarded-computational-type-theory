@@ -8,6 +8,7 @@ Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Coq.Program.Basics.
 Require Import Vectors.Fin.
+Require Import Coq.omega.Omega.
 
 From gctt Require Import Term.
 From gctt Require Import Axioms.
@@ -292,3 +293,74 @@ Proof.
         auto.
   - auto.
 Qed.
+
+(* need to prove symmetry lemma in the semantics first! *)
+Theorem ty_eq_sym `{Γ : FCtx.t Λ Ψ} {A0 A1} :
+  J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ A0 ⌋ ⟧.
+Proof.
+  move=> 𝒟 κs Γctx γ0 γ1 γ01.
+  specialize (𝒟 κs Γctx γ0 γ1 γ01).
+  case: 𝒟 => [R [𝒟0 𝒟1]].
+  exists R; repeat T.split.
+  - admit.
+  - admit.
+Admitted.
+
+
+Theorem ty_eq_trans `{Γ : FCtx.t Λ Ψ} {A0 A1 A2} :
+  J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ A2 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A2 ⌋ ⟧.
+Admitted.
+
+Theorem ty_eq_refl_left `{Γ : FCtx.t Λ Ψ} {A0 A1} :
+  J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A0 ⌋ ⟧.
+Proof.
+  move=> 𝒟.
+  apply: ty_eq_trans.
+  - eassumption.
+  - by apply: ty_eq_sym.
+Qed.
+
+(* This theorem goes through as soon as we have symmetry of environment equality. *)
+Theorem rewrite_ty_in_mem `{Γ : FCtx.t Λ Ψ} {A0 A1 e1 e2} :
+  J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A1 ∋ e1 ≐ e2⌋ ⟧.
+Proof.
+  move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01.
+  specialize (ℰ κs Γctx (ty_eq_refl_left 𝒟 κs Γctx) γ0 γ1 γ01).
+  have 𝒢 := 𝒟.
+  specialize (𝒟 κs Γctx γ0 γ1 γ01).
+
+  (* TODO *)
+  have WELP : τω ⊧ Γ⟦ Γ ⟧ κs ∋⋆ γ1 ∼ γ0.
+  admit.
+
+  specialize (𝒢 κs Γctx γ1 γ0 WELP).
+
+  case: (ℱ γ0 γ1 γ01) => [Rℱ [ℱ0 ℱ1]].
+  exists Rℱ; repeat T.split; auto.
+
+  case: ℰ => [Rℰ [ℰ0 ℰ1]].
+  case: 𝒟 => [R𝒟 [𝒟0 𝒟1]].
+  case: ℰ0 => [nℰ ℰ0'].
+  case: ℱ0 => [nℱ0 ℱ0'].
+  case: ℱ1 => [nℱ1 ℱ1'].
+  case: 𝒟0 => [n𝒟0 𝒟0'].
+  case: 𝒟1 => [n𝒟1 𝒟1'].
+
+  have: τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, Rℰ)
+         ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, R𝒟)
+         ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, R𝒟)
+         ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, Rℱ).
+  - repeat split; (apply: Tower.monotonicity; last by [eauto]; omega).
+  - move=> [ℰ0'' [𝒟0'' [𝒟1'' ℱ1'']]].
+    replace Rℱ with Rℰ; auto.
+    + apply: Tower.extensionality; simpl.
+      * exact ℰ0''.
+      * replace Rℱ with R𝒟; auto.
+        apply: Tower.extensionality; eauto.
+Admitted.
