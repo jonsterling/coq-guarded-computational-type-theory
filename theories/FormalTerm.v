@@ -349,12 +349,14 @@ Proof.
   case: 𝒟0 => [n𝒟0 𝒟0'].
   case: 𝒟1 => [n𝒟1 𝒟1'].
 
+  pose n := nℰ + n𝒟0 + n𝒟1 + nℱ1.
+
   have:
-    τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, Rℰ)
-    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, R𝒟)
-    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, R𝒟)
-    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, Rℱ).
-  - repeat split; (apply: Tower.monotonicity; last by [eauto]; omega).
+    τ[ n ] ((T⟦ A0 ⟧ κs) ⫽ γ0, Rℰ)
+    ∧ τ[ n ] ((T⟦ A0 ⟧ κs) ⫽ γ0, R𝒟)
+    ∧ τ[ n ] ((T⟦ A1 ⟧ κs) ⫽ γ1, R𝒟)
+    ∧ τ[ n ] ((T⟦ A1 ⟧ κs) ⫽ γ1, Rℱ).
+  - repeat split; (apply: Tower.monotonicity; last by [eauto]; rewrite /n; omega).
   - move=> [ℰ0'' [𝒟0'' [𝒟1'' ℱ1'']]].
     replace Rℱ with Rℰ; auto.
     apply: Tower.extensionality; eauto.
