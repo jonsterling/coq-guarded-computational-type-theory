@@ -345,21 +345,19 @@ Proof.
   case: ℰ => [Rℰ [ℰ0 ℰ1]].
   case: 𝒟 => [R𝒟 [𝒟0 𝒟1]].
   case: ℰ0 => [nℰ ℰ0'].
-  case: ℱ0 => [nℱ0 ℱ0'].
   case: ℱ1 => [nℱ1 ℱ1'].
   case: 𝒟0 => [n𝒟0 𝒟0'].
   case: 𝒟1 => [n𝒟1 𝒟1'].
 
   have:
-    τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, Rℰ)
-    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, R𝒟)
-    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, R𝒟)
-    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ0 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, Rℱ).
+    τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, Rℰ)
+    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A0 ⟧ κs) ⫽ γ0, R𝒟)
+    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, R𝒟)
+    ∧ τ[ nℰ + n𝒟0 + n𝒟1 + nℱ1 ] ((T⟦ A1 ⟧ κs) ⫽ γ1, Rℱ).
   - repeat split; (apply: Tower.monotonicity; last by [eauto]; omega).
   - move=> [ℰ0'' [𝒟0'' [𝒟1'' ℱ1'']]].
     replace Rℱ with Rℰ; auto.
-    + apply: Tower.extensionality; simpl.
-      * exact ℰ0''.
-      * replace Rℱ with R𝒟; auto.
-        apply: Tower.extensionality; eauto.
+    apply: Tower.extensionality; eauto.
+    replace Rℱ with R𝒟; auto.
+    apply: Tower.extensionality; eauto.
 Qed.
