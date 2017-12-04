@@ -66,9 +66,14 @@ Module FTm.
     | univ i => univ i
     end.
 
+  Definition mapv {Λ} `(ρΨ : Ren.t Ψ1 Ψ2) : t Λ Ψ1 → t Λ Ψ2 :=
+    map (λ x, x) ρΨ.
+
   Definition mapk {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) : t Λ1 Ψ → t Λ2 Ψ :=
     map ρ (λ x, x).
 End FTm.
+
+Notation "e .^ n" := (FTm.mapv (Ren.weak n) e) (at level 50).
 
 Module FCtx.
   Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
@@ -174,7 +179,7 @@ Proof.
 Qed.
 
 Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : FTm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
-  (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ FTm.map (fun x => x) ρ e ⟧ κs) ⫽ γ.
+  (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ FTm.mapv ρ e ⟧ κs) ⫽ γ.
 Proof.
   induction e; eauto; simpl; try by [rewrite_all_hyps].
   f_equal; T.eqcd => ?.
@@ -255,7 +260,7 @@ Qed.
 
 
 Theorem hypothesis `{Γ : FCtx.t Λ Ψ} {A} :
-  J⟦ ⌊ Λ ∣ Γ `; A ≫ FTm.map (fun x => x) (Ren.weak 1) A ∋ FTm.var _ Fin.F1 ≐ FTm.var _ Fin.F1 ⌋ ⟧.
+  J⟦ ⌊ Λ ∣ Γ `; A ≫ A.^1 ∋ FTm.var _ Fin.F1 ≐ FTm.var _ Fin.F1 ⌋ ⟧.
 Proof.
   move=> κs Γctx ty γ0 γ1 γ01.
   case: γ01 => [_ γ01].
