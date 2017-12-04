@@ -152,8 +152,7 @@ Definition interp_jdg `(J : FJdg.t Λ) : Prop :=
       → τω ⊧ Γ⟦ Γ ⟧ κs ≫ (T⟦ A ⟧ κs) ∼ (T⟦ A ⟧ κs)
       → τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A ⟧ κs ∋ T⟦ e1 ⟧ κs ∼ T⟦ e2 ⟧ κs
     | ⌊ _ ∣ Ψ ⊢ e1 ≃ e2 ⌋ =>
-      ∀ γ : Tm.Sub.t Ψ 0,
-        ∀ v, (T⟦ e1 ⟧ κs) ⫽ γ ⇓ v ↔ (T⟦ e2 ⟧ κs) ⫽ γ ⇓ v
+      (T⟦ e1 ⟧ κs) ≈ (T⟦ e2 ⟧ κs)
     end.
 
 Notation "J⟦ J ⟧" := (interp_jdg J) (at level 50).
