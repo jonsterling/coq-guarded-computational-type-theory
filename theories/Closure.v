@@ -205,16 +205,15 @@ Module Clo.
     T.destruct_eqs;
     auto.
 
-  Theorem extensionality
-    : ∀ σ,
-      M.Law.universe_system σ
-      → M.Law.extensional σ
-      → M.Law.extensional (t σ).
+  Theorem extensionality {σ} :
+    M.Law.universe_system σ
+    → M.Law.extensional σ
+    → M.Law.extensional (t σ).
   Proof.
-    move=> σ univ_sys ext A R; elim_clo; clear H.
+    move=> ? ext ? ?; elim_clo; clear H.
     - move=> [? ?] ? ? ?.
       destruct_clo.
-      + apply: ext; eauto.
+      + by apply: ext.
       + use_universe_system.
         destruct_has; by Term.evals_to_eq.
 
