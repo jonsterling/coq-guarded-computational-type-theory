@@ -23,14 +23,7 @@ Set Implicit Arguments.
 Hint Resolve Later.map.
 
 Module Connective.
-  Notation "[ e1 , e2 ] ⇓ e3" := (e1 ⇓ e3 ∧ e2 ⇓ e3) (at level 0).
-
-  Inductive ctor :=
-  | unit
-  | bool
-  | prod
-  | later
-  | isect.
+  Inductive ctor := unit | bool | prod | later | isect.
 
   Inductive unit_val : M.behavior :=
   | ax : unit_val (Tm.ax, Tm.ax).
@@ -71,16 +64,16 @@ Module Connective.
         (∀ κ, τ (B κ, S κ))
         → has τ isect (Tm.isect B, fun e0e1 => ∀ κ, S κ e0e1).
 
-  Ltac prove_monotone :=
-      move=> τ0 τ1 τ01 [A R] Aτ0R;
-      dependent induction Aτ0R;
-      constructor; eauto.
+  Hint Constructors has cext prod_val bool_val unit_val.
 
   Theorem monotone : ∀ ι, Proper (Poset.order ==> Poset.order) (fun τ => has τ ι).
   Proof.
     move=> ι τ0 τ1 τ01 [A R] H.
-    dependent induction H; constructor; eauto.
+    dependent destruction H;
+    eauto.
   Qed.
+
+  Hint Resolve monotone.
 End Connective.
 
 Module Sig.
@@ -99,16 +92,14 @@ Module Sig.
         → Connective.has τ ι (A0, R)
         → t σ τ (A, R).
 
-  Program Instance monotonicity {σ : M.matrix} : Monotone (t σ).
-  Next Obligation.
-    move=> τ1 τ2 p [A R].
+  Instance monotonicity {σ : M.matrix} : Monotone (t σ).
+  Proof.
+    constructor => τ1 τ2 p [A R].
     case => *.
-    + by [apply: init].
-    + apply: conn.
-      ++ eassumption.
-      ++ apply: Connective.monotone.
-         +++ exact p.
-         +++ eassumption.
+    + by econstructor.
+    + econstructor; try by [eauto];
+      apply: Connective.monotone;
+      eauto.
   Qed.
 End Sig.
 
@@ -190,10 +181,29 @@ Module Clo.
     | H : Connective.has _ _ _ |- _ => dependent destruction H
     end.
 
-  Local Ltac destruct_t :=
+  Local Ltac destruct_clo :=
     match goal with
-    | H : t _ _ |- _ => rewrite -roll in H; dependent destruction H
+    | H : t _ _ |- _ => rewrite -roll in H; dependent destruction H; clear H
     end.
+
+
+  Theorem connective_not_universe {τ i ι A' A R} {P : Prop} :
+    Connective.has τ ι (A', R)
+    → A ⇓ A'
+    → A ⇓ Tm.univ i
+    → P.
+  Proof.
+    move=> has eval1 eval2.
+    dependent destruction has;
+    by Term.evals_to_eq.
+  Qed.
+
+  Local Ltac cleanup :=
+    simpl in *;
+    try use_universe_system;
+    Term.evals_to_eq;
+    T.destruct_eqs;
+    auto.
 
   Theorem extensionality
     : ∀ σ,
@@ -201,23 +211,24 @@ Module Clo.
       → M.Law.extensional σ
       → M.Law.extensional (t σ).
   Proof.
-    move=> σ univ_sys ext A R; elim_clo.
-    + move=> [? ?] ? ? ?.
-      destruct_t.
-      ++ apply: ext; eauto.
-      ++ use_universe_system.
-         destruct_has; by Term.evals_to_eq.
+    move=> σ univ_sys ext A R; elim_clo; clear H.
+    - move=> [? ?] ? ? ?.
+      destruct_clo.
+      + apply: ext; eauto.
+      + use_universe_system.
+        destruct_has; by Term.evals_to_eq.
 
-    + move=> ? ? ? ? ? ?.
-      destruct_has => ? ? //=;
-      destruct_t; try by [use_universe_system; Term.evals_to_eq];
-      destruct_has; Term.evals_to_eq; T.destruct_eqs; rewrite_functionality_ih; eauto.
-      ++ do ? (T.eqcd; moves).
-         Later.gather => *; T.destruct_conjs.
-         rewrite_functionality_ih; eauto.
-      ++ do ? (T.eqcd; moves).
-         T.specialize_hyps.
-         rewrite_functionality_ih; eauto.
+    - move=> ? ? ? ? ? ?.
+      destruct_has => ? ?;
+      destruct_clo; try by [cleanup];
+      destruct_has; cleanup.
+      + rewrite_functionality_ih; eauto.
+      + do ? (T.eqcd; moves).
+        Later.gather => *; T.destruct_conjs.
+        rewrite_functionality_ih; eauto.
+      + do ? (T.eqcd; moves).
+        T.specialize_hyps.
+        rewrite_functionality_ih; eauto.
   Qed.
 
   Hint Resolve monotonicity extensionality.
