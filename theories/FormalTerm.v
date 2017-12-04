@@ -260,10 +260,9 @@ Theorem hypothesis `{Γ : FCtx.t Λ Ψ} {A}:
   J⟦ ⌊ Λ ∣ Γ `; A ≫ FTm.map (fun x => x) (Ren.weak 1) A ∋ FTm.var _ Fin.F1 ≐ FTm.var _ Fin.F1 ⌋ ⟧.
 Proof.
   move=> κs Γctx ty γ0 γ1 γ01.
-  simpl.
-  dependent induction Γ;
-  simplify_eqs; simpl in *;
-  destruct Γctx as [_ Γctx];
-  destruct γ01 as [_ γ01];
+  destruct Γctx as [_ Γctx].
+  destruct γ01 as [_ γ01].
+
+  simplify_eqs.
   by rewrite -interp_tm_var_naturality.
 Qed.
