@@ -35,10 +35,11 @@ Program Fixpoint atomic_eq_env {Ψ} τ Γ (γ1 γ2 : Tm.Sub.t Ψ 0) : Prop :=
   | ⋄ => True
   | Γ ; A =>
     τ ⊧ Γ ∋⋆ (γ1 ∘ Fin.FS) ∼ (γ2 ∘ Fin.FS)
-    ∧ τ ⊧ (A ⫽ (γ1 ∘ Fin.FS)) ∼ (A ⫽ (γ2 ∘ Fin.FS))
+    ∧ τ ⊧ (A ⫽ (γ1 ∘ Fin.FS)) ∋ (γ1 Fin.F1) ∼ (γ2 Fin.F1)
   end
 where "τ ⊧ Γ ∋⋆ γ1 ∼ γ2" := (atomic_eq_env τ Γ γ1 γ2).
 
+Solve All Obligations with auto.
 
 Definition seq_eq_ty {Ψ} τ Γ (A B : Tm.t Ψ) : Prop :=
   ∀ γ1 γ2,

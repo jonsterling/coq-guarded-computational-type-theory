@@ -1,6 +1,8 @@
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
+Generalizable All Variables.
+
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
@@ -45,7 +47,7 @@ Module FTm.
   Arguments ff [Λ Ψ].
   Arguments univ [Λ Ψ] i.
 
-  Program Fixpoint map {Λ1 Λ2 Ψ1 Ψ2} (ρΛ : Ren.t Λ1 Λ2) (ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
+  Program Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
     match e with
     | var i => var _ (ρΨ i)
     | fst e => fst (map ρΛ ρΨ e)
@@ -158,7 +160,7 @@ Ltac rewrite_all_hyps :=
 
 Local Open Scope program_scope.
 
-Theorem interp_tm_naturality :
+Theorem interp_tm_clk_naturality :
   ∀ Λ1 Λ2 Ψ (e : FTm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
     T⟦ e ⟧ κs ∘ ρ = T⟦ FTm.mapk ρ e ⟧ κs.
 Proof.
@@ -170,6 +172,18 @@ Proof.
     by dependent induction i.
 Qed.
 
+Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} :
+  ∀ (e : FTm.t Λ Ψ0) (ρ : Ren.t Ψ0 Ψ1) (γ : Tm.Sub.t Ψ1 Ψ2) (κs : Env.t Λ),
+    (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ FTm.map (fun x => x) ρ e ⟧ κs) ⫽ γ.
+Proof.
+  move=> e ρ γ κs.
+  induction e; eauto; simpl; try by [rewrite_all_hyps].
+  f_equal.
+  T.eqcd => κ.
+  rewrite IHe.
+  by rewrite Ren.cong_id.
+Qed.
+
 Theorem open_clock_irrelevance Λ Ψ Γ (A : FTm.t Λ Ψ) :
   J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ FTm.isect (FTm.mapk (Ren.weak 1) A) ⌋ ⟧.
@@ -179,7 +193,7 @@ Proof.
 
   have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
   + T.eqcd => *.
-    rewrite -interp_tm_naturality;
+    rewrite -interp_tm_clk_naturality;
     by simplify_eqs.
   + simplify_eqs; T.rewrite_;
     eauto.
@@ -239,4 +253,17 @@ Proof.
   + have: v = Tm.tt.
     ++ apply: determinacy; eauto.
     ++ T.rewrite_; eauto.
+Qed.
+
+
+Theorem hypothesis `{Γ : FCtx.t Λ Ψ} {A}:
+  J⟦ ⌊ Λ ∣ Γ `; A ≫ FTm.map (fun x => x) (Ren.weak 1) A ∋ FTm.var _ Fin.F1 ≐ FTm.var _ Fin.F1 ⌋ ⟧.
+Proof.
+  move=> κs Γctx ty γ0 γ1 γ01.
+  simpl.
+  dependent induction Γ;
+  simplify_eqs; simpl in *;
+  destruct Γctx as [_ Γctx];
+  destruct γ01 as [_ γ01];
+  by rewrite -interp_tm_var_naturality.
 Qed.

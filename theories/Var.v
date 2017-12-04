@@ -1,6 +1,8 @@
 Require Import Unicode.Utf8.
 Require Import Vectors.Fin.
 Require Import Coq.Program.Equality.
+From gctt Require Tactic.
+Module T := Tactic.
 
 Set Implicit Arguments.
 
@@ -14,9 +16,15 @@ Module Ren.
   Program Definition cong {Ψ1 Ψ2} (ρ : t Ψ1 Ψ2) : t (S Ψ1) (S Ψ2) :=
     fun x =>
       match x with
-      | Fin.F1 => Fin.F1
-      | Fin.FS y => Fin.FS (ρ y)
+      | Fin.F1 _ => Fin.F1
+      | Fin.FS _ y => Fin.FS (ρ y)
       end.
+
+  Theorem cong_id {Ψ} : @cong Ψ Ψ (fun x => x) = id.
+  Proof.
+    T.eqcd => x.
+    dependent induction x; auto.
+  Qed.
 
   Program Fixpoint weak {Ψ1} Ψ2 : t Ψ1 (Ψ2 + Ψ1) :=
     match Ψ2 with
