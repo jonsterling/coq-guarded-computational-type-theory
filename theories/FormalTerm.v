@@ -109,7 +109,7 @@ Notation "κ ∷ σ" := (Env.cons κ σ) (at level 30).
 Reserved Notation "T⟦ e ⟧ κs" (at level 50).
 Reserved Notation "Γ⟦ Γ ⟧ κs" (at level 50).
 
-Fixpoint interp_tm {Λ Ψ} (e : FTm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
+Fixpoint interp_tm `(e : FTm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   match e with
   | FTm.var i => Tm.var i
   | FTm.fst e => Tm.fst (T⟦e⟧ κs)
@@ -128,14 +128,14 @@ Fixpoint interp_tm {Λ Ψ} (e : FTm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   end
 where "T⟦ e ⟧ κs" := (interp_tm e κs).
 
-Program Fixpoint interp_ctx {Λ Ψ} (Γ : FCtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
+Program Fixpoint interp_ctx `(Γ : FCtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
   match Γ with
   | `⋄ => ⋄
   | Γ `; A => Γ⟦ Γ ⟧ κs ; T⟦ A ⟧ κs
   end
 where "Γ⟦ Γ ⟧ κs" := (interp_ctx Γ κs).
 
-Definition interp_jdg {Λ} (J : FJdg.t Λ) : Prop :=
+Definition interp_jdg `(J : FJdg.t Λ) : Prop :=
   ∀ (κs : Env.t Λ),
     match J with
     | ⌊ _ ∣ Γ ≫ A ≐ B ⌋ =>
@@ -253,11 +253,45 @@ Proof.
 Qed.
 
 
-Theorem hypothesis `{Γ : FCtx.t Λ Ψ} {A}:
+Theorem hypothesis `{Γ : FCtx.t Λ Ψ} {A} :
   J⟦ ⌊ Λ ∣ Γ `; A ≫ FTm.map (fun x => x) (Ren.weak 1) A ∋ FTm.var _ Fin.F1 ≐ FTm.var _ Fin.F1 ⌋ ⟧.
 Proof.
   move=> κs Γctx ty γ0 γ1 γ01.
   case: γ01 => [_ γ01].
   simplify_eqs.
   by rewrite -interp_tm_var_naturality.
+Qed.
+
+Theorem conv_ty `{Γ : FCtx.t Λ Ψ} {A0 A1 B} :
+  J⟦ ⌊ Λ ∣ Ψ ⊢ A0 ≃ A1 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ B ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ B ⌋ ⟧.
+Proof.
+  move=> 𝒟 ℰ κs Γctx γ0 γ1 γ01.
+  specialize (𝒟 κs γ0).
+  case: (ℰ κs Γctx γ0 γ1 γ01) => R [X1 X2].
+  exists R; split.
+  - case: X1 => [n X1].
+    rewrite /Tower.t in X1.
+    Clo.destruct_clo.
+    + induction n; Spine.simplify.
+      * done.
+      * case: H => [j H].
+        T.destruct_conjs.
+        simpl in *.
+        specialize (𝒟 (Tm.univ j)).
+        exists (S n).
+        rewrite /Tower.t.
+        rewrite -Clo.roll.
+        apply: Sig.init.
+        Spine.simplify.
+        exists j.
+        T.split; eauto.
+        T.split; eauto.
+        destruct 𝒟.
+        eauto.
+    + unshelve
+        (Clo.destruct_has; edestruct 𝒟; eexists; rewrite /Tower.t -Clo.roll;
+         apply: Sig.conn; eauto);
+        auto.
 Qed.

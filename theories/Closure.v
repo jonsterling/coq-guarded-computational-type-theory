@@ -166,22 +166,22 @@ Module Clo.
   Local Ltac moves :=
     move=> *.
 
-  Local Ltac destruct_sig :=
+  Ltac destruct_sig :=
     match goal with
     | H : Sig.t _ _ _ |- _ => dependent destruction H
     end.
 
-  Local Ltac ind_sig :=
+  Ltac ind_sig :=
     match goal with
     | H : Sig.t _ _ _ |- _ => dependent induction H
     end.
 
-  Local Ltac destruct_has :=
+  Ltac destruct_has :=
     match goal with
     | H : Connective.has _ _ _ |- _ => dependent destruction H
     end.
 
-  Local Ltac destruct_clo :=
+  Ltac destruct_clo :=
     match goal with
     | H : t _ _ |- _ => rewrite -roll in H; dependent destruction H; clear H
     end.
