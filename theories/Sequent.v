@@ -61,3 +61,13 @@ Program Fixpoint is_ctx {Ψ} (τ : matrix) (Γ : Prectx Ψ) : Prop :=
   | Γ ; A => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A
   end
 where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ).
+
+
+Definition open_approx {Ψ} (e1 e2 : Tm.t Ψ) : Prop :=
+  ∀ γ v, e1 ⫽ γ ⇓ v → e2 ⫽ γ ⇓ v.
+
+Definition open_equiv {Ψ} (e1 e2 : Tm.t Ψ) : Prop :=
+  ∀ γ v, e1 ⫽ γ ⇓ v ↔ e2 ⫽ γ ⇓ v.
+
+Infix "≼" := open_approx (at level 30).
+Infix "≈" := open_equiv (at level 30).
