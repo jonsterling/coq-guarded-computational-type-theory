@@ -160,11 +160,11 @@ Ltac rewrite_all_hyps :=
 
 Local Open Scope program_scope.
 
-Theorem interp_tm_clk_naturality :
-  ∀ Λ1 Λ2 Ψ (e : FTm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
+Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} :
+  ∀ (e : FTm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
     T⟦ e ⟧ κs ∘ ρ = T⟦ FTm.mapk ρ e ⟧ κs.
 Proof.
-  move=> Λ1 Λ2 Ψ e; move: Λ2.
+  move=> e; move: Λ2.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
   + f_equal; T.eqcd => ?.
     rewrite_all_hyps.
@@ -172,11 +172,9 @@ Proof.
     by dependent induction i.
 Qed.
 
-Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} :
-  ∀ (e : FTm.t Λ Ψ0) (ρ : Ren.t Ψ0 Ψ1) (γ : Tm.Sub.t Ψ1 Ψ2) (κs : Env.t Λ),
-    (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ FTm.map (fun x => x) ρ e ⟧ κs) ⫽ γ.
+Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : FTm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
+  (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ FTm.map (fun x => x) ρ e ⟧ κs) ⫽ γ.
 Proof.
-  move=> e ρ γ κs.
   induction e; eauto; simpl; try by [rewrite_all_hyps].
   f_equal; T.eqcd => ?.
   rewrite IHe.
