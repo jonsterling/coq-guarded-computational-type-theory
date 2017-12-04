@@ -279,19 +279,16 @@ Proof.
       * case: H => [j H].
         T.destruct_conjs.
         simpl in *.
-        specialize (𝒟 (Tm.univ j)).
         exists (S n).
         rewrite /Tower.t.
         rewrite -Clo.roll.
         apply: Sig.init.
         Spine.simplify.
-        exists j.
-        T.split; eauto.
-        T.split; eauto.
-        destruct 𝒟.
-        eauto.
+        exists j; repeat T.split; auto.
+        edestruct 𝒟; auto.
     + unshelve
-        (Clo.destruct_has; edestruct 𝒟; eexists; rewrite /Tower.t -Clo.roll;
-         apply: Sig.conn; eauto);
+        (Clo.destruct_has; eexists; rewrite /Tower.t -Clo.roll;
+         apply: Sig.conn; eauto; edestruct 𝒟; eauto);
         auto.
+  - auto.
 Qed.
