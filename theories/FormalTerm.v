@@ -285,16 +285,15 @@ Proof.
         T.destruct_conjs.
         simpl in *.
         exists (S n).
-        rewrite /Tower.t.
-        rewrite -Clo.roll.
+        rewrite /Tower.t -Clo.roll.
         apply: Sig.init.
         Spine.simplify.
         exists j; repeat T.split; auto.
         edestruct 𝒟; auto.
-    + unshelve
-        (Clo.destruct_has; eexists; rewrite /Tower.t -Clo.roll;
-         apply: Sig.conn; eauto; edestruct 𝒟; eauto);
-        auto.
+    + exists n; rewrite /Tower.t -Clo.roll.
+      apply: Sig.conn; eauto.
+      edestruct 𝒟.
+      Clo.destruct_has; eauto.
   - auto.
 Qed.
 
