@@ -180,7 +180,7 @@ Module Closed.
     ▷[κ] (τ[n] ⊧ A ∼ B)
     → τ[n] ⊧ (Tm.ltr κ A) ∼ (Tm.ltr κ B).
   Proof.
-    move=> / Later.yank_existential;
+    move=> /Later.yank_existential;
     case=> *; eauto.
     Tac.prove; Later.gather; case; Tac.prove.
   Qed.
@@ -189,10 +189,27 @@ Module Closed.
     ▷[κ] (τ[n] ⊧ A ∋ e1 ∼ e2)
     → τ[n] ⊧ (Tm.ltr κ A) ∋ e1 ∼ e2.
   Proof.
-    move=> / Later.yank_existential;
+    move=> /Later.yank_existential;
     case=> *; eauto.
     Tac.prove; simpl; Later.gather; Tac.prove.
   Qed.
+
+  Theorem later_force {n} {A e1 e2} :
+    τ[n] ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∋ e1 ∼ e2
+    → τ[n] ⊧ (Tm.isect (λ κ, A κ)) ∋ e1 ∼ e2.
+  Proof.
+    case=> R [H1 H2].
+    rewrite /Tower.t in H1.
+    Clo.destruct_clo.
+    - induction n; Spine.simplify.
+      + contradiction.
+      + T.destruct_conjs.
+        Term.destruct_evals.
+    - Clo.destruct_has; Term.destruct_evals.
+      exists (fun X => ∀ κ, S κ X).
+      T.split; try by eauto.
+      Tac.prove.
+
 
   Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro.
 
