@@ -194,30 +194,21 @@ Module Closed.
     Tac.prove; simpl; Later.gather; Tac.prove.
   Qed.
 
+
   Theorem later_force {n} {A} :
     τ[n] ⊧ (Tm.isect A) ∼ (Tm.isect A)
     → τ[n] ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∼ (Tm.isect A).
   Proof.
     move=> [R [H _]].
     exists R; T.split; auto.
-    rewrite /Tower.t in H.
-    rewrite -Clo.roll in H.
-    Clo.destruct_sig.
-    - induction n; Spine.simplify.
-      + contradiction.
-      + T.destruct_conjs.
-        Term.destruct_evals.
-    - Clo.destruct_has; Term.destruct_evals.
-      replace (fun e0e1 => ∀ κ, S κ e0e1) with (fun e0e1 => ∀ κ, ▷[κ] (S κ e0e1)).
-      + do 3 Tac.prove_step; eauto.
-        move=> κ.
-        T.specialize_hyps.
-        rewrite -Clo.roll.
-        apply: Sig.conn; eauto.
-        apply: Connective.has_later.
-        by apply: Later.next.
-      + T.eqcd => e0e1.
-        apply: Later.force.
+    Tower.destruct_tower.
+    replace (fun e0e1 => ∀ κ, S κ e0e1) with (fun e0e1 => ∀ κ, ▷[κ] (S κ e0e1)).
+    - Tac.prove.
+      T.specialize_hyps.
+      rewrite -Clo.roll.
+      by Tac.prove; apply: Later.next.
+    - T.eqcd => ?.
+      apply: Later.force.
   Qed.
 
   Theorem rewrite_ty_in_mem {n A0 A1 e1 e2} :

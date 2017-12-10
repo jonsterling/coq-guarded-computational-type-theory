@@ -101,6 +101,14 @@ Module Spine.
       esplit; [omega | eauto].
   Qed.
 
+  Ltac spine_contradiction :=
+    lazymatch goal with
+    | H : Spine.t _ (Tm.univ _, _) |- _ => fail "This is a universe!"
+    | H : Spine.t ?n (_, _) |- _ =>
+      induction n; Spine.simplify;
+      [contradiction | T.destruct_conjs; Term.destruct_evals]
+    end.
+
   Hint Resolve universe_system extensionality monotonicity.
 End Spine.
 
@@ -123,6 +131,13 @@ Module Tower.
     first (apply: Sig.init; apply: Spine.monotonicity); eauto.
     by [econstructor; eauto; rewrite -Clo.roll; eauto].
   Qed.
+
+  Ltac destruct_tower :=
+    match goal with
+    | H : t ?n _ |- _ =>
+      rewrite /t in H; Clo.destruct_clo; try by [Spine.spine_contradiction];
+      try (Clo.destruct_has; Term.destruct_evals)
+    end.
 
   Hint Resolve extensionality monotonicity.
 

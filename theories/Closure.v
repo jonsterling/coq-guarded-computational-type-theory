@@ -183,7 +183,7 @@ Module Clo.
 
   Ltac destruct_clo :=
     match goal with
-    | H : t _ _ |- _ => rewrite -roll in H; dependent destruction H; clear H
+    | H : t _ _ |- _ => rewrite -roll in H; dependent destruction H
     end.
 
 
@@ -197,6 +197,7 @@ Module Clo.
     dependent destruction has;
     by Term.evals_to_eq.
   Qed.
+
 
   Local Ltac cleanup :=
     simpl in *;
