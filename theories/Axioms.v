@@ -14,7 +14,9 @@ Module Later.
   Axiom t : CLK -> Prop -> Prop.
   Axiom map : forall κ (p q : Prop), (p -> q) -> (t κ p -> t κ q).
   Axiom cart : ∀ κ (p q : Prop), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
+  Axiom force : ∀ p, (∀ κ, t κ (p κ)) = (∀ κ, p κ).
   Axiom loeb : ∀ κ p, (t κ p → p) → p.
+  Axiom next : ∀ κ (p : Prop), p → t κ p.
 
   Theorem join : ∀ κ p q, t κ p → t κ q → t κ (p ∧ q).
   Proof.
