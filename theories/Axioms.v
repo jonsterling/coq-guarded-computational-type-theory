@@ -33,6 +33,25 @@ Module Later.
 
   Ltac gather :=
     let x := fresh in elim_aux x.
+
+  Axiom Total : Type → Prop.
+  Definition Inh (A : Type) : Prop := ∃ x : A, True.
+
+  Axiom yank_existential :
+    ∀ A P κ,
+      Total A
+      → Inh A
+      → t κ (∃ x : A, P x)
+      → ∃ x : A, t κ (P x).
+
+  Axiom pow_total : ∀ A, Total (A → Prop).
+  Theorem pow_inh : ∀ A, Inh (A → Prop).
+  Proof.
+    move=> A.
+    by exists (fun _ => True).
+  Qed.
+
+  Hint Resolve pow_total pow_inh.
 End Later.
 
 Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 0).
