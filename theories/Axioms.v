@@ -14,6 +14,7 @@ Module Later.
   Axiom t : CLK -> Prop -> Prop.
   Axiom map : forall κ (p q : Prop), (p -> q) -> (t κ p -> t κ q).
   Axiom cart : ∀ κ (p q : Prop), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
+  Axiom loeb : ∀ κ p, (t κ p → p) → p.
 
   Theorem join : ∀ κ p q, t κ p → t κ q → t κ (p ∧ q).
   Proof.
@@ -22,17 +23,20 @@ Module Later.
   Qed.
 
   Local Ltac elim_aux y :=
-  lazymatch goal with
-  | H1 : t ?κ _, H2 : t?κ _ |- _ =>
-    let x := fresh in
-    have := join H1 H2 => x;
-    clear H1; clear H2;
-    elim_aux x
-  | |- t ?κ _ => apply: map y
+    lazymatch goal with
+    | H1 : t ?κ _, H2 : t ?κ _ |- _ =>
+      let x := fresh in
+      have := join H1 H2 => x;
+      clear H1; clear H2;
+      elim_aux x
+    | |- t ?κ _ => refine (map _ y)
   end.
 
   Ltac gather :=
-    let x := fresh in elim_aux x.
+    lazymatch goal with
+    | x : t ?κ _ |- _ => elim_aux x
+    | _ => let x := fresh in elim_aux x
+    end.
 
   Axiom Total : Type → Prop.
   Definition Inh (A : Type) : Prop := ∃ x : A, True.
