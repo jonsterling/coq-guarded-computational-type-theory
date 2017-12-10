@@ -165,6 +165,28 @@ Module Closed.
     + eauto.
   Qed.
 
+  Theorem later_formation {κ n} {A B} :
+    ▷[κ] (τ[n] ⊧ A ∼ B)
+    → τ[n] ⊧ (Tm.ltr κ A) ∼ (Tm.ltr κ B).
+  Proof.
+    move=> / Later.yank_existential;
+    case; try by [rewrite /Tower.M.behavior].
+    move=> R 𝒟.
+    Tac.prove; refine (Later.map _ 𝒟);
+    case; Tac.prove.
+  Qed.
+
+  Theorem later_intro {κ n} {A e1 e2} :
+    ▷[κ] (τ[n] ⊧ A ∋ e1 ∼ e2)
+    → τ[n] ⊧ (Tm.ltr κ A) ∋ e1 ∼ e2.
+  Proof.
+    move=> / Later.yank_existential;
+    case; try by [rewrite /Tower.M.behavior].
+    move=> R 𝒟.
+    Tac.prove; refine (Later.map _ 𝒟);
+    case; Tac.prove.
+  Qed.
+
   Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality.
 
   Theorem test : τω ⊧ (Tm.prod Tm.unit (Tm.univ 0)) ∼ (Tm.prod Tm.unit (Tm.univ 0)).
