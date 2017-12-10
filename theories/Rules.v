@@ -194,24 +194,59 @@ Module Closed.
     Tac.prove; simpl; Later.gather; Tac.prove.
   Qed.
 
-  Theorem later_force {n} {A e1 e2} :
-    τ[n] ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∋ e1 ∼ e2
-    → τ[n] ⊧ (Tm.isect (λ κ, A κ)) ∋ e1 ∼ e2.
+  Theorem later_force {n} {A} :
+    τ[n] ⊧ (Tm.isect A) ∼ (Tm.isect A)
+    → τ[n] ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∼ (Tm.isect A).
   Proof.
-    case=> R [H1 H2].
-    rewrite /Tower.t in H1.
-    Clo.destruct_clo.
+    move=> [R [H _]].
+    exists R; T.split; auto.
+    rewrite /Tower.t in H.
+    rewrite -Clo.roll in H.
+    Clo.destruct_sig.
     - induction n; Spine.simplify.
       + contradiction.
       + T.destruct_conjs.
         Term.destruct_evals.
     - Clo.destruct_has; Term.destruct_evals.
-      exists (fun X => ∀ κ, S κ X).
-      T.split; try by eauto.
-      Tac.prove.
+      replace (fun e0e1 => ∀ κ, S κ e0e1) with (fun e0e1 => ∀ κ, ▷[κ] (S κ e0e1)).
+      + do 3 Tac.prove_step; eauto.
+        move=> κ.
+        T.specialize_hyps.
+        rewrite -Clo.roll.
+        apply: Sig.conn; eauto.
+        apply: Connective.has_later.
+        by apply: Later.next.
+      + T.eqcd => e0e1.
+        apply: Later.force.
+  Qed.
+
+  Theorem rewrite_ty_in_mem {n A0 A1 e1 e2} :
+    τ[n] ⊧ A0 ∼ A1
+    → τ[n] ⊧ A0 ∋ e1 ∼ e2
+    → τ[n] ⊧ A1 ∋ e1 ∼ e2.
+  Proof.
+    move=> [R [𝒟0 𝒟1]] [R' [ℰ ℱ]].
+    exists R'; split; eauto.
+
+    replace R' with R.
+    - auto.
+    - symmetry.
+      apply: Tower.extensionality; eauto.
+  Qed.
+
+  Theorem later_force_mem {n} {A e0 e1} :
+    τ[n] ⊧ (Tm.isect A) ∼ (Tm.isect A)
+    → τ[n] ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∋ e0 ∼ e1
+    → τ[n] ⊧ Tm.isect A ∋ e0 ∼ e1.
+  Proof.
+    move=> 𝒟 ℰ.
+    apply: rewrite_ty_in_mem.
+    - by apply: later_force.
+    - auto.
+  Qed.
 
 
-  Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro.
+  Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force.
 
   Theorem test : τω ⊧ (Tm.prod Tm.unit (Tm.univ 0)) ∼ (Tm.prod Tm.unit (Tm.univ 0)).
   Proof.
