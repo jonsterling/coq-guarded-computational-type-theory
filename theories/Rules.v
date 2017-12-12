@@ -1,5 +1,6 @@
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Tactics.
+Require Import Coq.Program.Equality.
 From mathcomp Require Import ssreflect.
 
 Set Bullet Behavior "Strict Subproofs".
@@ -306,6 +307,32 @@ Module Closed.
       + eexists; eauto.
       + symmetry; Tac.tower_ext; Tac.tower_mono.
   Qed.
+
+  (* TODO: finish. *)
+  Theorem env_eq_sym {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
+    τω ⊧ Γ ctx
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τω ⊧ Γ ∋⋆ γ1 ∼ γ0.
+  Proof.
+    move=> Γctx γ01.
+    induction Γ.
+    - eauto.
+    - split; simplify_eqs.
+      + apply: IHΓ; eauto.
+        * by case: Γctx => ? ?.
+        * by case: γ01 => ? ?.
+      + case: γ01; simplify_eqs.
+        case: Γctx; simplify_eqs.
+        rewrite /Basics.compose.
+        move=> H1 H2 H3 H4.
+        admit.
+  Admitted.
+
+  Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
+    τω ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
+  Admitted.
+
 
   Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force ty_eq_refl_left ty_eq_trans ty_eq_symm rewrite_ty_in_mem.
 

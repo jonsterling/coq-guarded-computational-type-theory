@@ -297,15 +297,6 @@ Proof.
   - auto.
 Qed.
 
-Theorem env_eq_sym `{Γ : Prectx Ψ} {γ0 γ1} :
-  τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-  → τω ⊧ Γ ∋⋆ γ1 ∼ γ0.
-Admitted.
-
-Theorem env_eq_refl_left `{Γ : Prectx Ψ} {γ0 γ1} :
-  τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-  → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
-Admitted.
 
 Theorem ty_eq_sym `{Γ : FCtx.t Λ Ψ} {A0 A1} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
@@ -315,8 +306,8 @@ Proof.
   specialize (𝒟 κs Γctx).
   apply: Closed.ty_eq_symm.
   move: (𝒟 γ0 γ1 γ01) => [R01 [[? ?] [? ?]]].
-  move: (𝒟 γ0 γ0 (env_eq_refl_left γ01)) => [R00 [[? ?] [? ?]]].
-  move: (𝒟 γ1 γ0 (env_eq_sym γ01)) => [R10 [[? ?] [? ?]]].
+  move: (𝒟 γ0 γ0 (Closed.env_eq_refl_left γ01)) => [R00 [[? ?] [? ?]]].
+  move: (𝒟 γ1 γ0 (Closed.env_eq_sym Γctx γ01)) => [R10 [[? ?] [? ?]]].
   Closed.Tac.accum_lvl n.
   (have H1 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R01)); [by Closed.Tac.tower_mono|].
   (have H2 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ1, R01)); [by Closed.Tac.tower_mono|].
