@@ -321,12 +321,34 @@ Proof.
   - apply: Tower.extensionality; eauto.
 Qed.
 
-(* need to prove transitivity lemma in the semantics first! *)
 Theorem ty_eq_trans `{Γ : FCtx.t Λ Ψ} {A0 A1 A2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ A2 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A2 ⌋ ⟧.
-Admitted.
+Proof.
+  move=> 𝒟 ℰ κs Γctx γ0 γ1 γ01.
+  specialize (𝒟 κs Γctx).
+  specialize (ℰ κs Γctx γ0 γ1 γ01).
+  move: (𝒟 γ0 γ1 γ01) => [R01 [[? ?] [? ?]]].
+  move: (𝒟 γ0 γ0 (Closed.env_eq_refl_left Γctx γ01)) => [R00 [[? ?] [? ?]]].
+  move: (𝒟 γ1 γ0 (Closed.env_eq_sym Γctx γ01)) => [R10 [[? ?] [? ?]]].
+  Closed.Tac.accum_lvl n.
+  (have H1 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R01)); [by Closed.Tac.tower_mono|].
+  (have H2 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ1, R01)); [by Closed.Tac.tower_mono|].
+  (have H3 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ1, R10)); [by Closed.Tac.tower_mono|].
+  (have H4 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R10)); [by Closed.Tac.tower_mono|].
+  (have H5 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
+  (have H6 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
+
+  apply: Closed.ty_eq_trans; eauto.
+  exists R00; replace R00 with R10.
+  T.split; exists n; eauto.
+  replace R10 with R01; eauto.
+  * transitivity R00; symmetry;
+    apply: Tower.extensionality; eauto.
+  * apply: Tower.extensionality; eauto.
+Qed.
+
 
 Theorem ty_eq_refl_left `{Γ : FCtx.t Λ Ψ} {A0 A1} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
