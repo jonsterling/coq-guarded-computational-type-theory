@@ -310,7 +310,6 @@ Module Closed.
       + symmetry; Tac.tower_ext; Tac.tower_mono.
   Qed.
 
-  (* TODO: finish. *)
   Theorem env_eq_sym {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
     τω ⊧ Γ ctx
     → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
@@ -321,23 +320,23 @@ Module Closed.
     - eauto.
     - split; simplify_eqs.
       + apply: IHΓ; eauto.
-        * by case: Γctx => ? ?.
-        * by case: γ01 => ? ?.
-      + have: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ1 ∘ Fin.FS)).
-        * admit.
-        * move=> [R [𝒟 _]].
-          destruct (Towerω_per_valued 𝒟) as [symm _].
-          admit.
-  Admitted.
-(*
+        * by case: Γctx.
+        * by case: γ01.
+      + have: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
+        * case: Γctx => _ 𝒟.
+          apply: ty_eq_symm.
+          apply: 𝒟.
+          by case: γ01.
+        * move=> [R [[? 𝒟0] [? 𝒟1]]].
+          case: γ01 => [_ [S [[n ℰ] γ01]]].
+          destruct (Tower.per_valued ℰ) as [symm _].
+          exists R; T.split.
+          ** eexists; eauto.
+          ** replace R with S.
+             *** by apply: symm.
+             *** Closed.Tac.tower_ext; Closed.Tac.tower_mono.
+  Qed.
 
-case: γ01; simplify_eqs.
-        case: Γctx; simplify_eqs.
-        rewrite /Basics.compose.
-        move=> H1 H2 H3 H4.
-        admit.
-  Admitted.
-*)
   Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
     τω ⊧ Γ ∋⋆ γ0 ∼ γ1
     → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
