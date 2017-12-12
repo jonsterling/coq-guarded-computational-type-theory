@@ -327,8 +327,6 @@ Proof.
   - by apply: ty_eq_sym.
 Qed.
 
-Hint Resolve Closed.rewrite_ty_in_mem.
-
 Theorem rewrite_ty_in_mem `{Γ : FCtx.t Λ Ψ} {A0 A1 e1 e2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⌋ ⟧
