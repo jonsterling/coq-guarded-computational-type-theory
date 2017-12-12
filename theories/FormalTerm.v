@@ -327,6 +327,8 @@ Proof.
   - by apply: ty_eq_sym.
 Qed.
 
+Hint Resolve Closed.ty_eq_trans Closed.ty_eq_symm.
+
 Theorem rewrite_ty_in_mem `{Γ : FCtx.t Λ Ψ} {A0 A1 e1 e2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⌋ ⟧
@@ -335,29 +337,8 @@ Proof.
   move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01.
   specialize (ℰ κs Γctx (ty_eq_refl_left 𝒟 κs Γctx) γ0 γ1 γ01).
   specialize (𝒟 κs Γctx γ0 γ1 γ01).
+  specialize (ℱ γ0 γ1 γ01).
 
-  case: (ℱ γ0 γ1 γ01) => [Rℱ [ℱ0 ℱ1]].
-  exists Rℱ; repeat T.split; auto.
-
-
-  case: ℰ => [Rℰ [ℰ0 ℰ1]].
-  case: 𝒟 => [R𝒟 [𝒟0 𝒟1]].
-  case: ℰ0 => [nℰ ℰ0'].
-  case: ℱ1 => [nℱ1 ℱ1'].
-  case: 𝒟0 => [n𝒟0 𝒟0'].
-  case: 𝒟1 => [n𝒟1 𝒟1'].
-
-  pose n := nℰ + n𝒟0 + n𝒟1 + nℱ1.
-
-  have:
-    τ[ n ] ((T⟦ A0 ⟧ κs) ⫽ γ0, Rℰ)
-    ∧ τ[ n ] ((T⟦ A0 ⟧ κs) ⫽ γ0, R𝒟)
-    ∧ τ[ n ] ((T⟦ A1 ⟧ κs) ⫽ γ1, R𝒟)
-    ∧ τ[ n ] ((T⟦ A1 ⟧ κs) ⫽ γ1, Rℱ).
-  - repeat split; (apply: Tower.monotonicity; last by [eauto]; rewrite /n; omega).
-  - move=> [ℰ0'' [𝒟0'' [𝒟1'' ℱ1'']]].
-    replace Rℱ with Rℰ; auto.
-    apply: Tower.extensionality; eauto.
-    replace Rℱ with R𝒟; auto.
-    apply: Tower.extensionality; eauto.
+  apply: Closed.rewrite_ty_in_mem;
+  eauto.
 Qed.
