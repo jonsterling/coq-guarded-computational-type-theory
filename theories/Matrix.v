@@ -13,6 +13,11 @@ Definition matrix := Tm.t 0 * behavior → Prop.
 Definition empty : matrix :=
   fun _ => False.
 
+Record is_per (R : behavior) :=
+  { symmetric : ∀ e0 e1, R (e0, e1) → R (e1, e0);
+    transitive : ∀ e0 e1 e2, R (e0, e1) → R (e1, e2) → R (e0, e2)
+  }.
+
 
 Module Law.
   Definition universe_system (σ : matrix) :=
@@ -23,4 +28,7 @@ Module Law.
 
   Definition extensional (σ : matrix) :=
     ∀ A R, σ (A, R) → extensional_at σ (A, R).
+
+  Definition per_valued (σ : matrix) :=
+    ∀ A R, σ (A, R) → is_per R.
 End Law.

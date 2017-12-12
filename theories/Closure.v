@@ -231,5 +231,95 @@ Module Clo.
         rewrite_functionality_ih; eauto.
   Qed.
 
-  Hint Resolve monotonicity extensionality.
+  Theorem cext_per {R} :
+    M.is_per R
+    → M.is_per (Connective.cext R).
+  Proof.
+    move=> [ihSm ihTr].
+    constructor.
+    - move=> e0 e1 H1.
+      dependent destruction H1.
+      econstructor; eauto.
+    - move=> e0 e1 e2 H1 H2.
+      dependent destruction H1.
+      dependent destruction H2.
+      Term.evals_to_eq.
+      T.destruct_eqs.
+      econstructor; eauto.
+  Qed.
+
+  Theorem unit_val_per : M.is_per Connective.unit_val.
+  Proof.
+    constructor.
+    - move=> e0 e1 H1.
+      by dependent destruction H1.
+    - move=> ? ? ? H1 H2.
+      by [dependent destruction H1;
+          dependent destruction H2].
+  Qed.
+
+  Theorem bool_val_per : M.is_per Connective.bool_val.
+  Proof.
+    constructor.
+    - move=> e0 e1 H1.
+      by dependent destruction H1.
+    - move=> ? ? ? H1 H2.
+      by [dependent destruction H1;
+          dependent destruction H2].
+  Qed.
+
+  Theorem prod_val_per {R0 R1} :
+    M.is_per R0
+    → M.is_per R1
+    → M.is_per (Connective.prod_val R0 R1).
+  Proof.
+    move=> [ihSm0 ihTr0] [ihSm1 ihTr1].
+    constructor.
+    - move=> e0 e1 H1.
+      dependent destruction H1.
+      constructor; eauto.
+    - move=> ? ? ? H1 H2.
+      dependent destruction H1.
+      dependent destruction H2.
+      constructor; eauto.
+  Qed.
+
+
+  Theorem per_valued {σ} :
+    M.Law.per_valued σ
+    → M.Law.per_valued (t σ).
+  Proof.
+    move=> IH A R 𝒟.
+    apply: (@ind (A, R) σ (fun X => M.is_per (snd X))); auto; move {𝒟 A R}.
+    - move=> [A R].
+      apply: IH.
+    - move=> ι A A0 R 𝒟 ℰ.
+      destruct_has; simpl.
+      + apply: cext_per.
+        apply: unit_val_per.
+      + apply: cext_per.
+        apply: bool_val_per.
+      + apply: cext_per.
+        apply: prod_val_per; eauto.
+      + constructor.
+        * move=> e0 e1 H1.
+          Later.gather.
+          move=> //= [[ihR0 _] e0e1].
+          eauto.
+        * move=> e0 e1 e2 H1 H2.
+          Later.gather.
+          move=> //= [[_ ihR0] [e0e1 e1e2]].
+          eauto.
+      + constructor.
+        * move=> ? ? H1 κ.
+          T.specialize_hyps.
+          case: H => //= [? ?].
+          eauto.
+        * move=> ? ? ? H1 H2 κ.
+          T.specialize_hyps.
+          case: H => //= [? ?].
+          eauto.
+  Qed.
+
+  Hint Resolve monotonicity extensionality per_valued.
 End Clo.
