@@ -101,6 +101,34 @@ Module Spine.
       esplit; [omega | eauto].
   Qed.
 
+  Theorem per_valued : ∀ i, M.Law.per_valued (t i).
+  Proof.
+    move=> i.
+    induction i.
+    - constructor; contradiction.
+    - constructor; Spine.simplify.
+      + move=> e0 e1 e0e1.
+        case: H => //= [j [? [? Rspec]]].
+        rewrite Rspec in e0e1.
+        rewrite Rspec.
+        case: e0e1 => [S [H1 H2]].
+        eauto.
+      + move=> e0 e1 e2 e0e1 e1e2.
+        case: H => //= [j [? [? Rspec]]].
+        rewrite Rspec in e0e1 e1e2.
+        rewrite Rspec.
+        case: e0e1 => //= [S [H1 H2]].
+        case: e1e2 => //= [S' [H1' H2']].
+        exists S; T.split.
+        * eauto.
+        * replace S with S'; auto.
+          apply: Clo.extensionality.
+          ** apply: universe_system j.
+          ** apply: extensionality.
+          ** exact H1'.
+          ** exact H2.
+  Qed.
+
   Ltac spine_contradiction :=
     lazymatch goal with
     | H : Spine.t _ (Tm.univ _, _) |- _ => fail "This is a universe!"
@@ -141,6 +169,13 @@ Module Tower.
 
   Hint Resolve extensionality monotonicity.
 
+  Theorem per_valued : ∀ i, M.Law.per_valued (t i).
+  Proof.
+    move=> i A R H.
+    apply: Clo.per_valued.
+    - apply: Spine.per_valued; eauto.
+    - eauto.
+  Qed.
 End Tower.
 
 
@@ -160,4 +195,21 @@ Proof.
     omega.
   + apply: (@Tower.monotonicity _ (n1 + n2)); last eauto.
     omega.
+Qed.
+
+Theorem Towerω_per_valued : M.Law.per_valued τω.
+Proof.
+  move=> A R.
+  rewrite /τω.
+  move=> [nH H].
+  constructor.
+
+  - move=> e0 e1 e0e1.
+    edestruct (@Tower.per_valued nH);
+    eauto.
+
+
+  - move=> e0 e1 e2 e0e1 e1e2.
+    edestruct (@Tower.per_valued nH);
+    eauto.
 Qed.
