@@ -309,12 +309,12 @@ Proof.
   move: (𝒟 γ0 γ0 (Closed.env_eq_refl_left Γctx γ01)) => [R00 [[? ?] [? ?]]].
   move: (𝒟 γ1 γ0 (Closed.env_eq_sym Γctx γ01)) => [R10 [[? ?] [? ?]]].
   Closed.Tac.accum_lvl n.
-  (have H1 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R01)); [by Closed.Tac.tower_mono|].
-  (have H2 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ1, R01)); [by Closed.Tac.tower_mono|].
-  (have H3 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ1, R10)); [by Closed.Tac.tower_mono|].
-  (have H4 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R10)); [by Closed.Tac.tower_mono|].
-  (have H5 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
-  (have H6 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R01)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ1, R01)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ1, R10)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R10)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
 
   exists R00; replace R00 with R10.
   - T.split; by [exists n].
@@ -333,12 +333,12 @@ Proof.
   move: (𝒟 γ0 γ0 (Closed.env_eq_refl_left Γctx γ01)) => [R00 [[? ?] [? ?]]].
   move: (𝒟 γ1 γ0 (Closed.env_eq_sym Γctx γ01)) => [R10 [[? ?] [? ?]]].
   Closed.Tac.accum_lvl n.
-  (have H1 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R01)); [by Closed.Tac.tower_mono|].
-  (have H2 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ1, R01)); [by Closed.Tac.tower_mono|].
-  (have H3 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ1, R10)); [by Closed.Tac.tower_mono|].
-  (have H4 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R10)); [by Closed.Tac.tower_mono|].
-  (have H5 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
-  (have H6 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R01)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ1, R01)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ1, R10)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R10)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
+  (have ? : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
 
   apply: Closed.ty_eq_trans; eauto; exists R00.
   replace R00 with R10; last by [apply: Tower.extensionality; eauto].
