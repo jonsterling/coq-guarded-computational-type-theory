@@ -1,6 +1,7 @@
 Require Import Unicode.Utf8.
 Require Import Coq.Program.Tactics.
 Require Import Coq.Program.Equality.
+Require Import Coq.Program.Basics.
 From mathcomp Require Import ssreflect.
 
 Set Bullet Behavior "Strict Subproofs".
@@ -20,6 +21,7 @@ Module T := Tactic.
 
 
 Require Import Coq.omega.Omega.
+Open Scope program_scope.
 
 
 Set Implicit Arguments.
@@ -321,13 +323,21 @@ Module Closed.
       + apply: IHΓ; eauto.
         * by case: Γctx => ? ?.
         * by case: γ01 => ? ?.
-      + case: γ01; simplify_eqs.
+      + have: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ1 ∘ Fin.FS)).
+        * admit.
+        * move=> [R [𝒟 _]].
+          destruct (Towerω_per_valued 𝒟) as [symm _].
+          admit.
+  Admitted.
+(*
+
+case: γ01; simplify_eqs.
         case: Γctx; simplify_eqs.
         rewrite /Basics.compose.
         move=> H1 H2 H3 H4.
         admit.
   Admitted.
-
+*)
   Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
     τω ⊧ Γ ∋⋆ γ0 ∼ γ1
     → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
