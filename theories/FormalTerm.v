@@ -327,6 +327,8 @@ Proof.
   - by apply: ty_eq_sym.
 Qed.
 
+Hint Resolve Closed.rewrite_ty_in_mem.
+
 Theorem rewrite_ty_in_mem `{Γ : FCtx.t Λ Ψ} {A0 A1 e1 e2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⌋ ⟧
@@ -336,7 +338,5 @@ Proof.
   specialize (ℰ κs Γctx (ty_eq_refl_left 𝒟 κs Γctx) γ0 γ1 γ01).
   specialize (𝒟 κs Γctx γ0 γ1 γ01).
   specialize (ℱ γ0 γ1 γ01).
-
-  apply: Closed.rewrite_ty_in_mem;
   eauto.
 Qed.
