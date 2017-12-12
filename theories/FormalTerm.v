@@ -340,13 +340,12 @@ Proof.
   (have H5 : τ[n] ((T⟦ A1 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
   (have H6 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R00)); [by Closed.Tac.tower_mono|].
 
-  apply: Closed.ty_eq_trans; eauto.
-  exists R00; replace R00 with R10.
-  T.split; exists n; eauto.
-  replace R10 with R01; eauto.
-  * transitivity R00; symmetry;
-    apply: Tower.extensionality; eauto.
-  * apply: Tower.extensionality; eauto.
+  apply: Closed.ty_eq_trans; eauto; exists R00.
+  replace R00 with R10; last by [apply: Tower.extensionality; eauto].
+  T.split; exists n; last by [eauto].
+  replace R10 with R01; first by [eauto].
+  transitivity R00; symmetry;
+  apply: Tower.extensionality; eauto.
 Qed.
 
 
