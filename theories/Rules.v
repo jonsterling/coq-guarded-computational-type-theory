@@ -287,21 +287,25 @@ Module Closed.
     Tac.prove.
   Qed.
 
-  (* TODO !*)
   Theorem ty_eq_symm {A B} :
     τω ⊧ A ∼ B
     → τω ⊧ B ∼ A.
   Proof.
-  Admitted.
+    Tac.prove.
+  Qed.
 
   Theorem ty_eq_trans {A B C} :
     τω ⊧ B ∼ C
     → τω ⊧ A ∼ B
     → τω ⊧ A ∼ C.
   Proof.
-  Admitted.
-
-
+    move=> [R1 [[? 𝒟0] [? 𝒟1]]] [R2 [[? ℰ0] [? ℰ1]]].
+    exists R2; T.split.
+    - eexists; eauto.
+    - replace R2 with R1.
+      + eexists; eauto.
+      + symmetry; Tac.tower_ext; Tac.tower_mono.
+  Qed.
 
   Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force ty_eq_refl_left ty_eq_trans ty_eq_symm rewrite_ty_in_mem.
 
