@@ -316,32 +316,53 @@ Module Closed.
     → τω ⊧ Γ ∋⋆ γ1 ∼ γ0.
   Proof.
     move=> Γctx γ01.
-    induction Γ.
-    - eauto.
-    - split; simplify_eqs.
-      + apply: IHΓ; eauto.
-        * by case: Γctx.
-        * by case: γ01.
-      + have: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
-        * case: Γctx => _ 𝒟.
-          apply: ty_eq_symm.
-          apply: 𝒟.
-          by case: γ01.
-        * move=> [R [[? 𝒟0] [? 𝒟1]]].
-          case: γ01 => [_ [S [[n ℰ] γ01]]].
-          destruct (Tower.per_valued ℰ) as [symm _].
-          exists R; T.split.
-          ** eexists; eauto.
-          ** replace R with S.
-             *** by apply: symm.
-             *** Closed.Tac.tower_ext; Closed.Tac.tower_mono.
+    induction Γ; eauto.
+    split; simplify_eqs.
+    - apply: IHΓ; eauto.
+      + by case: Γctx.
+      + by case: γ01.
+    - have: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
+      + case: Γctx => _ 𝒟.
+        apply: ty_eq_symm.
+        apply: 𝒟.
+        by case: γ01.
+      + move=> [R [[? 𝒟0] [? 𝒟1]]].
+        case: γ01 => [_ [S [[n ℰ] γ01]]].
+        destruct (Tower.per_valued ℰ) as [symm _].
+        exists R; T.split.
+        * eexists; eauto.
+        * replace R with S.
+          ** by apply: symm.
+          ** Closed.Tac.tower_ext; Closed.Tac.tower_mono.
   Qed.
 
   Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
-    τω ⊧ Γ ∋⋆ γ0 ∼ γ1
+    τω ⊧ Γ ctx
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
     → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
-  Admitted.
-
+  Proof.
+    move=> Γctx γ01.
+    induction Γ; eauto.
+    split; simplify_eqs.
+    - apply: IHΓ.
+      + by case: Γctx.
+      + case: γ01; eauto.
+    - have: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
+      + case: Γctx => _ 𝒟.
+        apply: ty_eq_refl_left.
+        apply: 𝒟.
+        case: γ01.
+        eauto.
+      + move=> [R [[? 𝒟0] [? 𝒟1]]].
+        case: γ01 => [_ [S [[n ℰ] γ01]]].
+        destruct (Tower.per_valued ℰ) as [symm trans].
+        exists R; T.split.
+        * eexists; eauto.
+        * move: ℰ γ01; simplify_eqs; move=> ℰ γ01.
+          replace R with S.
+          ** apply: trans; eauto.
+          ** Closed.Tac.tower_ext; Closed.Tac.tower_mono.
+  Qed.
 
   Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force ty_eq_refl_left ty_eq_trans ty_eq_symm rewrite_ty_in_mem.
 

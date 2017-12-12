@@ -306,7 +306,7 @@ Proof.
   specialize (𝒟 κs Γctx).
   apply: Closed.ty_eq_symm.
   move: (𝒟 γ0 γ1 γ01) => [R01 [[? ?] [? ?]]].
-  move: (𝒟 γ0 γ0 (Closed.env_eq_refl_left γ01)) => [R00 [[? ?] [? ?]]].
+  move: (𝒟 γ0 γ0 (Closed.env_eq_refl_left Γctx γ01)) => [R00 [[? ?] [? ?]]].
   move: (𝒟 γ1 γ0 (Closed.env_eq_sym Γctx γ01)) => [R10 [[? ?] [? ?]]].
   Closed.Tac.accum_lvl n.
   (have H1 : τ[n] ((T⟦ A0 ⟧ κs) ⫽ γ0, R01)); [by Closed.Tac.tower_mono|].
