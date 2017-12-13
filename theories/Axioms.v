@@ -61,14 +61,6 @@ Module Later.
       (∀ x : A, t κ (P x))
       → t κ (∀ x : A, P x).
 
-
-  Axiom yank_universal :
-    ∀ A (P : A → Prop) κ,
-      Total A
-      → t κ (∀ x : A, P x)
-      → (∀ x : A, t κ (P x)).
-
-
   Axiom pow_total : ∀ A, Total (A → Prop).
   Axiom nat_total : Total nat.
 
