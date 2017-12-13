@@ -287,8 +287,15 @@ Module Closed.
         apply: Later.push_universal.
         move=> e0e1.
         rewrite -Later.commute_eq.
-        have x' := equal_f x.
-        by specialize (x' e0e1).
+        by apply: (equal_f x).
+  Qed.
+
+  Theorem spine_inversion {n i R} :
+    τ[n] (Tm.univ i, R)
+    → Spine.t n (Tm.univ i, R).
+  Proof.
+    move=> ?.
+    by Tower.destruct_tower.
   Qed.
 
 
@@ -298,51 +305,36 @@ Module Closed.
   Proof.
     move=> /eq_mem_to_level [n [R [𝒟 ℰ]]].
     Tower.destruct_tower.
-    eexists.
-    split.
+    esplit; T.split.
     - exists (i + 1).
       Tac.prove.
       replace (i + 1) with (S i); last by [omega].
       Spine.simplify.
-      eexists.
-      repeat T.split; eauto.
+      esplit; repeat T.split; eauto.
       reflexivity.
-    - simpl.
-      suff: ▷[κ0] (Spine.t n (Tm.univ i, R0)).
-
-      + move=> H1.
-        induction n.
-
-        * exists (fun _ => ▷[κ0] True). (* any relation will do! *)
-          replace (Clo.t (Spine.t i)) with τ[i]; last by [auto].
-          split; Tac.prove;
-          Later.gather => *; T.destruct_conjs;
-          Spine.simplify; by [contradiction].
-
-        * move {H IHn}.
-          suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
-          ** move=> /Later.yank_existential; case; eauto.
-             move=> S H2; rewrite Later.cart in H2.
-             case: H2 => [H20 H21].
-             exists (fun e0e1 => ▷[κ0] (S e0e1)).
-             split; rewrite -Clo.roll;
-             (apply: Sig.conn; first by [eauto]);
-             by apply: Connective.has_later.
-
-
-          ** Later.gather.
-             move=> [H1 [H2 H3]].
-             Spine.simplify.
-             case: H3 => [j [? [? R0spec]]].
-             simpl in *.
-             Term.destruct_evals.
-             rewrite R0spec in H1.
-             eauto.
-
-      + Later.gather.
-        move=> [H2 H3].
-        Clo.destruct_clo; eauto.
-        apply: Clo.connective_not_universe; eauto.
+    - have H1 := Later.map spine_inversion H0.
+      induction n.
+      + exists (fun _ => ▷[κ0] True).
+        (* any relation will do! *)
+        replace (Clo.t (Spine.t i)) with τ[i]; last by [auto].
+        split; Tac.prove;
+        Later.gather => *; T.destruct_conjs;
+        Spine.simplify; by [contradiction].
+      + move {H IHn}; suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
+        * move=> /Later.yank_existential; case; eauto.
+          move=> S H2; rewrite Later.cart in H2.
+          case: H2 => [H20 H21].
+          exists (fun e0e1 => ▷[κ0] (S e0e1)).
+          simpl in *.
+          split; rewrite -Clo.roll;
+          (apply: Sig.conn; first by [eauto]);
+          by [apply: Connective.has_later].
+        * Later.gather.
+          move=> [H1 [H2 H3]].
+          Spine.simplify.
+          case: H3 => [j [? [? R0spec]]].
+          Term.destruct_evals.
+          simpl in *; by [rewrite R0spec in H1].
   Qed.
 
   Theorem later_force {A} :
@@ -427,11 +419,7 @@ Module Closed.
     - apply: IHΓ; eauto.
       + by case: Γctx.
       + by case: γ01.
-    - have: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
-      + case: Γctx => _ 𝒟.
-        apply: ty_eq_symm.
-        apply: 𝒟.
-        by case: γ01.
+    - suff: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
       + move=> [R [[? 𝒟0] [? 𝒟1]]].
         case: γ01 => [_ [S [[n ℰ] γ01]]].
         destruct (Tower.per_valued ℰ) as [symm _].
@@ -440,6 +428,11 @@ Module Closed.
         * replace R with S.
           ** by apply: symm.
           ** Closed.Tac.tower_ext; Closed.Tac.tower_mono.
+
+      + case: Γctx => _ 𝒟.
+        apply: ty_eq_symm.
+        apply: 𝒟.
+        by case: γ01.
   Qed.
 
   Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
@@ -453,12 +446,7 @@ Module Closed.
     - apply: IHΓ.
       + by case: Γctx.
       + case: γ01; eauto.
-    - have: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
-      + case: Γctx => _ 𝒟.
-        apply: ty_eq_refl_left.
-        apply: 𝒟.
-        case: γ01.
-        eauto.
+    - suff: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
       + move=> [R [[? 𝒟0] [? 𝒟1]]].
         case: γ01 => [_ [S [[n ℰ] γ01]]].
         destruct (Tower.per_valued ℰ) as [symm trans].
@@ -468,6 +456,11 @@ Module Closed.
           replace R with S.
           ** apply: trans; eauto.
           ** Closed.Tac.tower_ext; Closed.Tac.tower_mono.
+      + case: Γctx => _ 𝒟.
+        apply: ty_eq_refl_left.
+        apply: 𝒟.
+        case: γ01.
+        eauto.
   Qed.
 
   Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force ty_eq_refl_left ty_eq_trans ty_eq_symm rewrite_ty_in_mem later_mem_univ.
