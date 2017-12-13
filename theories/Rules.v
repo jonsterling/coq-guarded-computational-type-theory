@@ -2,6 +2,7 @@ Require Import Unicode.Utf8.
 Require Import Coq.Program.Tactics.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Basics.
+Require Import Coq.Logic.FunctionalExtensionality.
 From mathcomp Require Import ssreflect.
 
 Set Bullet Behavior "Strict Subproofs".
@@ -132,8 +133,8 @@ Module Closed.
     apply: (unique_choice (fun κ R => τ[n] (A1 κ, R) ∧ τ[n] (A2 κ, R))) => κ.
     case: (X κ) => S T.
     eexists; split; eauto => S' T';
-                              apply: Tower.extensionality; eauto;
-                                T.destruct_conjs; eauto.
+    apply: Tower.extensionality; eauto;
+    T.destruct_conjs; eauto.
   Qed.
 
   Theorem isect_formation {n B0 B1} :
@@ -211,11 +212,11 @@ Module Closed.
 
   Theorem behavior_total : Later.Total Matrix.behavior.
   Proof.
-      by rewrite /Matrix.behavior.
+    by rewrite /Matrix.behavior.
   Qed.
 
   Theorem behavior_inh : Later.Inh Matrix.behavior.
-      by rewrite /Matrix.behavior.
+    by rewrite /Matrix.behavior.
   Qed.
 
   Hint Resolve behavior_total behavior_inh.
@@ -229,13 +230,57 @@ Module Closed.
     Tac.prove; Later.gather; case; Tac.prove.
   Qed.
 
-  Theorem later_intro {κ n} {A e1 e2} :
-    ▷[κ] (τ[n] ⊧ A ∋ e1 ∼ e2)
-    → τ[n] ⊧ (Tm.ltr κ A) ∋ e1 ∼ e2.
+  Theorem later_intro {κ} {A e1 e2} :
+    ▷[κ] (τω ⊧ A ∋ e1 ∼ e2)
+    → τω ⊧ (Tm.ltr κ A) ∋ e1 ∼ e2.
   Proof.
-    move=> /Later.yank_existential;
-    case=> *; eauto.
-    Tac.prove; simpl; Later.gather; Tac.prove.
+    move=> /Later.yank_existential.
+    case; eauto.
+    move=> R 𝒟.
+    rewrite Later.cart in 𝒟.
+    case: 𝒟 => [/Later.yank_existential 𝒟0 𝒟1].
+    case: 𝒟0; eauto.
+    move=> n 𝒟0.
+    Tac.prove.
+  Qed.
+
+  (* This proof is really horrific! *)
+  Theorem later_mem_univ_inversion {κ i} {A0 A1} :
+    τω ⊧ (Tm.univ i) ∋ (Tm.ltr κ A0) ∼ (Tm.ltr κ A1)
+    → ▷[κ] (τω ⊧ (Tm.univ i) ∋ A0 ∼ A1).
+  Proof.
+    move=> /eq_mem_to_level [n [R [𝒟 A0A1]]].
+    Tower.destruct_tower.
+    induction n; Spine.simplify; try by [contradiction].
+    case: H => //= [j [? [? [Rspec]]]].
+    Term.destruct_evals.
+    apply: Later.push_existential.
+    exists R.
+    rewrite Later.cart.
+    split.
+    - apply: Later.next.
+      exists (S n).
+      rewrite /Tower.t -Clo.roll.
+      apply: Sig.init.
+      Spine.simplify.
+      eauto.
+    - rewrite Rspec in A0A1.
+      case: A0A1 => //= [S [H1 H2]].
+      replace (Clo.t (Spine.t j)) with (Tower.t j) in H1, H2; last by [auto].
+      Tower.destruct_tower.
+      Tower.destruct_tower.
+      suff: ▷[κ] (R = R0).
+      + move=> E; Later.gather.
+        move=> //= [H5 [H6 E]].
+        exists R.
+        split; first by [auto].
+        by rewrite -E in H5.
+      + refine (Later.map (functional_extensionality R R0) _).
+        apply: Later.push_universal.
+        move=> e0e1.
+        rewrite -Later.commute_eq.
+        have x' := equal_f x.
+        by specialize (x' e0e1).
   Qed.
 
 

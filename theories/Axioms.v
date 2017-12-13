@@ -17,6 +17,7 @@ Module Later.
   Axiom force : ∀ p, (∀ κ, t κ (p κ)) = (∀ κ, p κ).
   Axiom loeb : ∀ κ p, (t κ p → p) → p.
   Axiom next : ∀ κ (p : Prop), p → t κ p.
+  Axiom commute_eq : ∀ κ (p q : Prop), ((t κ p) = (t κ q)) = t κ (p = q).
 
   Theorem join : ∀ κ p q, t κ p → t κ q → t κ (p ∧ q).
   Proof.
@@ -50,14 +51,38 @@ Module Later.
       → t κ (∃ x : A, P x)
       → ∃ x : A, t κ (P x).
 
+  Axiom push_existential :
+    ∀ A P κ,
+      (∃ x : A, t κ (P x))
+      → t κ (∃ x : A, P x).
+
+  Axiom push_universal :
+    ∀ A P κ,
+      (∀ x : A, t κ (P x))
+      → t κ (∀ x : A, P x).
+
+
+  Axiom yank_universal :
+    ∀ A (P : A → Prop) κ,
+      t κ (∀ x : A, P x)
+      → (∀ x : A, t κ (P x)).
+
+
   Axiom pow_total : ∀ A, Total (A → Prop).
+  Axiom nat_total : Total nat.
+
   Theorem pow_inh : ∀ A, Inh (A → Prop).
   Proof.
     move=> A.
     by exists (fun _ => True).
   Qed.
 
-  Hint Resolve pow_total pow_inh.
+  Theorem nat_inh : Inh nat.
+  Proof.
+    by exists 0.
+  Qed.
+
+  Hint Resolve pow_total pow_inh nat_total nat_inh.
 End Later.
 
 Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 0).
