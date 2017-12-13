@@ -161,7 +161,7 @@ Module Tower.
   Qed.
 
   Ltac destruct_tower :=
-    match goal with
+    lazymatch goal with
     | H : t ?n _ |- _ =>
       rewrite /t in H; Clo.destruct_clo; try by [Spine.spine_contradiction];
       try (Clo.destruct_has; Term.destruct_evals)

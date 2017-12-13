@@ -74,6 +74,11 @@ Module Connective.
   Qed.
 
   Hint Resolve monotone.
+
+  Ltac destruct_cext :=
+    match goal with
+    | H : cext _ _ |- _ => dependent destruction H
+    end.
 End Connective.
 
 Module Sig.
