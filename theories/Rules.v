@@ -221,13 +221,21 @@ Module Closed.
 
   Hint Resolve behavior_total behavior_inh.
 
-  Theorem later_formation {κ n} {A B} :
-    ▷[κ] (τ[n] ⊧ A ∼ B)
-    → τ[n] ⊧ (Tm.ltr κ A) ∼ (Tm.ltr κ B).
+  Theorem later_formation {κ} {A B} :
+    ▷[κ] (τω ⊧ A ∼ B)
+    → τω ⊧ (Tm.ltr κ A) ∼ (Tm.ltr κ B).
   Proof.
-    move=> /Later.yank_existential;
-    case=> *; eauto.
-    Tac.prove; Later.gather; case; Tac.prove.
+    move=> /Later.yank_existential; case; auto.
+    move=> R H0.
+    suff: ▷[κ] (∃ n, τ[n] (A, R) ∧ τ[n] (B, R)).
+    - move=> /Later.yank_existential; case; auto.
+      move=> n H1.
+      Tac.prove; Later.gather; case; Tac.prove.
+    - Later.gather.
+      move=> [[n1 H1] [n2 H2]].
+      Tac.accum_lvl n.
+      exists n.
+      split; Tac.tower_mono.
   Qed.
 
   Theorem later_intro {κ} {A e1 e2} :
@@ -306,12 +314,10 @@ Module Closed.
         induction n.
 
         * exists (fun _ => ▷[κ0] True). (* any relation will do! *)
-          split;
-          rewrite -Clo.roll;
-          apply: Sig.conn; eauto;
-          apply: Connective.has_later;
+          replace (Clo.t (Spine.t i)) with τ[i]; last by [auto].
+          split; Tac.prove;
           Later.gather => *; T.destruct_conjs;
-          Spine.simplify; contradiction.
+          Spine.simplify; by [contradiction].
 
         * move {H IHn}.
           suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
@@ -464,7 +470,7 @@ Module Closed.
           ** Closed.Tac.tower_ext; Closed.Tac.tower_mono.
   Qed.
 
-  Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force ty_eq_refl_left ty_eq_trans ty_eq_symm rewrite_ty_in_mem.
+  Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force ty_eq_refl_left ty_eq_trans ty_eq_symm rewrite_ty_in_mem later_mem_univ.
 
   Theorem test : τω ⊧ (Tm.prod Tm.unit (Tm.univ 0)) ∼ (Tm.prod Tm.unit (Tm.univ 0)).
   Proof.
