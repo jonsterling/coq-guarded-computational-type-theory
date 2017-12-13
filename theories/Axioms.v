@@ -64,7 +64,8 @@ Module Later.
 
   Axiom yank_universal :
     ∀ A (P : A → Prop) κ,
-      t κ (∀ x : A, P x)
+      Total A
+      → t κ (∀ x : A, P x)
       → (∀ x : A, t κ (P x)).
 
 
