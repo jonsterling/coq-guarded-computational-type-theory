@@ -284,6 +284,61 @@ Module Closed.
   Qed.
 
 
+  Theorem later_mem_univ {κ i} {A0 A1} :
+    τω ⊧ (Tm.ltr κ (Tm.univ i)) ∋ A0 ∼ A1
+    → τω ⊧ Tm.univ i ∋ (Tm.ltr κ A0) ∼ (Tm.ltr κ A1).
+  Proof.
+    move=> /eq_mem_to_level [n [R [𝒟 ℰ]]].
+    Tower.destruct_tower.
+    eexists.
+    split.
+    - exists (i + 1).
+      Tac.prove.
+      replace (i + 1) with (S i); last by [omega].
+      Spine.simplify.
+      eexists.
+      repeat T.split; eauto.
+      reflexivity.
+    - simpl.
+      suff: ▷[κ0] (Spine.t n (Tm.univ i, R0)).
+
+      + move=> H1.
+        induction n.
+
+        * exists (fun _ => ▷[κ0] True). (* any relation will do! *)
+          split;
+          rewrite -Clo.roll;
+          apply: Sig.conn; eauto;
+          apply: Connective.has_later;
+          Later.gather => *; T.destruct_conjs;
+          Spine.simplify; contradiction.
+
+        * move {H IHn}.
+          suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
+          ** move=> /Later.yank_existential; case; eauto.
+             move=> S H2; rewrite Later.cart in H2.
+             case: H2 => [H20 H21].
+             exists (fun e0e1 => ▷[κ0] (S e0e1)).
+             split; rewrite -Clo.roll;
+             (apply: Sig.conn; first by [eauto]);
+             by apply: Connective.has_later.
+
+
+          ** Later.gather.
+             move=> [H1 [H2 H3]].
+             Spine.simplify.
+             case: H3 => [j [? [? R0spec]]].
+             simpl in *.
+             Term.destruct_evals.
+             rewrite R0spec in H1.
+             eauto.
+
+      + Later.gather.
+        move=> [H2 H3].
+        Clo.destruct_clo; eauto.
+        apply: Clo.connective_not_universe; eauto.
+  Qed.
+
   Theorem later_force {A} :
     τω ⊧ (Tm.isect A) ∼ (Tm.isect A)
     → τω ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∼ (Tm.isect A).
