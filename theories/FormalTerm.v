@@ -370,3 +370,18 @@ Proof.
   specialize (ℱ γ0 γ1 γ01).
   eauto.
 Qed.
+
+Theorem later_mem_univ `{Γ : FCtx.t Λ Ψ} {k i A0 A1} :
+  J⟦ ⌊ Λ ∣ Γ ≫ FTm.ltr k (FTm.univ i) ∋ A0 ≐ A1 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ FTm.univ i ∋ (FTm.ltr k A0) ≐ (FTm.ltr k A1) ⌋ ⟧.
+Proof.
+  move=> 𝒟 κs Γctx ℱ γ0 γ1 γ01. simpl in *.
+  suff: τω ⊧ Γ⟦ Γ ⟧ κs ≫ Tm.ltr (κs k) (Tm.univ i) ∼ (Tm.ltr (κs k) (Tm.univ i)).
+  - move=> ℰ.
+    specialize (𝒟 κs Γctx ℰ γ0 γ1 γ01).
+    eauto.
+  - move=> ? ? ? //=.
+    apply: Closed.later_formation.
+    apply: Later.next.
+    eauto.
+Qed.
