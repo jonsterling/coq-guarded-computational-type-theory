@@ -1,19 +1,13 @@
+Require Import Unicode.Utf8 Program.Equality Program.Tactics Program.Basics Vectors.Fin omega.Omega.
+
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
-
-Generalizable All Variables.
-
-Require Import Unicode.Utf8.
-Require Import Coq.Program.Equality.
-Require Import Coq.Program.Tactics.
-Require Import Coq.Program.Basics.
-Require Import Vectors.Fin.
-Require Import Coq.omega.Omega.
 
 From gctt Require Import Term Axioms Var Sequent Tower.
 From gctt Require Tactic.
 Module T := Tactic.
 
+Generalizable All Variables.
 Set Implicit Arguments.
 
 Module ETm.
@@ -92,9 +86,9 @@ Notation "⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋" := (@EJdg.conv Λ Ψ e1 e2).
 Example example_judgment :=  ⌊ 1 ∣ `⋄ ≫ ETm.ltr Fin.F1 ETm.unit ≐ ETm.ltr Fin.F1 ETm.unit ⌋.
 
 Module Env.
-  Definition t Λ := Var Λ → CLK.
+  Definition t Λ := Var Λ → 𝕂.
 
-  Program Definition cons {Λ} (κ : CLK) (σ : t Λ) : t (S Λ) :=
+  Program Definition cons {Λ} (κ : 𝕂) (σ : t Λ) : t (S Λ) :=
     λ x,
       match x with
       | Fin.F1 _ => κ
@@ -133,7 +127,7 @@ Program Fixpoint interp_ctx `(Γ : ECtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
   end
 where "Γ⟦ Γ ⟧ κs" := (interp_ctx Γ κs).
 
-Definition interp_jdg `(J : EJdg.t Λ) : Prop :=
+Definition interp_jdg `(J : EJdg.t Λ) : Ω :=
   ∀ (κs : Env.t Λ),
     match J with
     | ⌊ _ ∣ Γ ≫ A ≐ B ⌋ =>

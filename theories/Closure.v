@@ -1,26 +1,14 @@
-Require Import Unicode.Utf8.
-Require Import Coq.Program.Equality.
-Require Import Coq.Logic.FunctionalExtensionality.
-Require Import Coq.omega.Omega.
-Require Import Coq.Classes.Morphisms.
+Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
+From gctt Require Import OrderTheory Axioms Term.
+From gctt Require Matrix Tactic.
+
 From mathcomp Require Import ssreflect.
-
-From gctt Require Import OrderTheory.
-From gctt Require Matrix.
-From gctt Require Import Axioms.
-From gctt Require Import Term.
-
-
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Tactic.
 Module T := Tactic.
 Module M := Matrix.
 
-
 Set Implicit Arguments.
-
-Hint Resolve Later.map.
 
 Module Connective.
   Inductive ctor := unit | bool | prod | later | isect.
@@ -47,7 +35,7 @@ Module Connective.
         → R (v0, v1)
         → cext R (e0, e1).
 
-  Inductive has (τ : M.matrix) : ctor → Tm.t 0 * M.behavior → Prop :=
+  Inductive has (τ : M.matrix) : ctor → Tm.t 0 * M.behavior → Ω :=
   | has_unit : has τ unit (Tm.unit, cext unit_val)
   | has_bool : has τ bool (Tm.bool, cext bool_val)
   | has_prod :
@@ -66,6 +54,7 @@ Module Connective.
 
   Hint Constructors has cext prod_val bool_val unit_val.
 
+  Local Hint Resolve Later.map.
   Theorem monotone : ∀ ι, Proper (Poset.order ==> Poset.order) (fun τ => has τ ι).
   Proof.
     move=> ι τ0 τ1 τ01 [A R] H.
@@ -85,7 +74,7 @@ Module Sig.
   (* For each refinement matrix σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/behaviors. *)
-  Inductive t (σ τ : M.matrix) : (Tm.t 0 * M.behavior) → Prop :=
+  Inductive t (σ τ : M.matrix) : (Tm.t 0 * M.behavior) → Ω :=
   | init :
       ∀ X,
         σ X
@@ -192,7 +181,7 @@ Module Clo.
     end.
 
 
-  Theorem connective_not_universe {τ i ι A' A R} {P : Prop} :
+  Theorem connective_not_universe {τ i ι A' A R} {P : Ω} :
     Connective.has τ ι (A', R)
     → A ⇓ A'
     → A ⇓ Tm.univ i

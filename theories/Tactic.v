@@ -35,7 +35,7 @@ Ltac rewrite_ :=
 Ltac specialize_clocks κ :=
   repeat
     match goal with
-    | X : ∀ (κ : CLK), ?P |- _ => specialize (X κ)
+    | X : ∀ (κ : 𝕂), ?P |- _ => specialize (X κ)
     end.
 
 
@@ -55,7 +55,7 @@ Ltac backthruhyp :=
 Ltac specialize_hyps :=
   repeat
     match goal with
-    | H : ∀ κ : CLK, ?P, κ : CLK |- _ => specialize (H κ)
+    | H : ∀ κ : 𝕂, ?P, κ : 𝕂 |- _ => specialize (H κ)
     | H : ?R (?e1, ?e2) -> ?P, H' : ?R (?e1, ?e2) |- _ => specialize (H H')
     end.
 

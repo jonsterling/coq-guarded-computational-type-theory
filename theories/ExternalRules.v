@@ -17,7 +17,7 @@ Proof.
   move=> D κs Γctx γ0 γ1 γ01;
   specialize (D κs Γctx γ0 γ1 γ01).
 
-  have : (λ κ : CLK, (T⟦ ETm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
+  have : (λ κ : 𝕂, (T⟦ ETm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
   + T.eqcd => *.
     rewrite -interp_tm_clk_naturality;
     by simplify_eqs.

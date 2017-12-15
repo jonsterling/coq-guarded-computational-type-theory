@@ -1,6 +1,4 @@
-Require Import Unicode.Utf8.
-Require Import Vectors.Fin.
-Require Import Coq.Program.Equality.
+Require Import Unicode.Utf8 Vectors.Fin Program.Equality.
 From gctt Require Tactic.
 Module T := Tactic.
 

@@ -117,7 +117,7 @@ Proof.
 Qed.
 
 
-Lemma TowerChoice {n : nat} {A1 A2 : CLK → Tm.t 0} :
+Lemma TowerChoice {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
   (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
   → ∃ S, ∀ κ, τ[n] (A1 κ, S κ) ∧ τ[n] (A2 κ, S κ).
 Proof.
@@ -149,7 +149,7 @@ Proof.
 
   match goal with
   | |- Connective.has _ _ (_, ?R) =>
-    replace R with (fun e0e1 => ∀ κ:CLK, R e0e1)
+    replace R with (fun e0e1 => ∀ κ:𝕂, R e0e1)
   end.
 
   + Tac.prove.

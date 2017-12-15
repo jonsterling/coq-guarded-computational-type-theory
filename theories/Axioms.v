@@ -1,23 +1,22 @@
-Require Import Unicode.Utf8.
-Require Import Coq.Program.Tactics.
-Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Unicode.Utf8 Program.Tactics Logic.FunctionalExtensionality.
 
 From mathcomp Require Import ssreflect.
-
 Set Bullet Behavior "Strict Subproofs".
 Set Implicit Arguments.
 
-Axiom CLK : Type.
-Axiom LocalClock : ∃ κ : CLK, True.
+Notation "'Ω'" := Prop.
+
+Axiom 𝕂 : Type.
+Axiom LocalClock : ∃ κ : 𝕂, True.
 
 Module Later.
-  Axiom t : CLK -> Prop -> Prop.
-  Axiom map : forall κ (p q : Prop), (p -> q) -> (t κ p -> t κ q).
-  Axiom cart : ∀ κ (p q : Prop), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
+  Axiom t : 𝕂 -> Ω -> Ω.
+  Axiom map : forall κ (p q : Ω), (p -> q) -> (t κ p -> t κ q).
+  Axiom cart : ∀ κ (p q : Ω), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
   Axiom force : ∀ p, (∀ κ, t κ (p κ)) = (∀ κ, p κ).
   Axiom loeb : ∀ κ p, (t κ p → p) → p.
-  Axiom next : ∀ κ (p : Prop), p → t κ p.
-  Axiom commute_eq : ∀ κ (p q : Prop), ((t κ p) = (t κ q)) = t κ (p = q).
+  Axiom next : ∀ κ (p : Ω), p → t κ p.
+  Axiom commute_eq : ∀ κ (p q : Ω), ((t κ p) = (t κ q)) = t κ (p = q).
 
   Theorem join : ∀ κ p q, t κ p → t κ q → t κ (p ∧ q).
   Proof.
@@ -41,8 +40,8 @@ Module Later.
     | _ => let x := fresh in elim_aux x
     end.
 
-  Axiom Total : Type → Prop.
-  Definition Inh (A : Type) : Prop := ∃ x : A, True.
+  Axiom Total : Type → Ω.
+  Definition Inh (A : Type) : Ω := ∃ x : A, True.
 
   Axiom yank_existential :
     ∀ A P κ,
@@ -61,10 +60,10 @@ Module Later.
       (∀ x : A, t κ (P x))
       → t κ (∀ x : A, P x).
 
-  Axiom pow_total : ∀ A, Total (A → Prop).
+  Axiom pow_total : ∀ A, Total (A → Ω).
   Axiom nat_total : Total nat.
 
-  Theorem pow_inh : ∀ A, Inh (A → Prop).
+  Theorem pow_inh : ∀ A, Inh (A → Ω).
   Proof.
     move=> A.
     by exists (fun _ => True).
@@ -82,11 +81,11 @@ Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 0).
 
 (* True in any topos. *)
 Axiom constructive_definite_description :
-  forall (A : Type) (P : A->Prop),
+  forall (A : Type) (P : A → Ω),
     (exists! x, P x) -> { x : A | P x }.
 
 Theorem dependent_unique_choice :
-  forall (A:Type) (B:A -> Type) (R:forall x:A, B x -> Prop),
+  forall (A:Type) (B:A -> Type) (R:forall x:A, B x -> Ω),
     (forall x:A, exists! y : B x, R x y) ->
     (exists f : (forall x:A, B x), forall x:A, R x (f x)).
 Proof.
@@ -99,7 +98,7 @@ Qed.
 
 
 Theorem unique_choice :
-  forall {A B:Type} (R:A -> B -> Prop),
+  forall {A B:Type} (R:A -> B -> Ω),
     (forall x:A,  exists! y : B, R x y) ->
     (exists f : A -> B, forall x:A, R x (f x)).
 Proof.
@@ -109,12 +108,12 @@ Qed.
 
 
 Axiom propositional_extensionality :
-  ∀ (P Q : Prop),
+  ∀ (P Q : Ω),
     (P ↔ Q)
     -> P = Q.
 
 Theorem binrel_extensionality :
-  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Prop),
+  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Ω),
     (∀ x y, R1 (x, y) ↔ R2 (x, y))
     → R1 = R2.
 Proof.

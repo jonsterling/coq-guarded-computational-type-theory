@@ -1,14 +1,12 @@
+Require Import Unicode.Utf8 Program.
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Axioms.
-From gctt Require Import Var.
+From gctt Require Import Axioms Var.
 From gctt Require Tactic.
-
-Require Import Coq.Program.Equality.
-Require Import Unicode.Utf8.
-
 Module T := Tactic.
+
+
 Set Implicit Arguments.
 
 Module Tm.
@@ -25,8 +23,8 @@ Module Tm.
   | arr : t Ψ -> t Ψ -> t Ψ
   | pair : t Ψ -> t Ψ -> t Ψ
   | lam : t (S Ψ) → t Ψ
-  | ltr : CLK -> t Ψ -> t Ψ
-  | isect : (CLK -> t Ψ) -> t Ψ
+  | ltr : 𝕂 -> t Ψ -> t Ψ
+  | isect : (𝕂 → t Ψ) → t Ψ
   | univ : nat -> t Ψ.
 
   Arguments unit [Ψ].
@@ -96,7 +94,7 @@ Notation "e ⫽ σ" := (Tm.subst σ e) (at level 20, left associativity).
 Reserved Notation "e 'val'" (at level 50).
 Reserved Notation "e ⇓ e'" (at level 50).
 
-Inductive is_val : Tm.t 0 → Prop :=
+Inductive is_val : Tm.t 0 → Ω :=
 | val_bool : Tm.bool val
 | val_unit : Tm.unit val
 | val_prod : ∀ {e1 e2}, Tm.prod e1 e2 val
@@ -111,7 +109,7 @@ Inductive is_val : Tm.t 0 → Prop :=
 | val_lam : ∀ {e}, Tm.lam e val
 where "v 'val'" := (is_val v).
 
-Inductive eval : Tm.t 0 → Tm.t 0 → Prop :=
+Inductive eval : Tm.t 0 → Tm.t 0 → Ω :=
 | eval_val :
     ∀ {v},
       v val

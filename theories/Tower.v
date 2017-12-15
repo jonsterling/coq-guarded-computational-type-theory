@@ -1,32 +1,16 @@
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Program.Tactics.
-From mathcomp Require Import ssreflect.
+Require Import Unicode.Utf8 Program.Equality Program.Tactics Setoids.Setoid omega.Omega.
 
+From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory.
-From gctt Require Matrix.
-From gctt Require Import Axioms.
-From gctt Require Import Term.
-From gctt Require Import Closure.
-
-From gctt Require Tactic.
+From gctt Require Import OrderTheory Axioms Term Closure.
+From gctt Require Matrix Tactic.
 
 Module M := Matrix.
 Module T := Tactic.
 
 
-Require Import Coq.Setoids.Setoid.
-Require Import Coq.omega.Omega.
-Require Import Coq.Program.Equality.
-
-
 Set Implicit Arguments.
-
-Ltac print_goal :=
-  match goal with
-  | |- ?G => idtac G; idtac "----------------------------------------------"
-  end.
 
 Module Spine.
   Local Obligation Tactic := firstorder.
