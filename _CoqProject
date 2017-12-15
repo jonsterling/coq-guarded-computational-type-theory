@@ -11,3 +11,4 @@ theories/Tower.v
 theories/Sequent.v
 theories/InternalRules.v
 theories/FormalTerm.v
+theories/ExternalRules.v
