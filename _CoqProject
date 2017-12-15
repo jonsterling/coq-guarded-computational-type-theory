@@ -6,8 +6,8 @@ theories/Matrix.v
 theories/OrderTheory.v
 theories/Axioms.v
 theories/Term.v
-theories/FormalTerm.v
 theories/Closure.v
 theories/Tower.v
 theories/Sequent.v
-theories/Rules.v
+theories/InternalRules.v
+theories/FormalTerm.v

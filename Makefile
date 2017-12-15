@@ -108,11 +108,11 @@ VFILES:=theories/Tactic.v\
   theories/OrderTheory.v\
   theories/Axioms.v\
   theories/Term.v\
-  theories/FormalTerm.v\
   theories/Closure.v\
   theories/Tower.v\
   theories/Sequent.v\
-  theories/Rules.v
+  theories/InternalRules.v\
+  theories/FormalTerm.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))

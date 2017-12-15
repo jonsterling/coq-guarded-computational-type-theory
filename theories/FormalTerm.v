@@ -16,7 +16,7 @@ From gctt Require Import Var.
 From gctt Require Import Sequent.
 From gctt Require Import Tower.
 From gctt Require Import Closure.
-From gctt Require Import Rules.
+From gctt Require Import InternalRules.
 From gctt Require Tactic.
 
 Module T := Tactic.
