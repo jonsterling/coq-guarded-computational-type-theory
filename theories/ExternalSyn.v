@@ -10,21 +10,13 @@ Require Import Coq.Program.Basics.
 Require Import Vectors.Fin.
 Require Import Coq.omega.Omega.
 
-From gctt Require Import Term.
-From gctt Require Import Axioms.
-From gctt Require Import Var.
-From gctt Require Import Sequent.
-From gctt Require Import Tower.
-From gctt Require Import Closure.
-From gctt Require Import InternalRules.
+From gctt Require Import Term Axioms Var Sequent Tower.
 From gctt Require Tactic.
-
 Module T := Tactic.
-
 
 Set Implicit Arguments.
 
-Module FTm.
+Module ETm.
   Inductive t (Λ Ψ : nat) :=
   | var : Var Ψ -> t Λ Ψ
   | fst : t Λ Ψ -> t Λ Ψ
@@ -71,33 +63,33 @@ Module FTm.
 
   Definition mapk {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) : t Λ1 Ψ → t Λ2 Ψ :=
     map ρ (λ x, x).
-End FTm.
+End ETm.
 
-Notation "e .^ n" := (FTm.mapv (Ren.weak n) e) (at level 50).
+Notation "e .^ n" := (ETm.mapv (Ren.weak n) e) (at level 50).
 
-Module FCtx.
+Module ECtx.
   Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
   | nil : t Λ 0
-  | snoc : ∀ {Ψ}, t Λ Ψ → FTm.t Λ Ψ → t Λ (S Ψ).
+  | snoc : ∀ {Ψ}, t Λ Ψ → ETm.t Λ Ψ → t Λ (S Ψ).
 
   Arguments nil [Λ].
-End FCtx.
+End ECtx.
 
-Notation "`⋄" := FCtx.nil.
-Infix "`;" := (FCtx.snoc) (at level 50, left associativity).
+Notation "`⋄" := ECtx.nil.
+Infix "`;" := (ECtx.snoc) (at level 50, left associativity).
 
-Module FJdg.
+Module EJdg.
   Inductive t Λ :=
-  | eq_ty : ∀ {Ψ}, FCtx.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ
-  | eq_mem : ∀ {Ψ}, FCtx.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ
-  | conv : ∀ {Ψ}, FTm.t Λ Ψ → FTm.t Λ Ψ → t Λ.
-End FJdg.
+  | eq_ty : ∀ {Ψ}, ECtx.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ
+  | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ
+  | conv : ∀ {Ψ}, ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ.
+End EJdg.
 
-Notation "⌊ Λ ∣ Γ ≫ A ≐ B ⌋" := (@FJdg.eq_ty Λ _ Γ A B).
-Notation "⌊ Λ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋" := (@FJdg.eq_mem Λ _ Γ A e1 e2).
-Notation "⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋" := (@FJdg.conv Λ Ψ e1 e2).
+Notation "⌊ Λ ∣ Γ ≫ A ≐ B ⌋" := (@EJdg.eq_ty Λ _ Γ A B).
+Notation "⌊ Λ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋" := (@EJdg.eq_mem Λ _ Γ A e1 e2).
+Notation "⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋" := (@EJdg.conv Λ Ψ e1 e2).
 
-Example example_judgment :=  ⌊ 1 ∣ `⋄ ≫ FTm.ltr Fin.F1 FTm.unit ≐ FTm.ltr Fin.F1 FTm.unit ⌋.
+Example example_judgment :=  ⌊ 1 ∣ `⋄ ≫ ETm.ltr Fin.F1 ETm.unit ≐ ETm.ltr Fin.F1 ETm.unit ⌋.
 
 Module Env.
   Definition t Λ := Var Λ → CLK.
@@ -115,33 +107,33 @@ Notation "κ ∷ σ" := (Env.cons κ σ) (at level 30).
 Reserved Notation "T⟦ e ⟧ κs" (at level 50).
 Reserved Notation "Γ⟦ Γ ⟧ κs" (at level 50).
 
-Fixpoint interp_tm `(e : FTm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
+Fixpoint interp_tm `(e : ETm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   match e with
-  | FTm.var i => Tm.var i
-  | FTm.fst e => Tm.fst (T⟦e⟧ κs)
-  | FTm.snd e => Tm.snd (T⟦e⟧ κs)
-  | FTm.unit => Tm.unit
-  | FTm.bool => Tm.bool
-  | FTm.ax => Tm.ax
-  | FTm.tt => Tm.tt
-  | FTm.ff => Tm.ff
-  | FTm.prod A B => Tm.prod (T⟦A⟧ κs) (T⟦B⟧ κs)
-  | FTm.arr A B => Tm.arr (T⟦A⟧ κs) (T⟦B⟧ κs)
-  | FTm.pair A B => Tm.pair (T⟦A⟧ κs) (T⟦B⟧ κs)
-  | FTm.ltr r A => Tm.ltr (κs r) (T⟦A⟧ κs)
-  | FTm.isect A => Tm.isect (λ κ, T⟦A⟧ (κ ∷ κs))
-  | FTm.univ i => Tm.univ i
+  | ETm.var i => Tm.var i
+  | ETm.fst e => Tm.fst (T⟦e⟧ κs)
+  | ETm.snd e => Tm.snd (T⟦e⟧ κs)
+  | ETm.unit => Tm.unit
+  | ETm.bool => Tm.bool
+  | ETm.ax => Tm.ax
+  | ETm.tt => Tm.tt
+  | ETm.ff => Tm.ff
+  | ETm.prod A B => Tm.prod (T⟦A⟧ κs) (T⟦B⟧ κs)
+  | ETm.arr A B => Tm.arr (T⟦A⟧ κs) (T⟦B⟧ κs)
+  | ETm.pair A B => Tm.pair (T⟦A⟧ κs) (T⟦B⟧ κs)
+  | ETm.ltr r A => Tm.ltr (κs r) (T⟦A⟧ κs)
+  | ETm.isect A => Tm.isect (λ κ, T⟦A⟧ (κ ∷ κs))
+  | ETm.univ i => Tm.univ i
   end
 where "T⟦ e ⟧ κs" := (interp_tm e κs).
 
-Program Fixpoint interp_ctx `(Γ : FCtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
+Program Fixpoint interp_ctx `(Γ : ECtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
   match Γ with
   | `⋄ => ⋄
   | Γ `; A => Γ⟦ Γ ⟧ κs ; T⟦ A ⟧ κs
   end
 where "Γ⟦ Γ ⟧ κs" := (interp_ctx Γ κs).
 
-Definition interp_jdg `(J : FJdg.t Λ) : Prop :=
+Definition interp_jdg `(J : EJdg.t Λ) : Prop :=
   ∀ (κs : Env.t Λ),
     match J with
     | ⌊ _ ∣ Γ ≫ A ≐ B ⌋ =>
@@ -166,8 +158,8 @@ Ltac rewrite_all_hyps :=
 Local Open Scope program_scope.
 
 Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} :
-  ∀ (e : FTm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
-    T⟦ e ⟧ κs ∘ ρ = T⟦ FTm.mapk ρ e ⟧ κs.
+  ∀ (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
+    T⟦ e ⟧ κs ∘ ρ = T⟦ ETm.mapk ρ e ⟧ κs.
 Proof.
   move=> e; move: Λ2.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
@@ -177,8 +169,8 @@ Proof.
     by dependent induction i.
 Qed.
 
-Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : FTm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
-  (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ FTm.mapv ρ e ⟧ κs) ⫽ γ.
+Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
+  (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ ETm.mapv ρ e ⟧ κs) ⫽ γ.
 Proof.
   induction e; eauto; simpl; try by [rewrite_all_hyps].
   f_equal; T.eqcd => ?.

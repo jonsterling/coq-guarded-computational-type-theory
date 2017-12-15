@@ -6,18 +6,18 @@ Generalizable All Variables.
 Require Import Unicode.Utf8.
 Require Import Program.Equality.
 
-From gctt Require Import Axioms Var Term FormalTerm Tower Closure Sequent InternalRules.
+From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
-Theorem open_clock_irrelevance Λ Ψ Γ (A : FTm.t Λ Ψ) :
+Theorem open_clock_irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
   J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
-  → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ FTm.isect (FTm.mapk (Ren.weak 1) A) ⌋ ⟧.
+  → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ ETm.isect (ETm.mapk (Ren.weak 1) A) ⌋ ⟧.
 Proof.
   move=> D κs Γctx γ0 γ1 γ01;
   specialize (D κs Γctx γ0 γ1 γ01).
 
-  have : (λ κ : CLK, (T⟦ FTm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
+  have : (λ κ : CLK, (T⟦ ETm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1 ) = (λ κ, (T⟦A⟧ κs) ⫽ γ1).
   + T.eqcd => *.
     rewrite -interp_tm_clk_naturality;
     by simplify_eqs.
@@ -25,8 +25,8 @@ Proof.
     eauto.
 Qed.
 
-Theorem open_ax_equality Λ Ψ (Γ : FCtx.t Λ Ψ) :
-  J⟦ ⌊ Λ ∣ Γ ≫ FTm.unit ∋ FTm.ax ≐ FTm.ax ⌋ ⟧.
+Theorem open_ax_equality Λ Ψ (Γ : ECtx.t Λ Ψ) :
+  J⟦ ⌊ Λ ∣ Γ ≫ ETm.unit ∋ ETm.ax ≐ ETm.ax ⌋ ⟧.
 Proof.
   move=> κs Γctx unit_ty γ0 γ1 γ01.
   unshelve eauto.
@@ -54,7 +54,7 @@ Proof.
 Qed.
 
 Theorem conv_fst_pair Λ Ψ e1 e2 :
-  J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair e1 e2) ≃ e1 ⌋ ⟧.
+  J⟦ ⌊ Λ ∣ Ψ ⊢ ETm.fst (ETm.pair e1 e2) ≃ e1 ⌋ ⟧.
 Proof.
   move=> κs γ v.
   split => //= D; inversion D; eauto.
@@ -69,7 +69,7 @@ Qed.
 
 
 Example conv_test Λ Ψ :
-  J⟦ ⌊ Λ ∣ Ψ ⊢ FTm.fst (FTm.pair FTm.tt FTm.ff) ≃ FTm.snd (FTm.pair FTm.ff FTm.tt) ⌋ ⟧.
+  J⟦ ⌊ Λ ∣ Ψ ⊢ ETm.fst (ETm.pair ETm.tt ETm.ff) ≃ ETm.snd (ETm.pair ETm.ff ETm.tt) ⌋ ⟧.
 Proof.
   move=> κs γ v //=.
   split => D.
@@ -82,8 +82,8 @@ Proof.
 Qed.
 
 
-Theorem hypothesis `{Γ : FCtx.t Λ Ψ} {A} :
-  J⟦ ⌊ Λ ∣ Γ `; A ≫ A.^1 ∋ FTm.var _ Fin.F1 ≐ FTm.var _ Fin.F1 ⌋ ⟧.
+Theorem hypothesis `{Γ : ECtx.t Λ Ψ} {A} :
+  J⟦ ⌊ Λ ∣ Γ `; A ≫ A.^1 ∋ ETm.var _ Fin.F1 ≐ ETm.var _ Fin.F1 ⌋ ⟧.
 Proof.
   move=> κs Γctx ty γ0 γ1 γ01.
   case: γ01 => [_ γ01].
@@ -91,7 +91,7 @@ Proof.
   by rewrite -interp_tm_var_naturality.
 Qed.
 
-Theorem conv_ty `{Γ : FCtx.t Λ Ψ} {A0 A1 B} :
+Theorem conv_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 B} :
   J⟦ ⌊ Λ ∣ Ψ ⊢ A0 ≃ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ B ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ B ⌋ ⟧.
@@ -122,7 +122,7 @@ Proof.
 Qed.
 
 
-Theorem ty_eq_sym `{Γ : FCtx.t Λ Ψ} {A0 A1} :
+Theorem ty_eq_sym `{Γ : ECtx.t Λ Ψ} {A0 A1} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ A0 ⌋ ⟧.
   move=> 𝒟 κs Γctx γ0 γ1 γ01.
@@ -144,7 +144,7 @@ Theorem ty_eq_sym `{Γ : FCtx.t Λ Ψ} {A0 A1} :
   - apply: Tower.extensionality; eauto.
 Qed.
 
-Theorem ty_eq_trans `{Γ : FCtx.t Λ Ψ} {A0 A1 A2} :
+Theorem ty_eq_trans `{Γ : ECtx.t Λ Ψ} {A0 A1 A2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ A2 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A2 ⌋ ⟧.
@@ -172,7 +172,7 @@ Proof.
 Qed.
 
 
-Theorem ty_eq_refl_left `{Γ : FCtx.t Λ Ψ} {A0 A1} :
+Theorem ty_eq_refl_left `{Γ : ECtx.t Λ Ψ} {A0 A1} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A0 ⌋ ⟧.
 Proof.
@@ -182,7 +182,7 @@ Proof.
   - by apply: ty_eq_sym.
 Qed.
 
-Theorem rewrite_ty_in_mem `{Γ : FCtx.t Λ Ψ} {A0 A1 e1 e2} :
+Theorem rewrite_ty_in_mem `{Γ : ECtx.t Λ Ψ} {A0 A1 e1 e2} :
   J⟦ ⌊ Λ ∣ Γ ≫ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ∋ e1 ≐ e2⌋ ⟧.
@@ -194,9 +194,9 @@ Proof.
   eauto.
 Qed.
 
-Theorem later_mem_univ `{Γ : FCtx.t Λ Ψ} {k i A0 A1} :
-  J⟦ ⌊ Λ ∣ Γ ≫ FTm.ltr k (FTm.univ i) ∋ A0 ≐ A1 ⌋ ⟧
-  → J⟦ ⌊ Λ ∣ Γ ≫ FTm.univ i ∋ (FTm.ltr k A0) ≐ (FTm.ltr k A1) ⌋ ⟧.
+Theorem later_mem_univ `{Γ : ECtx.t Λ Ψ} {k i A0 A1} :
+  J⟦ ⌊ Λ ∣ Γ ≫ ETm.ltr k (ETm.univ i) ∋ A0 ≐ A1 ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ ETm.univ i ∋ (ETm.ltr k A0) ≐ (ETm.ltr k A1) ⌋ ⟧.
 Proof.
   move=> 𝒟 κs Γctx ℱ γ0 γ1 γ01. simpl in *.
   suff: τω ⊧ Γ⟦ Γ ⟧ κs ≫ Tm.ltr (κs k) (Tm.univ i) ∼ (Tm.ltr (κs k) (Tm.univ i)).
