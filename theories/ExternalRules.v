@@ -97,13 +97,10 @@ Theorem conv_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 B} :
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ≐ B ⌋ ⟧.
 Proof.
   move=> 𝒟 ℰ κs Γctx γ0 γ1 γ01.
-  specialize (𝒟 κs γ0).
   specialize (ℰ κs Γctx γ0 γ1 γ01).
   apply: IR.ty_eq_conv.
   - eauto.
-  - move=> v.
-    case: (𝒟 v) => 𝒟0 𝒟1.
-    eassumption.
+  - move=> ?; edestruct 𝒟; eauto.
   - eassumption.
 Qed.
 
@@ -114,29 +111,22 @@ Theorem conv_mem_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 e0 e1} :
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ∋ e0 ≐ e1 ⌋ ⟧.
 Proof.
   move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01.
-  specialize (𝒟 κs).
   suff: τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A0 ⟧ κs ∼ (T⟦ A0 ⟧ κs).
   - move=> 𝒢.
     specialize (ℰ κs Γctx 𝒢 γ0 γ1 γ01).
     apply: IR.mem_eq_conv_ty.
     + eauto.
-    + move=> v.
-      case: (𝒟 γ0 v) => ? ?.
-      eassumption.
+    + move=> ?; edestruct 𝒟; eauto.
     + eassumption.
   - move=> γ0' γ1' γ01'.
     specialize (ℱ γ0' γ1' γ01').
     apply: IR.ty_eq_conv.
     + eauto.
-    + move=> v.
-      case: (𝒟 γ0' v) => ? ?.
-      eassumption.
+    + move=> ?; edestruct 𝒟; eassumption.
     + apply: IR.ty_eq_symm.
       apply: IR.ty_eq_conv.
       * eauto.
-      * move=> v.
-        case: (𝒟 γ1' v) => ? ?.
-        eassumption.
+      * move=> ?; edestruct 𝒟; eassumption.
       * eauto.
 Qed.
 
@@ -149,9 +139,7 @@ Proof.
   specialize (ℰ κs Γctx ℱ γ0 γ1 γ01).
   apply: IR.mem_eq_conv.
   - eauto.
-  - move=> v.
-    case: (𝒟 κs γ0 v) => ? ?.
-    eassumption.
+  - move=> ?; edestruct 𝒟; eassumption.
   - eassumption.
 Qed.
 
