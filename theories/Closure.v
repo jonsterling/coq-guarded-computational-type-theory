@@ -365,5 +365,5 @@ Module Clo.
         eauto.
   Qed.
 
-  Hint Resolve monotonicity extensionality cper_valued.
+  Hint Resolve monotonicity extensionality cper_valued type_computational.
 End Clo.

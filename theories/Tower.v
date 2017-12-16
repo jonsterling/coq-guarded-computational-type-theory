@@ -144,7 +144,7 @@ Module Spine.
       [contradiction | T.destruct_conjs; Term.destruct_evals]
     end.
 
-  Hint Resolve universe_system extensionality monotonicity.
+  Hint Resolve universe_system extensionality monotonicity type_computational cper_valued.
 End Spine.
 
 Module Tower.
@@ -174,15 +174,22 @@ Module Tower.
       try (Clo.destruct_has; Term.destruct_evals)
     end.
 
-  Hint Resolve extensionality monotonicity.
 
   Theorem cper_valued : ∀ i, TS.cper_valued (t i).
   Proof.
-    move=> i A R H.
+    move=> i.
     apply: Clo.cper_valued.
-    - apply: Spine.cper_valued; eauto.
-    - eauto.
+    apply: Spine.cper_valued.
   Qed.
+
+  Theorem type_computational : ∀ i, TS.type_computational (t i).
+  Proof.
+    move=> i.
+    apply: Clo.type_computational.
+    apply: Spine.type_computational.
+  Qed.
+
+  Hint Resolve extensionality monotonicity cper_valued type_computational.
 End Tower.
 
 
@@ -204,7 +211,14 @@ Proof.
     omega.
 Qed.
 
-Theorem τω_per_valued : TS.cper_valued τω.
+Theorem τω_type_computational : TS.type_computational τω.
+Proof.
+  move=> A0 R [nH H] A1 //= A01.
+  exists nH.
+  apply: Tower.type_computational; eauto.
+Qed.
+
+Theorem τω_cper_valued : TS.cper_valued τω.
 Proof.
   move=> A R.
   rewrite /τω.
@@ -225,3 +239,5 @@ Proof.
   - move=> ? ? ? ? ?.
     edestruct (@Tower.cper_valued nH); eauto.
 Qed.
+
+Hint Resolve τω_type_computational τω_extensionality τω_cper_valued.
