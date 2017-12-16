@@ -429,7 +429,7 @@ Proof.
     + symmetry; Tac.tower_ext; Tac.tower_mono.
 Qed.
 
-Theorem env_eq_sym {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
+Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
   τω ⊧ Γ ctx
   → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
   → τω ⊧ Γ ∋⋆ γ1 ∼ γ0.
