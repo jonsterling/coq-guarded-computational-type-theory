@@ -10,24 +10,11 @@ From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent Inter
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
-Theorem open_clock_irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
-  J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
-  → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ ETm.isect (ETm.mapk (Ren.weak 1) A) ⌋ ⟧.
-Proof.
-  move=> 𝒟 κs Γctx γ0 γ1 γ01.
-  suff: (λ κ : 𝕂, (T⟦ ETm.mapk (Ren.weak 1) A ⟧ κ ∷ κs) ⫽ γ1) = (λ κ:𝕂, (T⟦A⟧ κs) ⫽ γ1).
-  - simplify_eqs; T.rewrite_.
-    apply: IR.isect_irrelevance.
-    apply: 𝒟; eauto.
-  - T.eqcd => *.
-    rewrite -interp_tm_clk_naturality.
-    by simplify_eqs.
-Qed.
 
 Theorem open_ax_equality Λ Ψ (Γ : ECtx.t Λ Ψ) :
   J⟦ ⌊ Λ ∣ Γ ≫ ETm.unit ∋ ETm.ax ≐ ETm.ax ⌋ ⟧.
 Proof.
-  move=> κs Γctx unit_ty γ0 γ1 γ01.
+  move=> ? ? ? ? ? ?.
   apply: (@IR.eq_mem_from_level 0).
   apply: IR.unit_ax_equality.
 Qed.
@@ -66,21 +53,6 @@ Proof.
     by congruence.
 Qed.
 
-
-Example conv_test Λ Ψ :
-  J⟦ ⌊ Λ ∣ Ψ ⊢ ETm.fst (ETm.pair ETm.tt ETm.ff) ≃ ETm.snd (ETm.pair ETm.ff ETm.tt) ⌋ ⟧.
-Proof.
-  move=> κs γ v //=.
-  split => D.
-  + have: v = Tm.tt.
-    ++ apply: determinacy; eauto.
-    ++ T.rewrite_; eauto.
-  + have: v = Tm.tt.
-    ++ apply: determinacy; eauto.
-    ++ T.rewrite_; eauto.
-Qed.
-
-
 Theorem hypothesis `{Γ : ECtx.t Λ Ψ} {A} :
   J⟦ ⌊ Λ ∣ Γ `; A ≫ A.^1 ∋ ETm.var _ Fin.F1 ≐ ETm.var _ Fin.F1 ⌋ ⟧.
 Proof.
@@ -101,8 +73,6 @@ Proof.
   - move=> ?; edestruct 𝒟; eauto.
   - apply: ℰ; eauto.
 Qed.
-
-
 
 
 Theorem ty_eq_symm `{Γ : ECtx.t Λ Ψ} {A0 A1} :
@@ -139,6 +109,19 @@ Proof.
   - eassumption.
 Qed.
 
+
+Theorem open_clock_irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
+  J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
+  → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ ETm.isect (ETm.mapk (Ren.weak 1) A) ⌋ ⟧.
+Proof.
+  move=> 𝒟 κs Γctx γ0 γ1 γ01; simplify_eqs.
+  replace (λ κ : 𝕂, (T⟦ ETm.mapk _ _ ⟧ _) ⫽ _) with (λ κ:𝕂, (T⟦A⟧ κs) ⫽ γ1).
+  - apply: IR.isect_irrelevance.
+    apply: 𝒟; eauto.
+  - T.eqcd => *.
+    by rewrite -interp_tm_clk_naturality.
+Qed.
+
 Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00 e01 e1} :
   J⟦ ⌊ Λ ∣ Ψ ⊢ e00 ≃ e01 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⌋ ⟧
@@ -171,13 +154,11 @@ Theorem conv_mem_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 e0 e1} :
   → J⟦ ⌊ Λ ∣ Γ ≫ A1 ∋ e0 ≐ e1 ⌋ ⟧.
 Proof.
   move=> 𝒟 ℰ κs ? ? ? ? ?.
-  suff: τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A0 ⟧ κs ∼ (T⟦ A0 ⟧ κs).
-  - move=> 𝒢.
-    apply: IR.mem_eq_conv_ty.
-    + eauto.
-    + move=> ?; edestruct 𝒟; eauto.
-    + apply: ℰ; eauto.
-  - move=> ? ? ?.
+  apply: IR.mem_eq_conv_ty.
+  - eauto.
+  - move=> ?; edestruct 𝒟; eauto.
+  - apply: ℰ; eauto.
+    move=> ? ? ?.
     apply: IR.ty_eq_conv.
     + eauto.
     + move=> ?; edestruct 𝒟; eassumption.
@@ -192,13 +173,11 @@ Theorem later_mem_univ `{Γ : ECtx.t Λ Ψ} {k i A0 A1} :
   J⟦ ⌊ Λ ∣ Γ ≫ ETm.ltr k (ETm.univ i) ∋ A0 ≐ A1 ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ ETm.univ i ∋ (ETm.ltr k A0) ≐ (ETm.ltr k A1) ⌋ ⟧.
 Proof.
-  move=> 𝒟 κs Γctx ℱ γ0 γ1 γ01. simpl in *.
-  suff: τω ⊧ Γ⟦ Γ ⟧ κs ≫ Tm.ltr (κs k) (Tm.univ i) ∼ (Tm.ltr (κs k) (Tm.univ i)).
-  - move=> ℰ.
-    apply: IR.later_mem_univ.
-    apply: 𝒟; eauto.
-  - move=> ? ? ? //=.
-    apply: IR.later_formation.
-    apply: Later.next.
-    eauto.
+  move=> 𝒟 ? ? ? ? ? ?; simpl.
+  apply: IR.later_mem_univ.
+  apply: 𝒟; eauto.
+  move=> ? ? ?; simpl.
+  apply: IR.later_formation.
+  apply: Later.next.
+  eauto.
 Qed.
