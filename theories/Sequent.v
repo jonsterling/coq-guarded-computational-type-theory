@@ -3,7 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics.
 
-From gctt Require Import Matrix Term Axioms.
+From gctt Require Import TypeSystem Term Axioms.
 From gctt Require Var.
 
 Set Implicit Arguments.
@@ -17,10 +17,10 @@ Notation "⋄" := nil.
 Infix ";" := (snoc) (at level 50, left associativity).
 
 
-Definition atomic_eq_ty (τ : matrix) (A B : Tm.t 0) :=
+Definition atomic_eq_ty (τ : cts) (A B : Tm.t 0) :=
   ∃ R, τ (A, R) ∧ τ (B, R).
 
-Definition atomic_eq_mem (τ : matrix) (A e1 e2 : Tm.t 0) :=
+Definition atomic_eq_mem (τ : cts) (A e1 e2 : Tm.t 0) :=
   ∃ R, τ (A, R) ∧ R (e1, e2).
 
 Notation "τ ⊧ A ∼ B" := (atomic_eq_ty τ A B) (at level 10).
@@ -52,7 +52,7 @@ Reserved Notation "τ ⊧ Γ 'ctx'" (at level 10).
 Notation "τ ⊧ Γ ≫ A ∼ B" := (seq_eq_ty τ Γ A B) (at level 10).
 Notation "τ ⊧ Γ ≫ A ∋ e1 ∼ e2" := (seq_eq_mem τ Γ A e1 e2) (at level 10).
 
-Program Fixpoint is_ctx {Ψ} (τ : matrix) (Γ : Prectx Ψ) : Ω :=
+Program Fixpoint is_ctx {Ψ} (τ : cts) (Γ : Prectx Ψ) : Ω :=
   match Γ with
   | ⋄ => True
   | Γ ; A => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A

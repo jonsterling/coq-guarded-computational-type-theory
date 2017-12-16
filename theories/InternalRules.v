@@ -3,10 +3,9 @@ Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logi
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory Axioms Term Closure Tower Sequent.
-From gctt Require Tactic Matrix.
+From gctt Require Import OrderTheory Axioms Term Closure Tower Sequent TypeSystem.
+From gctt Require Tactic.
 
-Module M := Matrix.
 Module T := Tactic.
 
 
@@ -198,16 +197,16 @@ Proof.
   - auto.
 Qed.
 
-Theorem behavior_total : Later.Total Matrix.behavior.
+Theorem rel_total : Later.Total rel.
 Proof.
-  by rewrite /Matrix.behavior.
+  by rewrite /rel.
 Qed.
 
-Theorem behavior_inh : Later.Inh Matrix.behavior.
-  by rewrite /Matrix.behavior.
+Theorem rel_inh : Later.Inh rel.
+  by rewrite /rel.
 Qed.
 
-Hint Resolve behavior_total behavior_inh.
+Hint Resolve rel_total rel_inh.
 
 Theorem later_formation {κ} {A B} :
   ▷[κ] (τω ⊧ A ∼ B)

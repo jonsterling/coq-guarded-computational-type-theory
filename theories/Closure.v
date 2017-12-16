@@ -1,33 +1,30 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import OrderTheory Axioms Term.
-From gctt Require Matrix Tactic.
+From gctt Require Import OrderTheory Axioms Term TypeSystem.
+From gctt Require Tactic.
+Module T := Tactic.
 
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
-
-Module T := Tactic.
-Module M := Matrix.
-
 Set Implicit Arguments.
 
 Module Connective.
   Inductive ctor := unit | bool | prod | later | isect.
 
-  Inductive unit_val : M.behavior :=
+  Inductive unit_val : rel :=
   | ax : unit_val (Tm.ax, Tm.ax).
 
-  Inductive bool_val : M.behavior :=
+  Inductive bool_val : rel :=
   | tt : bool_val (Tm.tt, Tm.tt)
   | ff : bool_val (Tm.ff, Tm.ff).
 
-  Inductive prod_val (R0 R1 : M.behavior) : M.behavior :=
+  Inductive prod_val (R0 R1 : rel) : rel :=
   | pair :
       ∀ e00 e01 e10 e11,
         R0 (e00, e10)
         → R1 (e01, e11)
         → prod_val R0 R1 (Tm.pair e00 e01, Tm.pair e10 e11).
 
-  Inductive cext (R : M.behavior) : M.behavior :=
+  Inductive cext (R : rel) : rel :=
   | mk_cext :
       ∀ e0 e1 v0 v1,
         e0 ⇓ v0
@@ -35,7 +32,7 @@ Module Connective.
         → R (v0, v1)
         → cext R (e0, e1).
 
-  Inductive has (τ : M.matrix) : ctor → Tm.t 0 * M.behavior → Ω :=
+  Inductive has (τ : cts) : ctor → Tm.t 0 * rel → Ω :=
   | has_unit : has τ unit (Tm.unit, cext unit_val)
   | has_bool : has τ bool (Tm.bool, cext bool_val)
   | has_prod :
@@ -71,10 +68,10 @@ Module Connective.
 End Connective.
 
 Module Sig.
-  (* For each refinement matrix σ, we define a monotone map on
+  (* For each refinement cts σ, we define a monotone map on
        refinement matrices which adds the appropriate
-       types/behaviors. *)
-  Inductive t (σ τ : M.matrix) : (Tm.t 0 * M.behavior) → Ω :=
+       types/rels. *)
+  Inductive t (σ τ : cts) : (Tm.t 0 * rel) → Ω :=
   | init :
       ∀ X,
         σ X
@@ -86,7 +83,7 @@ Module Sig.
         → Connective.has τ ι (A0, R)
         → t σ τ (A, R).
 
-  Instance monotonicity {σ : M.matrix} : Monotone (t σ).
+  Instance monotonicity {σ : cts} : Monotone (t σ).
   Proof.
     constructor => τ1 τ2 p [A R].
     case => *.
@@ -99,7 +96,7 @@ End Sig.
 
 
 Module Clo.
-  Program Definition t (σ : M.matrix) := LFP.t (Sig.t σ).
+  Program Definition t (σ : cts) := LFP.t (Sig.t σ).
 
   Theorem roll : ∀ σ, Sig.t σ (t σ) = t σ.
   Proof.
@@ -111,7 +108,7 @@ Module Clo.
   Qed.
 
   Theorem ind :
-    ∀ Y (σ ρ : M.matrix),
+    ∀ Y (σ ρ : cts),
       t σ Y
       → (∀ X, σ X → ρ X)
       → (∀ ι A A0 R, A ⇓ A0 → Connective.has ρ ι (A0, R) → ρ (A, R))
@@ -120,7 +117,7 @@ Module Clo.
     move=> [A R] σ ρ AcloR init conn.
     rewrite /t /LFP.t in AcloR.
     simpl in AcloR.
-    rewrite -/M.matrix in AcloR.
+    rewrite -/cts in AcloR.
 
     destruct AcloR.
     destruct H.
@@ -144,15 +141,15 @@ Module Clo.
 
   Ltac use_universe_system :=
     match goal with
-    | H : M.Law.universe_system ?σ, H' : ?σ ?X |- _ =>
+    | H : TS.universe_system ?σ, H' : ?σ ?X |- _ =>
       destruct (H X H')
     end.
 
 
   Local Ltac rewrite_functionality_ih :=
     repeat match goal with
-    | ih : M.Law.extensional_at _ _ |- _ =>
-      rewrite /M.Law.extensional_at in ih;
+    | ih : TS.extensional_at _ _ |- _ =>
+      rewrite /TS.extensional_at in ih;
       simpl in ih;
       erewrite ih
     end.
@@ -201,9 +198,9 @@ Module Clo.
     auto.
 
   Theorem extensionality {σ} :
-    M.Law.universe_system σ
-    → M.Law.extensional σ
-    → M.Law.extensional (t σ).
+    TS.universe_system σ
+    → TS.extensional σ
+    → TS.extensional (t σ).
   Proof.
     move=> ? ext ? ?; elim_clo; clear H.
     - move=> [? ?] ? ? ?.
@@ -226,8 +223,8 @@ Module Clo.
   Qed.
 
   Theorem cext_per {R} :
-    M.is_per R
-    → M.is_per (Connective.cext R).
+    is_per R
+    → is_per (Connective.cext R).
   Proof.
     move=> [ihSm ihTr].
     constructor.
@@ -242,7 +239,7 @@ Module Clo.
       econstructor; eauto.
   Qed.
 
-  Theorem unit_val_per : M.is_per Connective.unit_val.
+  Theorem unit_val_per : is_per Connective.unit_val.
   Proof.
     constructor.
     - move=> e0 e1 H1.
@@ -252,7 +249,7 @@ Module Clo.
           dependent destruction H2].
   Qed.
 
-  Theorem bool_val_per : M.is_per Connective.bool_val.
+  Theorem bool_val_per : is_per Connective.bool_val.
   Proof.
     constructor.
     - move=> e0 e1 H1.
@@ -263,9 +260,9 @@ Module Clo.
   Qed.
 
   Theorem prod_val_per {R0 R1} :
-    M.is_per R0
-    → M.is_per R1
-    → M.is_per (Connective.prod_val R0 R1).
+    is_per R0
+    → is_per R1
+    → is_per (Connective.prod_val R0 R1).
   Proof.
     move=> [ihSm0 ihTr0] [ihSm1 ihTr1].
     constructor.
@@ -280,11 +277,11 @@ Module Clo.
 
 
   Theorem per_valued {σ} :
-    M.Law.per_valued σ
-    → M.Law.per_valued (t σ).
+    TS.per_valued σ
+    → TS.per_valued (t σ).
   Proof.
     move=> IH A R 𝒟.
-    apply: (@ind (A, R) σ (fun X => M.is_per (snd X))); auto; move {𝒟 A R}.
+    apply: (@ind (A, R) σ (fun X => is_per (snd X))); auto; move {𝒟 A R}.
     - move=> [A R].
       apply: IH.
     - move=> ι A A0 R 𝒟 ℰ.

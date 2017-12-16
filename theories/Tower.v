@@ -3,20 +3,18 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Setoids.Setoid omeg
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory Axioms Term Closure.
-From gctt Require Matrix Tactic.
+From gctt Require Import OrderTheory Axioms Term Closure TypeSystem.
+From gctt Require Tactic.
 
-Module M := Matrix.
 Module T := Tactic.
-
 
 Set Implicit Arguments.
 
 Module Spine.
   Local Obligation Tactic := firstorder.
-  Program Fixpoint t (n : nat) {measure n} : M.matrix :=
+  Program Fixpoint t (n : nat) {measure n} : cts :=
     match n with
-    | 0 => M.empty
+    | 0 => empty
     | S n =>
       fun X =>
         ∃ (j : nat) (p : j ≤ n),
@@ -41,7 +39,7 @@ Module Spine.
   Qed.
 
   Theorem unfold_0 :
-    t 0 = M.empty.
+    t 0 = empty.
   Proof.
     T.eqcd => X.
     by [Wf.WfExtensionality.unfold_sub t (t 0 X)].
@@ -54,7 +52,7 @@ Module Spine.
     | _ => rewrite unfold_S || rewrite unfold_0
     end.
 
-  Theorem universe_system : ∀ i, M.Law.universe_system (t i).
+  Theorem universe_system : ∀ i, TS.universe_system (t i).
   Proof.
     case.
     + simplify; by [firstorder].
@@ -64,7 +62,7 @@ Module Spine.
       eauto.
   Qed.
 
-  Theorem extensionality : ∀ i, M.Law.extensional (t i).
+  Theorem extensionality : ∀ i, TS.extensional (t i).
   Proof.
     case.
     + simplify; by [firstorder].
@@ -85,7 +83,7 @@ Module Spine.
       esplit; [omega | eauto].
   Qed.
 
-  Theorem per_valued : ∀ i, M.Law.per_valued (t i).
+  Theorem per_valued : ∀ i, TS.per_valued (t i).
   Proof.
     move=> i.
     induction i.
@@ -126,10 +124,10 @@ End Spine.
 
 Module Tower.
 
-  Definition t (i : nat) : M.matrix :=
+  Definition t (i : nat) : cts :=
     Clo.t (Spine.t i).
 
-  Theorem extensionality : ∀ i, M.Law.extensional (t i).
+  Theorem extensionality : ∀ i, TS.extensional (t i).
   Proof.
     rewrite /t => *.
     eauto.
@@ -153,7 +151,7 @@ Module Tower.
 
   Hint Resolve extensionality monotonicity.
 
-  Theorem per_valued : ∀ i, M.Law.per_valued (t i).
+  Theorem per_valued : ∀ i, TS.per_valued (t i).
   Proof.
     move=> i A R H.
     apply: Clo.per_valued.
@@ -163,13 +161,13 @@ Module Tower.
 End Tower.
 
 
-Definition τω : M.matrix :=
+Definition τω : cts :=
   fun X =>
     ∃ n, Tower.t n X.
 
 Notation "'τ[' n ']'" := (Tower.t n).
 
-Theorem Towerω_extensionality : M.Law.extensional τω.
+Theorem τω_extensionality : TS.extensional τω.
 Proof.
   move=> A R.
   rewrite /τω.
@@ -181,7 +179,7 @@ Proof.
     omega.
 Qed.
 
-Theorem Towerω_per_valued : M.Law.per_valued τω.
+Theorem τω_per_valued : TS.per_valued τω.
 Proof.
   move=> A R.
   rewrite /τω.

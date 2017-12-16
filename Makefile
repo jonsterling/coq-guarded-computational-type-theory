@@ -104,7 +104,7 @@ endif
 
 VFILES:=theories/Tactic.v\
   theories/Var.v\
-  theories/Matrix.v\
+  theories/TypeSystem.v\
   theories/OrderTheory.v\
   theories/Axioms.v\
   theories/Term.v\
