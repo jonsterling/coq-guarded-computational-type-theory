@@ -14,6 +14,7 @@ Module Tm.
   | var : Var Ψ -> t Ψ
   | fst : t Ψ -> t Ψ
   | snd : t Ψ → t Ψ
+  | app : t Ψ → t Ψ → t Ψ
   | unit : t Ψ
   | bool : t Ψ
   | ax : t Ψ
@@ -39,6 +40,7 @@ Module Tm.
     | var i => var (ρ i)
     | fst e => fst (map ρ e)
     | snd e => snd (map ρ e)
+    | app e1 e2 => app (map ρ e1) (map ρ e2)
     | unit => unit
     | bool => bool
     | ax => ax
@@ -74,6 +76,7 @@ Module Tm.
     | var i => σ i
     | fst e => fst (subst σ e)
     | snd e => snd (subst σ e)
+    | app e1 e2 => app (subst σ e1) (subst σ e2)
     | unit => unit
     | bool => bool
     | ax => ax
@@ -126,6 +129,11 @@ Inductive eval : Tm.t 0 → Tm.t 0 → Ω :=
       e ⇓ Tm.pair e1 e2
       → e2 ⇓ v
       → Tm.snd e ⇓ v
+
+| eval_app :
+    ∀ {e1 e1' e2},
+      e1 ⇓ Tm.lam e1'
+      → Tm.app e1 e2 ⇓ Tm.subst (fun _ => e2) e1'
 
 where "e ⇓ e'" := (eval e e').
 
