@@ -114,7 +114,7 @@ Theorem open_clock_irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
   J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
   → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ ETm.isect (ETm.mapk (Ren.weak 1) A) ⌋ ⟧.
 Proof.
-  move=> 𝒟 κs Γctx γ0 γ1 γ01; simplify_eqs.
+  move=> 𝒟 κs ? ? γ1 ?; simplify_eqs.
   replace (λ κ : 𝕂, (T⟦ ETm.mapk _ _ ⟧ _) ⫽ _) with (λ κ:𝕂, (T⟦A⟧ κs) ⫽ γ1).
   - apply: IR.isect_irrelevance.
     apply: 𝒟; eauto.
