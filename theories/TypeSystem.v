@@ -18,7 +18,7 @@ Record is_per (R : rel) :=
 
 
 Definition rel_computational (R : rel) :=
-  ∀ e0 e1 e2, e0 ≼0 e1 → R (e0, e2) → R (e0, e1).
+  ∀ e0 e1 e2, e0 ≼0 e1 → R (e0, e2) → R (e1, e2).
 
 Record is_cper (R : rel) :=
   { per : is_per R;

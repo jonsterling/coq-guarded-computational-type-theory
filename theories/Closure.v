@@ -277,14 +277,11 @@ Module Clo.
 
 
   Theorem cext_computational {R} :
-    is_per R
-    → rel_computational (Connective.cext R).
+    rel_computational (Connective.cext R).
   Proof.
-    move=> per e0 e1 e2 e01 cext.
+    move=> e0 e1 e2 e01 cext.
     Connective.destruct_cext.
     econstructor; eauto.
-    destruct per.
-    eauto.
   Qed.
 
   Hint Resolve cext_per cext_computational unit_val_per bool_val_per prod_val_per cext_per.
@@ -301,7 +298,6 @@ Module Clo.
       match goal with
       | H : is_per _ |- _ => destruct H
       end.
-
 
 
   Theorem cper_valued {σ} :
