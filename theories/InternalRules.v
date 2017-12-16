@@ -8,10 +8,8 @@ From gctt Require Tactic.
 
 Module T := Tactic.
 
-
 Require Import Coq.omega.Omega.
 Open Scope program_scope.
-
 
 Set Implicit Arguments.
 
@@ -21,7 +19,6 @@ Module Tac.
 
   Ltac connective_eq_type :=
     apply: Sig.conn; eauto; constructor.
-
 
   Local Ltac accum_lvl_aux x n :=
     match goal with
@@ -203,6 +200,7 @@ Proof.
 Qed.
 
 Theorem rel_inh : Later.Inh rel.
+Proof.
   by rewrite /rel.
 Qed.
 
