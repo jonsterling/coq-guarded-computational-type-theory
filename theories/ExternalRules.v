@@ -98,27 +98,13 @@ Theorem conv_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 B} :
 Proof.
   move=> 𝒟 ℰ κs Γctx γ0 γ1 γ01.
   specialize (𝒟 κs γ0).
-  case: (ℰ κs Γctx γ0 γ1 γ01) => R [X1 X2].
-  exists R; split.
-  - case: X1 => [n X1].
-    rewrite /Tower.t in X1.
-    Clo.destruct_clo.
-    + induction n; Spine.simplify.
-      * done.
-      * case: H => [j H].
-        T.destruct_conjs.
-        simpl in *.
-        exists (S n).
-        rewrite /Tower.t -Clo.roll.
-        apply: Sig.init.
-        Spine.simplify.
-        exists j; repeat T.split; auto.
-        edestruct 𝒟; auto.
-    + exists n; rewrite /Tower.t -Clo.roll.
-      apply: Sig.conn; eauto.
-      edestruct 𝒟.
-      Clo.destruct_has; eauto.
-  - auto.
+  specialize (ℰ κs Γctx γ0 γ1 γ01).
+  apply: IR.ty_eq_conv.
+  - eauto.
+  - move=> v.
+    case: (𝒟 v) => 𝒟0 𝒟1.
+    eassumption.
+  - eassumption.
 Qed.
 
 
