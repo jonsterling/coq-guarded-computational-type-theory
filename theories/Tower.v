@@ -83,32 +83,57 @@ Module Spine.
       esplit; [omega | eauto].
   Qed.
 
-  Theorem per_valued : ∀ i, TS.per_valued (t i).
+  Theorem type_computational : ∀ i, TS.type_computational (t i).
+    move=> i.
+    induction i.
+    - move=> ? ? ?.
+      contradiction.
+    - Spine.simplify.
+      move=> //= ? ? [j [p [? Rspec]]].
+      simpl in *.
+      move=> //= A1 A01.
+      exists j; exists p.
+      T.split.
+      * by apply: A01.
+      * eauto.
+  Qed.
+
+  Theorem cper_valued : ∀ i, TS.cper_valued (t i).
   Proof.
     move=> i.
     induction i.
     - constructor; contradiction.
     - constructor; Spine.simplify.
-      + move=> e0 e1 e0e1.
-        case: H => //= [j [? [? Rspec]]].
-        rewrite Rspec in e0e1.
-        rewrite Rspec.
-        case: e0e1 => [S [H1 H2]].
-        eauto.
-      + move=> e0 e1 e2 e0e1 e1e2.
-        case: H => //= [j [? [? Rspec]]].
-        rewrite Rspec in e0e1 e1e2.
-        rewrite Rspec.
-        case: e0e1 => //= [S [H1 H2]].
-        case: e1e2 => //= [S' [H1' H2']].
-        exists S; T.split.
-        * eauto.
-        * replace S with S'; auto.
+      + constructor.
+        * move=> e0 e1 e0e1.
+          case: H => //= [j [? [? Rspec]]].
+          rewrite Rspec in e0e1.
+          rewrite Rspec.
+          case: e0e1 => [S [H1 H2]].
+          eauto.
+        * move=> e0 e1 e2 e0e1 e1e2.
+          case: H => //= [j [? [? Rspec]]].
+          rewrite Rspec in e0e1 e1e2.
+          rewrite Rspec.
+          case: e0e1 => //= [S [H1 H2]].
+          case: e1e2 => //= [S' [H1' H2']].
+          exists S; T.split; first by [eauto].
+          replace S with S'; auto.
           apply: Clo.extensionality.
           ** apply: universe_system j.
           ** apply: extensionality.
           ** exact H1'.
           ** exact H2.
+      + move=> ? ? ? ? H'.
+        case: H => //= [j [? [? Rspec]]].
+        rewrite Rspec.
+        rewrite Rspec in H'.
+        simpl in *.
+        T.destruct_conjs.
+        eauto.
+        esplit; split; eauto.
+        apply: Clo.type_computational; [apply: type_computational | idtac | eauto].
+        eauto.
   Qed.
 
   Ltac spine_contradiction :=
@@ -151,11 +176,11 @@ Module Tower.
 
   Hint Resolve extensionality monotonicity.
 
-  Theorem per_valued : ∀ i, TS.per_valued (t i).
+  Theorem cper_valued : ∀ i, TS.cper_valued (t i).
   Proof.
     move=> i A R H.
-    apply: Clo.per_valued.
-    - apply: Spine.per_valued; eauto.
+    apply: Clo.cper_valued.
+    - apply: Spine.cper_valued; eauto.
     - eauto.
   Qed.
 End Tower.
@@ -179,19 +204,24 @@ Proof.
     omega.
 Qed.
 
-Theorem τω_per_valued : TS.per_valued τω.
+Theorem τω_per_valued : TS.cper_valued τω.
 Proof.
   move=> A R.
   rewrite /τω.
   move=> [nH H].
   constructor.
 
-  - move=> e0 e1 e0e1.
-    edestruct (@Tower.per_valued nH);
-    eauto.
+  - constructor.
+    + move=> e0 e1 e0e1.
+      edestruct (@Tower.cper_valued nH); eauto.
+      destruct per.
+      eauto.
 
+    + move=> e0 e1 e2 e0e1 e1e2.
+      edestruct (@Tower.cper_valued nH); eauto.
+      destruct per.
+      eauto.
 
-  - move=> e0 e1 e2 e0e1 e1e2.
-    edestruct (@Tower.per_valued nH);
-    eauto.
+  - move=> ? ? ? ? ?.
+    edestruct (@Tower.cper_valued nH); eauto.
 Qed.

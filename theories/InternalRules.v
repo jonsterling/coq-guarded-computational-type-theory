@@ -409,7 +409,7 @@ Proof.
   - suff: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
     + move=> [R [[? 𝒟0] [? 𝒟1]]].
       case: γ01 => [_ [S [[n ℰ] γ01]]].
-      destruct (Tower.per_valued ℰ) as [symm _].
+      destruct (Tower.cper_valued ℰ) as [[symm _] _].
       exists R; T.split.
       * eexists; eauto.
       * replace R with S.
@@ -436,7 +436,7 @@ Proof.
   - suff: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
     + move=> [R [[? 𝒟0] [? 𝒟1]]].
       case: γ01 => [_ [S [[n ℰ] γ01]]].
-      destruct (Tower.per_valued ℰ) as [symm trans].
+      destruct (Tower.cper_valued ℰ) as [[symm trans] _].
       exists R; T.split.
       * eexists; eauto.
       * move: ℰ γ01; simplify_eqs; move=> ℰ γ01.

@@ -288,87 +288,65 @@ Module Clo.
   Qed.
 
   Hint Resolve cext_per cext_computational unit_val_per bool_val_per prod_val_per cext_per.
+  Hint Constructors is_cper.
+
+  Ltac destruct_cper :=
+    repeat
+      match goal with
+      | H : is_cper _ |- _ => destruct H
+      end.
+
+  Ltac destruct_per :=
+    repeat
+      match goal with
+      | H : is_per _ |- _ => destruct H
+      end.
 
 
-  Theorem per_valued {σ} :
-    TS.per_valued σ
-    → TS.per_valued (t σ).
+
+  Theorem cper_valued {σ} :
+    TS.cper_valued σ
+    → TS.cper_valued (t σ).
   Proof.
     move=> IH A R 𝒟.
-    apply: (@ind (A, R) σ (fun X => is_per (snd X))); auto; move {𝒟 A R}.
+    apply: (@ind (A, R) σ (fun X => is_cper (snd X))); auto; move {𝒟 A R}.
     - move=> [A R].
       apply: IH.
     - move=> ι A A0 R 𝒟 ℰ.
-      destruct_has; simpl; try by [eauto].
+      destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto].
       + constructor.
-        * move=> e0 e1 H1.
-          Later.gather.
-          move=> //= [[ihR0 _] e0e1].
-          eauto.
-        * move=> e0 e1 e2 H1 H2.
-          Later.gather.
-          move=> //= [[_ ihR0] [e0e1 e1e2]].
-          eauto.
-      + constructor.
-        * move=> ? ? H1 κ.
-          T.specialize_hyps.
-          case: H => //= [? ?].
-          eauto.
-        * move=> ? ? ? H1 H2 κ.
-          T.specialize_hyps.
-          case: H => //= [? ?].
-          eauto.
-  Qed.
-
-  (* TODO: this inlines the proof that the type system is per-valued! Need to factor it better. *)
-  Theorem elem_computational {σ} :
-    TS.elem_computational σ
-    → TS.per_valued σ
-    → TS.elem_computational (t σ).
-  Proof.
-    move=> ih pv A R 𝒟.
-    suff: is_per R ∧ rel_computational R; first by case.
-    apply: (@ind (A, R) σ (fun X => is_per (snd X) ∧ rel_computational (snd X))); auto; move {𝒟 A R}.
-    - move=> [A R] ℰ; split; eauto.
-
-    - move=> ι A0 A0v R 𝒟 ℰ.
-      destruct_has; simpl; T.destruct_conjs; try by [split; eauto].
-      + split.
         * constructor.
           ** move=> e0 e1 H1.
              Later.gather.
              move=> //= [[ihR0 _] e0e1].
              eauto.
-             destruct ihR0.
-             eauto.
+             destruct_per; eauto.
           ** move=> e0 e1 e2 H1 H2.
              Later.gather.
-             move=> //= [[ihR0 _] [e0e1 e1e2]].
-             eauto.
-             destruct ihR0.
+             move=> //= [[? ?] [e0e1 e1e2]].
+             destruct_per.
              eauto.
         * move=> ? ? ? ? ?.
           Later.gather.
-          move=> [[? ihR0] ?].
-          apply: ihR0; eauto.
-
-      + split.
+          move=> [] [].
+          eauto.
+      + constructor.
         * constructor.
           ** move=> ? ? H1 κ.
              T.specialize_hyps.
-             case: H => //= [[] ?].
+             case: H => //= [? ?].
+             destruct_per.
              eauto.
           ** move=> ? ? ? H1 H2 κ.
              T.specialize_hyps.
-             case: H => //= [[] ?].
+             case: H => //= [? ?].
+             destruct_per.
              eauto.
-
         * move=> ? ? ? ? ? ?.
           T.specialize_hyps.
-          case: H => _.
-          apply; eauto.
+          destruct_cper.
+          eauto.
   Qed.
-
 
   Theorem type_computational {σ} :
     TS.type_computational σ
@@ -391,5 +369,5 @@ Module Clo.
         eauto.
   Qed.
 
-  Hint Resolve monotonicity extensionality per_valued.
+  Hint Resolve monotonicity extensionality cper_valued.
 End Clo.
