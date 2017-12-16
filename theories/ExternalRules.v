@@ -177,7 +177,7 @@ Module Isect.
 End Isect.
 
 Module Later.
-  Theorem mem_univ `{Γ : ECtx.t Λ Ψ} {k i A0 A1} :
+  Theorem formation `{Γ : ECtx.t Λ Ψ} {k i A0 A1} :
     J⟦ ⌊ Λ ∣ Γ ≫ ETm.ltr k (ETm.univ i) ∋ A0 ≐ A1 ⌋ ⟧
     → J⟦ ⌊ Λ ∣ Γ ≫ ETm.univ i ∋ (ETm.ltr k A0) ≐ (ETm.ltr k A1) ⌋ ⟧.
   Proof.
@@ -188,5 +188,16 @@ Module Later.
     apply: IR.later_formation.
     apply: Later.next.
     eauto.
+  Qed.
+
+  Theorem intro `{Γ : ECtx.t Λ Ψ} {k A e0 e1} :
+    J⟦ ⌊ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⌋ ⟧
+    → J⟦ ⌊ Λ ∣ Γ ≫ A ≐ A ⌋ ⟧
+    → J⟦ ⌊ Λ ∣ Γ ≫ ETm.ltr k A ∋ e0 ≐ e1 ⌋ ⟧.
+  Proof.
+    move=> 𝒟 ? ? ? ? ? ? ?; simpl.
+    apply: IR.later_intro.
+    apply: Later.next.
+    apply: 𝒟; auto.
   Qed.
 End Later.
