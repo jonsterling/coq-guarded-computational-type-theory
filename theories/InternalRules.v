@@ -1,14 +1,10 @@
-Require Import Unicode.Utf8.
-Require Import Coq.Program.Tactics.
-Require Import Coq.Program.Equality.
-Require Import Coq.Program.Basics.
-Require Import Coq.Logic.FunctionalExtensionality.
-From mathcomp Require Import ssreflect.
+Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logic.FunctionalExtensionality.
 
+From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Import OrderTheory Axioms Term Closure Tower Sequent.
-From gctt Require Tactic Tactic.
+From gctt Require Tactic Matrix.
 
 Module M := Matrix.
 Module T := Tactic.
