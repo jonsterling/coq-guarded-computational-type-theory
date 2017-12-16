@@ -16,6 +16,9 @@ Record is_per (R : rel) :=
     transitive : ∀ e0 e1 e2, R (e0, e1) → R (e1, e2) → R (e0, e2)
   }.
 
+Definition rel_computational (R : rel) :=
+  ∀ e0 e1 e2, e0 ≼0 e1 → R (e0, e2) → R (e0, e1).
+
 Module TS.
   Section Law.
     Variable σ : cts.
@@ -31,5 +34,14 @@ Module TS.
 
     Definition per_valued :=
       ∀ A R, σ (A, R) → is_per R.
+
+    Definition type_computational_at (X : Tm.t 0 * rel) :=
+      ∀ A, fst X ≼0 A → σ (A, snd X).
+
+    Definition type_computational :=
+      ∀ A R, σ (A, R) → type_computational_at (A, R).
+
+    Definition elem_computational :=
+      ∀ A R, σ (A, R) → rel_computational R.
   End Law.
 End TS.

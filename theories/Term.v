@@ -156,3 +156,21 @@ Ltac evals_to_eq :=
     match goal with
     | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => simpl in H1, H2; have: V1 = V2; [apply: determinacy; eauto | move {H1 H2} => *]
     end.
+
+
+Definition closed_approx (e1 e2 : Tm.t 0) : Ω :=
+  ∀ v, e1 ⇓ v → e2 ⇓ v.
+
+Definition closed_equiv (e1 e2 : Tm.t 0) : Ω :=
+  ∀ v, e1 ⇓ v ↔ e2 ⇓ v.
+
+Infix "≼0" := closed_approx (at level 30).
+Infix "≈0" := closed_equiv (at level 30).
+
+Theorem closed_approx_refl : ∀ e, e ≼0 e.
+Proof.
+  compute.
+  auto.
+Qed.
+
+Hint Resolve closed_approx_refl.

@@ -276,6 +276,20 @@ Module Clo.
   Qed.
 
 
+  Theorem cext_computational {R} :
+    is_per R
+    → rel_computational (Connective.cext R).
+  Proof.
+    move=> per e0 e1 e2 e01 cext.
+    Connective.destruct_cext.
+    econstructor; eauto.
+    destruct per.
+    eauto.
+  Qed.
+
+  Hint Resolve cext_per cext_computational unit_val_per bool_val_per prod_val_per cext_per.
+
+
   Theorem per_valued {σ} :
     TS.per_valued σ
     → TS.per_valued (t σ).
@@ -285,13 +299,7 @@ Module Clo.
     - move=> [A R].
       apply: IH.
     - move=> ι A A0 R 𝒟 ℰ.
-      destruct_has; simpl.
-      + apply: cext_per.
-        apply: unit_val_per.
-      + apply: cext_per.
-        apply: bool_val_per.
-      + apply: cext_per.
-        apply: prod_val_per; eauto.
+      destruct_has; simpl; try by [eauto].
       + constructor.
         * move=> e0 e1 H1.
           Later.gather.
@@ -310,6 +318,77 @@ Module Clo.
           T.specialize_hyps.
           case: H => //= [? ?].
           eauto.
+  Qed.
+
+  (* TODO: this inlines the proof that the type system is per-valued! Need to factor it better. *)
+  Theorem elem_computational {σ} :
+    TS.elem_computational σ
+    → TS.per_valued σ
+    → TS.elem_computational (t σ).
+  Proof.
+    move=> ih pv A R 𝒟.
+    suff: is_per R ∧ rel_computational R; first by case.
+    apply: (@ind (A, R) σ (fun X => is_per (snd X) ∧ rel_computational (snd X))); auto; move {𝒟 A R}.
+    - move=> [A R] ℰ; split; eauto.
+
+    - move=> ι A0 A0v R 𝒟 ℰ.
+      destruct_has; simpl; T.destruct_conjs; try by [split; eauto].
+      + split.
+        * constructor.
+          ** move=> e0 e1 H1.
+             Later.gather.
+             move=> //= [[ihR0 _] e0e1].
+             eauto.
+             destruct ihR0.
+             eauto.
+          ** move=> e0 e1 e2 H1 H2.
+             Later.gather.
+             move=> //= [[ihR0 _] [e0e1 e1e2]].
+             eauto.
+             destruct ihR0.
+             eauto.
+        * move=> ? ? ? ? ?.
+          Later.gather.
+          move=> [[? ihR0] ?].
+          apply: ihR0; eauto.
+
+      + split.
+        * constructor.
+          ** move=> ? ? H1 κ.
+             T.specialize_hyps.
+             case: H => //= [[] ?].
+             eauto.
+          ** move=> ? ? ? H1 H2 κ.
+             T.specialize_hyps.
+             case: H => //= [[] ?].
+             eauto.
+
+        * move=> ? ? ? ? ? ?.
+          T.specialize_hyps.
+          case: H => _.
+          apply; eauto.
+  Qed.
+
+
+  Theorem type_computational {σ} :
+    TS.type_computational σ
+    → TS.type_computational (t σ).
+  Proof.
+    move=> ih ? ?; elim_clo.
+    - move=> [A0 R] 𝒟 A1 //= A01.
+      rewrite -roll.
+      apply: Sig.init.
+      apply: ih; eauto.
+    - move=> ι A0 A0v R 𝒟 ℰ.
+      destruct_has => ? //= ?;
+      rewrite -roll; apply: Sig.conn; eauto.
+      + constructor.
+        Later.gather.
+        eauto.
+      + constructor.
+        move=> κ.
+        T.specialize_hyps.
+        eauto.
   Qed.
 
   Hint Resolve monotonicity extensionality per_valued.
