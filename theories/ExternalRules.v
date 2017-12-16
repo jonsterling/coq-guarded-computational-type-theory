@@ -200,4 +200,13 @@ Module Later.
     apply: Later.next.
     apply: 𝒟; auto.
   Qed.
+
+  Theorem force `{Γ : ECtx.t Λ Ψ} {A B} :
+    J⟦ ⌊ Λ ∣ Γ ≫ (ETm.isect A) ≐ (ETm.isect B) ⌋ ⟧
+    → J⟦ ⌊ Λ ∣ Γ ≫ (ETm.isect (ETm.ltr Fin.F1 A)) ≐ (ETm.isect B) ⌋ ⟧.
+  Proof.
+    move=> 𝒟 ? ? ? ? ?; simpl.
+    apply: IR.later_force.
+    apply: 𝒟; eauto.
+  Qed.
 End Later.
