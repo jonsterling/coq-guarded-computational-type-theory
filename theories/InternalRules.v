@@ -380,6 +380,42 @@ Proof.
   Tac.prove.
 Qed.
 
+Theorem ty_eq_conv {τ A0 A1 B} :
+  TS.type_computational τ
+  → A0 ≼0 A1
+  → τ ⊧ A0 ∼ B
+  → τ ⊧ A1 ∼ B.
+Proof.
+  move=> H A01 [R [𝒟A0 𝒟B]].
+  exists R; split; auto.
+  apply: H.
+  - exact 𝒟A0.
+  - auto.
+Qed.
+
+Theorem mem_eq_conv_ty {τ A0 A1 e0 e1} :
+  TS.type_computational τ
+  → A0 ≼0 A1
+  → τ ⊧ A0 ∋ e0 ∼ e1
+  → τ ⊧ A1 ∋ e0 ∼ e1.
+Proof.
+  move=> H A01 [R [𝒟 e01]].
+  exists R; split; auto.
+  apply: H; eauto.
+Qed.
+
+
+Theorem mem_eq_conv {τ A e00 e01 e1} :
+  TS.cper_valued τ
+  → e00 ≼0 e01
+  → τ ⊧ A ∋ e00 ∼ e1
+  → τ ⊧ A ∋ e01 ∼ e1.
+Proof.
+  move=> H e00e01 [R [ℰ e00e1]].
+  exists R; split; auto.
+  case: (H A R); eauto.
+Qed.
+
 Theorem ty_eq_trans {A B C} :
   τω ⊧ B ∼ C
   → τω ⊧ A ∼ B
