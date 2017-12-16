@@ -65,16 +65,60 @@ Module Tac.
   Ltac prove := repeat prove_step.
 End Tac.
 
-Theorem unit_formation {n : nat} :
-  τ[n] ⊧ Tm.unit ∼ Tm.unit.
+
+Theorem eq_ty_from_level {n A B} :
+  τ[n] ⊧ A ∼ B
+  → τω ⊧ A ∼ B.
 Proof.
-  Tac.prove.
+  move=> [R [TA TB]].
+  eexists.
+  split.
+  + eexists; eauto.
+  + eexists; eauto.
 Qed.
 
-Theorem unit_ax_equality {n : nat} :
-  τ[n] ⊧ Tm.unit ∋ Tm.ax ∼ Tm.ax.
+Theorem eq_ty_to_level {A B} :
+  τω ⊧ A ∼ B
+  → ∃ n, τ[n] ⊧ A ∼ B.
 Proof.
-  Tac.prove.
+  move=> [R [[n𝒟 𝒟] [nℰ ℰ]]].
+  exists (n𝒟 + nℰ), R.
+  T.split;
+    (apply: Tower.monotonicity; last by [eauto]); omega.
+Qed.
+
+Theorem eq_mem_from_level {n A e1 e2} :
+  τ[n] ⊧ A ∋ e1 ∼ e2
+  → τω ⊧ A ∋ e1 ∼ e2.
+Proof.
+  move=> [R [TA e1e2]].
+  eexists.
+  split.
+  + eexists; eauto.
+  + eauto.
+Qed.
+
+Theorem eq_mem_to_level {A e1 e2} :
+  τω ⊧ A ∋ e1 ∼ e2
+  → ∃ n, τ[n] ⊧ A ∋ e1 ∼ e2.
+Proof.
+  move=> [R [[n𝒟 𝒟] e1e2]].
+  exists n𝒟, R.
+  T.split.
+  - Tac.tower_mono.
+  - auto.
+Qed.
+
+Theorem unit_formation :
+  τω ⊧ Tm.unit ∼ Tm.unit.
+Proof.
+  unshelve Tac.prove; constructor.
+Qed.
+
+Theorem unit_ax_equality :
+  τω ⊧ Tm.unit ∋ Tm.ax ∼ Tm.ax.
+Proof.
+  unshelve Tac.prove; constructor.
 Qed.
 
 Lemma univ_formation_S {n : nat} :
@@ -83,7 +127,7 @@ Proof.
   Tac.prove.
 Qed.
 
-Theorem univ_formation {n i : nat} :
+Theorem univ_formation_lvl {n i : nat} :
   i < n
   → τ[n] ⊧ (Tm.univ i) ∼ (Tm.univ i).
 Proof.
@@ -92,6 +136,15 @@ Proof.
   + Tac.prove.
 Qed.
 
+Theorem univ_formation {i} :
+  τω ⊧ (Tm.univ i) ∼ (Tm.univ i).
+Proof.
+  apply: eq_ty_from_level.
+  apply: univ_formation_lvl.
+  eauto.
+Qed.
+
+(* TODO: put these in τω *)
 Theorem prod_formation {n A0 A1 B0 B1} :
   τ[n] ⊧ A0 ∼ A1
   → τ[n] ⊧ B0 ∼ B1
@@ -151,48 +204,6 @@ Proof.
     T.split; eauto.
 Qed.
 
-Theorem eq_ty_from_level {n A B} :
-  τ[n] ⊧ A ∼ B
-  → τω ⊧ A ∼ B.
-Proof.
-  move=> [R [TA TB]].
-  eexists.
-  split.
-  + eexists; eauto.
-  + eexists; eauto.
-Qed.
-
-Theorem eq_ty_to_level {A B} :
-  τω ⊧ A ∼ B
-  → ∃ n, τ[n] ⊧ A ∼ B.
-Proof.
-  move=> [R [[n𝒟 𝒟] [nℰ ℰ]]].
-  exists (n𝒟 + nℰ), R.
-  T.split;
-    (apply: Tower.monotonicity; last by [eauto]); omega.
-Qed.
-
-Theorem eq_mem_from_level {n A e1 e2} :
-  τ[n] ⊧ A ∋ e1 ∼ e2
-  → τω ⊧ A ∋ e1 ∼ e2.
-Proof.
-  move=> [R [TA e1e2]].
-  eexists.
-  split.
-  + eexists; eauto.
-  + eauto.
-Qed.
-
-Theorem eq_mem_to_level {A e1 e2} :
-  τω ⊧ A ∋ e1 ∼ e2
-  → ∃ n, τ[n] ⊧ A ∋ e1 ∼ e2.
-Proof.
-  move=> [R [[n𝒟 𝒟] e1e2]].
-  exists n𝒟, R.
-  T.split.
-  - Tac.tower_mono.
-  - auto.
-Qed.
 
 Theorem rel_total : Later.Total rel.
 Proof.
@@ -495,10 +506,6 @@ Proof.
     apply: ty_eq_refl_left.
     eassumption.
 Qed.
-
-
-
-Hint Resolve unit_formation univ_formation eq_ty_from_level eq_mem_from_level prod_formation isect_formation isect_irrelevance unit_ax_equality later_formation later_intro later_force ty_eq_refl_left ty_eq_trans ty_eq_symm rewrite_ty_in_mem later_mem_univ.
 
 
 Definition quote_bool (b : bool) : Tm.t 0 :=

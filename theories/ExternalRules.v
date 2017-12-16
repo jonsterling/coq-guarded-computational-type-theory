@@ -3,9 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Generalizable All Variables.
 
-Require Import Unicode.Utf8.
-Require Import Program.Equality.
-
+Require Import Unicode.Utf8 Program.Equality.
 From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
@@ -15,7 +13,6 @@ Module Unit.
     J⟦ ⌊ Λ ∣ Γ ≫ ETm.unit ∋ ETm.ax ≐ ETm.ax ⌋ ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
-    apply: (@IR.eq_mem_from_level 0).
     apply: IR.unit_ax_equality.
   Qed.
 End Unit.
@@ -59,6 +56,7 @@ Module Conversion.
 End Conversion.
 
 Module General.
+  Local Hint Resolve ty_eq_refl_left ty_eq_trans ty_eq_symm.
 
   Theorem hypothesis `{Γ : ECtx.t Λ Ψ} {A} :
     J⟦ ⌊ Λ ∣ Γ `; A ≫ A.^1 ∋ ETm.var _ Fin.F1 ≐ ETm.var _ Fin.F1 ⌋ ⟧.
@@ -92,7 +90,6 @@ Module General.
     - move=> ?; edestruct 𝒟; eassumption.
     - apply: ℰ; eauto.
   Qed.
-
 
   Theorem conv_mem_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 e0 e1} :
     J⟦ ⌊ Λ ∣ Ψ ⊢ A0 ≃ A1 ⌋ ⟧
@@ -187,7 +184,7 @@ Module Later.
     move=> ? ? ?; simpl.
     apply: IR.later_formation.
     apply: Later.next.
-    eauto.
+    apply: IR.univ_formation.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} {k A e0 e1} :
