@@ -44,14 +44,17 @@ Module Conversion.
     ⟦ Λ ∣ Ψ ⊢ ⟨e1, e2⟩ .1 ≃ e1 ⟧.
   Proof.
     move=> κs γ v.
-    split => //= D; inversion D; eauto.
-    + match goal with
-      | X : _ val |- _ => inversion X
-      end.
-    + match goal with
-      | X : Tm.pair _ _ ⇓ _ |- _ => inversion X
-      end.
-      by congruence.
+    split; move=> [𝒟1 𝒟2].
+    - split; auto.
+      dependent destruction 𝒟1.
+      + Term.destruct_evals.
+      + dependent destruction H.
+        * Term.destruct_evals.
+        * eauto.
+    - split; auto; simpl.
+      econstructor.
+      + apply: step_fst_pair.
+      + auto.
   Qed.
 End Conversion.
 

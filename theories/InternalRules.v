@@ -38,6 +38,11 @@ Module Tac.
     apply: Tower.monotonicity; last by [eassumption];
     cbn; omega.
 
+  Ltac prove_eval :=
+    match goal with
+    | |- ?A ⇓ ?Av => eauto
+    end.
+
   Ltac prove_step :=
     try by [eassumption];
     match goal with
@@ -49,8 +54,7 @@ Module Tac.
     | |- Spine.t _ (Tm.univ _, _) => Spine.simplify; repeat T.split; [idtac | eauto | reflexivity] ; eauto
     | |- Connective.cext _ _ => repeat econstructor
     | |- Connective.has _ _ _ => econstructor
-    | |- _ val => econstructor
-    | |- _ ⇓ _ => econstructor
+    | |- _ ⇓ _ => prove_eval
     | |- _ ≤ _ => omega
     | |- ∃ _ : nat, _ => esplit
     | |- τω _ => rewrite /τω
@@ -84,7 +88,7 @@ Proof.
   move=> [R [[n𝒟 𝒟] [nℰ ℰ]]].
   exists (n𝒟 + nℰ), R.
   T.split;
-    (apply: Tower.monotonicity; last by [eauto]); omega.
+  (apply: Tower.monotonicity; last by [eauto]); omega.
 Qed.
 
 Theorem eq_mem_from_level {n A e1 e2} :
@@ -108,6 +112,7 @@ Proof.
   - Tac.tower_mono.
   - auto.
 Qed.
+
 
 Theorem unit_formation :
   τω ⊧ 𝟙 ∼ 𝟙.
@@ -257,9 +262,9 @@ Proof.
   Tower.destruct_tower.
   induction n; Spine.simplify; try by [contradiction].
   case: H => //= [j [? [? [Rspec]]]].
-  Term.destruct_evals.
   apply: Later.push_existential.
   exists R.
+  Term.destruct_evals.
   rewrite Later.cart.
   split.
   - apply: Later.next.
@@ -313,10 +318,10 @@ Proof.
     + exists (fun _ => ▷[κ0] ⊤).
       (* any relation will do! *)
       replace (Clo.t (Spine.t i)) with τ[i]; last by [auto].
-      split; Tac.prove;
+      split; simpl; Tac.prove;
       Later.gather => *; T.destruct_conjs;
       Spine.simplify; by [contradiction].
-    + move {H IHn}; suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
+    + move {IHn}; suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
       * move=> /Later.yank_existential; case; eauto.
         move=> S H2; rewrite Later.cart in H2.
         case: H2 => [H20 H21].

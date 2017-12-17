@@ -114,7 +114,8 @@ Notation "e1 ⋅ e2" := (Tm.app e1%tm e2%tm) (at level 50) : tm_scope.
 Notation "'𝛌{' e }" := (Tm.lam e%tm) (at level 50) : tm_scope.
 
 Reserved Notation "e 'val'" (at level 50).
-Reserved Notation "e ⇓ e'" (at level 50).
+Reserved Notation "e ↦ e'" (at level 50).
+Reserved Notation "e ↦⋆ e'" (at level 50).
 
 Inductive is_val : Tm.t 0 → Ω :=
 | val_bool : 𝟚 val
@@ -131,53 +132,57 @@ Inductive is_val : Tm.t 0 → Ω :=
 | val_lam : ∀ {e}, 𝛌{ e } val
 where "v 'val'" := (is_val v%tm).
 
-Inductive eval : Tm.t 0 → Tm.t 0 → Ω :=
-| eval_val :
-    ∀ {v},
-      v val
-      → v ⇓ v
+Inductive step : Tm.t 0 → Tm.t 0 → Ω :=
+| step_fst_cong :
+    ∀ {e e'},
+      e ↦ e'
+      → (e.1) ↦ (e'.1)
 
-| eval_fst :
-    ∀ {e e1 e2 v},
-      e ⇓ Tm.pair e1 e2
-      → e1 ⇓ v
-      → Tm.fst e ⇓ v
+| step_snd_cong :
+    ∀ {e e'},
+      e ↦ e'
+      → (e.2) ↦ (e'.2)
 
-| eval_snd :
-    ∀ {e e1 e2 v},
-      e ⇓ ⟨e1, e2⟩
-      → e2 ⇓ v
-      → e.2 ⇓ v
+| step_app_cong :
+    ∀ {e1 e1' e2},
+      e1 ↦ e1'
+      → (e1 ⋅ e2) ↦ (e1' ⋅ e2)
 
-| eval_app :
-    ∀ {e1 e1' e2 v},
-      (e1 ⇓ 𝛌{e1'})
-      → Tm.subst (fun _ => e2) e1' ⇓ v
-      → e1 ⋅ e2 ⇓ v
-
-where "e ⇓ e'" := (eval e%tm e'%tm).
-
+| step_fst_pair : ∀ {e1 e2}, ⟨e1,e2⟩.1 ↦ e1
+| step_snd_pair : ∀ {e1 e2}, ⟨e1,e2⟩.2 ↦ e2
+| step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ (fun _ => e2))
+where "e ↦ e'" := (step e%tm e'%tm).
 
 Hint Constructors is_val.
-Hint Constructors eval.
+Hint Constructors step.
 
+Inductive steps : Tm.t 0 → Tm.t 0 → Ω :=
+| steps_nil : ∀ {e}, e ↦⋆ e
+| steps_cons : ∀ {e1 e2 e3}, e1 ↦ e2 → e2 ↦⋆ e3 → e1 ↦⋆ e3
+where "e ↦⋆ e'" := (steps e%tm e'%tm).
+
+Hint Constructors steps.
+
+Record eval (e v : Tm.t 0) :=
+  { eval_steps : e ↦⋆ v;
+    eval_val : v val
+  }.
+
+Hint Constructors eval.
+Notation "e ⇓ v" := (eval e%tm v%tm) (at level 50).
 
 Ltac destruct_evals :=
   repeat
-    match goal with
-    | H : ?A ⇓ ?B |- _ => dependent destruction H
+    match goal with 
+    | H : _ ↦ _ |- _ => dependent destruction H
+    | H : _ ↦⋆ _ |- _ => dependent destruction H
+    | H : _ ⇓ _ |- _ => dependent destruction H
+    | H : _ val |- _ => dependent destruction H
     end.
-
-
-Ltac destruct_eval :=
-  match goal with
-  | |- _ ⇓ _ → _ => let x := fresh in move=> x; dependent destruction x
-  end.
 
 
 (* TODO *)
 Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.
-
 
 Ltac evals_to_eq :=
   repeat
