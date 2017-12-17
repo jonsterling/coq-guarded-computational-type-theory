@@ -563,8 +563,7 @@ Proof.
          dependent induction x.
     + by Later.gather; case.
 
-Admitted.
-
+Qed.
 
 Definition quote_bool (b : bool) : Tm.t 0 :=
   match b with
