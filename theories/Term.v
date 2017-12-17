@@ -105,7 +105,7 @@ Notation "★" := Tm.ax : tm_scope.
 Notation "e .1" := (Tm.fst e%tm) (at level 50) : tm_scope.
 Notation "e .2" := (Tm.snd e%tm) (at level 50) : tm_scope.
 Infix "×" := Tm.prod : tm_scope.
-Infix "→" := Tm.arr : tm_scope.
+Infix "⇒" := Tm.arr (at level 30) : tm_scope.
 Notation "⋂[ κ ] A" := (Tm.isect (fun κ => A%tm)) (at level 50) : tm_scope.
 Notation "⋂ A" := (Tm.isect A) (at level 50) : tm_scope.
 Notation "𝕌[ i ] " := (Tm.univ i%nat) : tm_scope.
@@ -120,7 +120,7 @@ Inductive is_val : Tm.t 0 → Ω :=
 | val_bool : 𝟚 val
 | val_unit : 𝟙 val
 | val_prod : ∀ {e1 e2}, (e1 × e2) val
-| val_arr : ∀ {e1 e2}, (e1 → e2) val
+| val_arr : ∀ {e1 e2}, (e1 ⇒ e2) val
 | val_ltr : ∀ {κ e}, ▶[κ] e val
 | val_isect : ∀ {e}, ⋂ e val
 | val_univ : ∀ {i}, 𝕌[i] val
@@ -199,8 +199,8 @@ Definition closed_equiv (e1 e2 : Tm.t 0) : Ω :=
 Arguments closed_approx e1%tm e2%tm.
 Arguments closed_equiv e1%tm e2%tm.
 
-Infix "≼₀" := closed_approx (at level 30).
-Infix "≈₀" := closed_equiv (at level 30).
+Notation "e0 ≼₀ e1" := (closed_approx e0%tm e1%tm) (at level 30).
+Notation "e0 ≈₀ e1" := (closed_equiv e0%tm e1%tm) (at level 30).
 
 Theorem closed_approx_refl : ∀ e, e ≼₀ e.
 Proof.

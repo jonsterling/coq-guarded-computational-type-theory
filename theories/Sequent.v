@@ -58,15 +58,15 @@ Arguments seq_eq_ty [Ψ] τ Γ%ictx A%tm B%tm.
 Arguments seq_eq_mem [Ψ] τ Γ%ictx A%tm e1%tm e2%tm.
 
 Reserved Notation "τ ⊧ Γ 'ctx'" (at level 10).
-Notation "τ ⊧ Γ ≫ A ∼ B" := (seq_eq_ty τ Γ A B) (at level 10).
-Notation "τ ⊧ Γ ≫ A ∋ e1 ∼ e2" := (seq_eq_mem τ Γ A e1 e2) (at level 10).
+Notation "τ ⊧ Γ ≫ A ∼ B" := (seq_eq_ty τ Γ%ictx A%tm B%tm) (at level 10).
+Notation "τ ⊧ Γ ≫ A ∋ e1 ∼ e2" := (seq_eq_mem τ Γ%ictx A%tm e1%tm e2%tm) (at level 10).
 
 Program Fixpoint is_ctx {Ψ} (τ : cts) (Γ : Prectx Ψ) : Ω :=
   match Γ with
   | ⋄%ictx => ⊤
   | (Γ; A)%ictx => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A
   end
-where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ).
+where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ%ictx).
 
 Arguments is_ctx [Ψ] τ Γ%ictx.
 
@@ -80,5 +80,5 @@ Definition open_equiv {Ψ} (e1 e2 : Tm.t Ψ) : Ω :=
 Arguments open_approx [Ψ] e1%tm e2%tm.
 Arguments open_equiv [Ψ] e1%tm e2%tm.
 
-Infix "≼" := open_approx (at level 30).
-Infix "≈" := open_equiv (at level 30).
+Notation "e0 ≼ e1" := (open_approx e0%tm e1%tm) (at level 30).
+Notation "e0 ≈ e1" := (open_equiv e0%tm e1%tm) (at level 30).

@@ -10,7 +10,7 @@ Module IR := InternalRules.
 
 Module Unit.
   Theorem ax_equality Λ Ψ (Γ : ECtx.t Λ Ψ) :
-    J⟦ ⌊ Λ ∣ Γ ≫ ETm.unit ∋ ETm.ax ≐ ETm.ax ⌋ ⟧.
+    ⟦ Λ ∣ Γ ≫ 𝟙 ∋ ★ ≐ ★ ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
     apply: IR.unit_ax_equality.
@@ -20,8 +20,8 @@ End Unit.
 Module Conversion.
   Module Structural.
     Theorem symm {Λ Ψ e1 e2} :
-      J⟦ Λ ∣ Ψ ⊢ e1 ≃ e2 ⟧
-      → J⟦ Λ ∣ Ψ ⊢ e2 ≃ e1 ⟧.
+      ⟦ Λ ∣ Ψ ⊢ e1 ≃ e2 ⟧
+      → ⟦ Λ ∣ Ψ ⊢ e2 ≃ e1 ⟧.
     Proof.
       move=> D κs γ v.
       specialize (D κs γ v).
@@ -29,9 +29,9 @@ Module Conversion.
     Qed.
 
     Theorem trans {Λ Ψ e1 e2 e3} :
-      J⟦ Λ ∣ Ψ ⊢ e1 ≃ e2 ⟧
-      → J⟦ Λ ∣ Ψ ⊢ e2 ≃ e3 ⟧
-      → J⟦ Λ ∣ Ψ ⊢ e1 ≃ e3 ⟧.
+      ⟦ Λ ∣ Ψ ⊢ e1 ≃ e2 ⟧
+      → ⟦ Λ ∣ Ψ ⊢ e2 ≃ e3 ⟧
+      → ⟦ Λ ∣ Ψ ⊢ e1 ≃ e3 ⟧.
     Proof.
       move=> 𝒟 ℰ κs γ v.
       specialize (𝒟 κs γ v).
@@ -41,7 +41,7 @@ Module Conversion.
   End Structural.
 
   Theorem fst_of_pair {Λ Ψ e1 e2} :
-    J⟦ Λ ∣ Ψ ⊢ ⟨e1, e2⟩ .1 ≃ e1 ⟧.
+    ⟦ Λ ∣ Ψ ⊢ ⟨e1, e2⟩ .1 ≃ e1 ⟧.
   Proof.
     move=> κs γ v.
     split => //= D; inversion D; eauto.
@@ -59,7 +59,7 @@ Module General.
   Local Hint Resolve ty_eq_refl_left ty_eq_trans ty_eq_symm.
 
   Theorem hypothesis `{Γ : ECtx.t Λ Ψ} {A} :
-    J⟦ Λ ∣ Γ ; A ≫ (A.^1) ∋ @0 ≐ @0 ⟧.
+    ⟦ Λ ∣ Γ ; A ≫ (A.^1) ∋ @0 ≐ @0 ⟧.
   Proof.
     move=> κs Γctx ty γ0 γ1 γ01.
     case: γ01 => [_ γ01].
@@ -68,9 +68,9 @@ Module General.
   Qed.
 
   Theorem conv_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 B} :
-    J⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A0 ≐ B ⟧
-    → J⟦ Λ ∣ Γ ≫ A1 ≐ B ⟧.
+    ⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ≐ B ⟧
+    → ⟦ Λ ∣ Γ ≫ A1 ≐ B ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ?.
     apply: IR.ty_eq_conv.
@@ -80,9 +80,9 @@ Module General.
   Qed.
 
   Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00 e01 e1} :
-    J⟦ Λ ∣ Ψ ⊢ e00 ≃ e01 ⟧
-    → J⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A ∋ e01 ≐ e1 ⟧.
+    ⟦ Λ ∣ Ψ ⊢ e00 ≃ e01 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ e01 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
     apply: IR.mem_eq_conv.
@@ -92,9 +92,9 @@ Module General.
   Qed.
 
   Theorem conv_mem_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 e0 e1} :
-    J⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A0 ∋ e0 ≐ e1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A1 ∋ e0 ≐ e1 ⟧.
+    ⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A1 ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ? ? ? ? ?.
     apply: IR.mem_eq_conv_ty.
@@ -113,8 +113,8 @@ Module General.
   Qed.
 
   Theorem ty_eq_symm `{Γ : ECtx.t Λ Ψ} {A0 A1} :
-    J⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A1 ≐ A0 ⟧.
+    ⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A1 ≐ A0 ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ?.
     apply: IR.ty_eq_symm.
@@ -123,9 +123,9 @@ Module General.
   Qed.
 
   Theorem ty_eq_trans `{Γ : ECtx.t Λ Ψ} {A0 A1 A2} :
-    J⟦ Λ ∣ Γ ≫ A1 ≐ A2 ⟧
-    → J⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A0 ≐ A2 ⟧.
+    ⟦ Λ ∣ Γ ≫ A1 ≐ A2 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ≐ A2 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ?.
     apply: IR.ty_eq_trans.
@@ -135,8 +135,8 @@ Module General.
   Qed.
 
   Theorem ty_eq_refl_left `{Γ : ECtx.t Λ Ψ} {A0 A1} :
-    J⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A0 ≐ A0 ⟧.
+    ⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ≐ A0 ⟧.
   Proof.
     move=> 𝒟.
     apply: ty_eq_trans.
@@ -146,9 +146,9 @@ Module General.
   Qed.
 
   Theorem replace_ty_in_mem `{Γ : ECtx.t Λ Ψ} {A0 A1 e1 e2} :
-    J⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⟧
-    → J⟦ Λ ∣ Γ ≫ A1 ∋ e1 ≐ e2 ⟧.
+    ⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⟧
+    → ⟦ Λ ∣ Γ ≫ A1 ∋ e1 ≐ e2 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? _ ? ? ?.
     apply: IR.rewrite_ty_in_mem.
@@ -161,11 +161,11 @@ End General.
 
 Module Isect.
   Theorem irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
-    J⟦ Λ ∣ Γ ≫ A ≐ A ⟧
-    → J⟦ Λ ∣ Γ ≫ A ≐ ⋂ (ETm.mapk (Ren.weak 1) A) ⟧.
+    ⟦ Λ ∣ Γ ≫ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ≫ A ≐ ⋂ (ETm.mapk (Ren.weak 1) A) ⟧.
   Proof.
     move=> 𝒟 κs ? ? γ1 ?; simplify_eqs.
-    replace (λ κ : 𝕂, (T⟦ ETm.mapk _ _ ⟧ _) ⫽ _) with (λ κ:𝕂, (T⟦A⟧ κs) ⫽ γ1).
+    replace (λ κ : 𝕂, (⟦ ETm.mapk _ _ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1).
     - apply: IR.isect_irrelevance.
       apply: 𝒟; eauto.
     - T.eqcd => *.
@@ -175,8 +175,8 @@ End Isect.
 
 Module Later.
   Theorem formation `{Γ : ECtx.t Λ Ψ} {k i A0 A1} :
-    J⟦ Λ ∣ Γ ≫ ▶[k] 𝕌[i] ∋ A0 ≐ A1 ⟧
-    → J⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ▶[k] A0 ≐ ▶[k] A1 ⟧.
+    ⟦ Λ ∣ Γ ≫ ▶[k] 𝕌[i] ∋ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ▶[k] A0 ≐ ▶[k] A1 ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ? ?; simpl.
     apply: IR.later_mem_univ.
@@ -188,9 +188,9 @@ Module Later.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} {k A e0 e1} :
-    J⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
-    → J⟦ Λ ∣ Γ ≫ A ≐ A ⟧
-    → J⟦ Λ ∣ Γ ≫ ▶[k] A ∋ e0 ≐ e1 ⟧.
+    ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ≫ ▶[k] A ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ? ? ?; simpl.
     apply: IR.later_intro.
@@ -199,8 +199,8 @@ Module Later.
   Qed.
 
   Theorem force `{Γ : ECtx.t Λ Ψ} {A B} :
-    J⟦ Λ ∣ Γ ≫ ⋂ A ≐ ⋂ B ⟧
-    → J⟦ Λ ∣ Γ ≫ ⋂ ▶[#0] A ≐ ⋂ B ⟧.
+    ⟦ Λ ∣ Γ ≫ ⋂ A ≐ ⋂ B ⟧
+    → ⟦ Λ ∣ Γ ≫ ⋂ ▶[#0] A ≐ ⋂ B ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ?; simpl.
     apply: IR.later_force.

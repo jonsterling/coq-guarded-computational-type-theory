@@ -129,36 +129,35 @@ End Env.
 
 Notation "κ ∷ σ" := (Env.cons κ σ) (at level 30).
 
-Reserved Notation "T⟦ e ⟧ κs" (at level 50).
-Reserved Notation "Γ⟦ Γ ⟧ κs" (at level 50).
+Reserved Notation "⟦ e ⟧ κs" (at level 50).
 
 Fixpoint interp_tm `(e : ETm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   match e with
   | ETm.var i => Tm.var i
-  | ETm.fst e => (T⟦e⟧ κs) .1
-  | ETm.snd e => (T⟦e⟧ κs) .2
+  | ETm.fst e => (⟦e⟧ κs) .1
+  | ETm.snd e => (⟦e⟧ κs) .2
   | ETm.unit => 𝟙
   | ETm.bool => 𝟚
   | ETm.ax => ★
   | ETm.tt => Tm.tt
   | ETm.ff => Tm.ff
-  | ETm.prod A B => (T⟦A⟧ κs) × (T⟦B⟧ κs)
-  | ETm.arr A B => (T⟦A⟧ κs) → (T⟦B⟧ κs)
-  | ETm.pair A B => ⟨T⟦A⟧ κs, T⟦B⟧ κs⟩
-  | ETm.ltr r A => ▶[κs r] T⟦A⟧ κs
-  | ETm.isect A => ⋂[κ] T⟦A⟧ (κ ∷ κs)
+  | ETm.prod A B => (⟦A⟧ κs) × (⟦B⟧ κs)
+  | ETm.arr A B => (⟦A⟧ κs) ⇒ (⟦B⟧ κs)
+  | ETm.pair A B => ⟨⟦A⟧ κs, ⟦B⟧ κs⟩
+  | ETm.ltr r A => ▶[κs r] ⟦A⟧ κs
+  | ETm.isect A => ⋂[κ] ⟦A⟧ (κ ∷ κs)
   | ETm.univ i => Tm.univ i
   end
-where "T⟦ e ⟧ κs" := (interp_tm e%etm κs) : tm_scope.
+where "⟦ e ⟧ κs" := (interp_tm e%etm κs) : tm_scope.
 
 Arguments interp_tm [Λ Ψ] e%etm κs.
 
 Program Fixpoint interp_ctx `(Γ : ECtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
   match Γ with
   | ⋄%ectx => ⋄%ictx
-  | (Γ ; A)%ectx => (Γ⟦ Γ ⟧ κs ; T⟦ A ⟧ κs)%ictx
+  | (Γ ; A)%ectx => (⟦ Γ ⟧ κs ; ⟦ A ⟧ κs)%ictx
   end
-where "Γ⟦ Γ ⟧ κs" := (interp_ctx Γ%ectx κs).
+where "⟦ Γ ⟧ κs" := (interp_ctx Γ%ectx κs).
 
 Arguments interp_ctx [Λ Ψ] Γ%ectx κs.
 
@@ -166,18 +165,18 @@ Definition interp_jdg `(J : EJdg.t Λ) : Ω :=
   ∀ (κs : Env.t Λ),
     match J with
     | ⌊ _ ∣ Γ ≫ A ≐ B ⌋ =>
-      τω ⊧ Γ⟦ Γ ⟧ κs ctx
-      → τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A ⟧ κs ∼ T⟦ B ⟧ κs
+      τω ⊧ ⟦ Γ ⟧ κs ctx
+      → τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ B ⟧ κs
     | ⌊ _ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋ =>
-      τω ⊧ Γ⟦ Γ ⟧ κs ctx
-      → τω ⊧ Γ⟦ Γ ⟧ κs ≫ (T⟦ A ⟧ κs) ∼ (T⟦ A ⟧ κs)
-      → τω ⊧ Γ⟦ Γ ⟧ κs ≫ T⟦ A ⟧ κs ∋ T⟦ e1 ⟧ κs ∼ T⟦ e2 ⟧ κs
+      τω ⊧ ⟦ Γ ⟧ κs ctx
+      → (τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ A ⟧ κs)
+      → τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∋ ⟦ e1 ⟧ κs ∼ ⟦ e2 ⟧ κs
     | ⌊ _ ∣ Ψ ⊢ e1 ≃ e2 ⌋ =>
-      (T⟦ e1 ⟧ κs) ≈ (T⟦ e2 ⟧ κs)
+      (⟦ e1 ⟧ κs) ≈ (⟦ e2 ⟧ κs)
     end.
 
 Arguments interp_jdg [Λ] J%ejdg.
-Notation "J⟦ J ⟧" := (interp_jdg J%ejdg) (at level 50).
+Notation "⟦ J ⟧" := (interp_jdg J%ejdg) (at level 50) : type_scope.
 
 Ltac rewrite_all_hyps :=
   repeat
@@ -190,7 +189,7 @@ Local Open Scope tm_scope.
 
 Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} :
   ∀ (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
-    T⟦ e ⟧ κs ∘ ρ = T⟦ ETm.mapk ρ e ⟧ κs.
+    ⟦ e ⟧ κs ∘ ρ = ⟦ ETm.mapk ρ e ⟧ κs.
 Proof.
   move=> e; move: Λ2.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
@@ -201,7 +200,7 @@ Proof.
 Qed.
 
 Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
-  (T⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (T⟦ ETm.mapv ρ e ⟧ κs) ⫽ γ.
+  (⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (⟦ ETm.mapv ρ e ⟧ κs) ⫽ γ.
 Proof.
   induction e; eauto; simpl; try by [rewrite_all_hyps].
   f_equal; T.eqcd => ?.
