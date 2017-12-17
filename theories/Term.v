@@ -159,6 +159,13 @@ Module Tm.
 
   (* This is not quite done; hard lemmas *)
 
+  Lemma map_subst_coh n {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) e :
+    subst (Sub.cong_n n σ) (map (Ren.weak n) e)
+    =
+    map (Ren.weak n) (subst σ e).
+  Proof.
+  Admitted.
+
   Lemma subst_coh_n :
     ∀ n {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
       subst (Sub.cong_n n σ23) (subst (Sub.cong_n n σ12) e)
@@ -167,11 +174,13 @@ Module Tm.
   Proof.
     move=> n Ψ1 Ψ2 Ψ3 σ12 σ23 e.
     dependent induction e; simpl; auto; try by [rewrites].
-    - dependent induction n; auto; simpl; auto.
-      dependent induction v; auto.
-      simpl.
+
+    - dependent induction n; dependent destruction v; try by [simpl; auto].
+      simpl in *.
       rewrite -IHn.
-      admit.
+      move: (map_subst_coh 1 (Sub.cong_n n σ23) (Sub.cong_n n σ12 v)).
+      simpl; simplify_eqs => Q.
+      by rewrite Q.
 
     - specialize (IHe1 n).
       specialize (IHe2 n).
