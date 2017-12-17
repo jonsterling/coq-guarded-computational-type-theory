@@ -159,25 +159,59 @@ Module Tm.
 
   (* This is not quite done; hard lemmas *)
 
+  Lemma subst_coh_n :
+    ∀ n {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
+      subst (Sub.cong_n n σ23) (subst (Sub.cong_n n σ12) e)
+      =
+      subst (Sub.cong_n n (fun x => subst σ23 (σ12 x))) e.
+  Proof.
+    move=> n Ψ1 Ψ2 Ψ3 σ12 σ23 e.
+    dependent induction e; simpl; auto; try by [rewrites].
+    - dependent induction n; auto; simpl; auto.
+      dependent induction v; auto.
+      simpl.
+      rewrite -IHn.
+      admit.
+
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+
+    - specialize (IHe (S n)).
+      rewrite IHe; auto.
+
+    - f_equal.
+      T.eqcd => κ.
+      specialize (H κ n).
+      auto.
+  Admitted.
+
   Theorem subst_coh :
     ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
-      subst σ23 (subst σ12 e) = subst (fun x => subst σ23 (σ12 x)) e.
+      subst σ23 (subst σ12 e)
+      =
+      subst (fun x => subst σ23 (σ12 x)) e.
   Proof.
     move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
-    generalize Ψ2 Ψ3 σ12 σ23.
-    induction e => ? ? σ' σ''; simpl; try by [rewrites].
-    - f_equal.
-      rewrite IHe.
-      + f_equal.
-        T.eqcd => x.
-        dependent destruction x; auto.
-        simpl.
-        admit.
-      + exact (fun _ => Tm.tt). (*weird zombie goal*)
-    - f_equal.
-      T.eqcd => ?.
-      rewrite H; eauto.
-  Admitted.
+    apply: (subst_coh_n 0).
+  Qed.
+
 End Tm.
 
 Delimit Scope tm_scope with tm.
