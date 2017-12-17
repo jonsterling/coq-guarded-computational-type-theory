@@ -80,5 +80,5 @@ Definition open_equiv {Ψ} (e1 e2 : Tm.t Ψ) : Ω :=
 Arguments open_approx [Ψ] e1%tm e2%tm.
 Arguments open_equiv [Ψ] e1%tm e2%tm.
 
-Notation "e0 ≼ e1" := (open_approx e0%tm e1%tm) (at level 30).
-Notation "e0 ≈ e1" := (open_equiv e0%tm e1%tm) (at level 30).
+Notation "e0 ≼ e1" := (open_approx e0%tm e1%tm) (at level 30) : type_scope.
+Notation "e0 ≈ e1" := (open_equiv e0%tm e1%tm) (at level 30) : type_scope.
