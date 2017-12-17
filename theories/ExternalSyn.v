@@ -61,11 +61,9 @@ End ETm.
 
 Delimit Scope eclk_scope with eclk.
 Delimit Scope etm_scope with etm.
-Delimit Scope ren_scope with ren.
 
 Notation "e .[ ρ ]" := (ETm.mapv ρ%ren e) (at level 50) : etm_scope.
 Notation "e .⦃ ρ ⦄" := (ETm.mapk ρ%ren e) (at level 50) : etm_scope.
-Notation "^ n" := (Ren.weak n) (at level 50) : ren_scope.
 
 Notation "#0" := Fin.F1 : eclk_scope.
 Notation "#1" := (Fin.FS Fin.F1) : eclk_scope.

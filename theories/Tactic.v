@@ -1,10 +1,7 @@
-Require Import Unicode.Utf8.
-Require Import Coq.Program.Equality.
-Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality.
 
 From mathcomp Require Import ssreflect.
-From gctt Require Import Axioms.
-
+From gctt Require Import Notation Axioms.
 
 Local Ltac mysplit :=
   simpl;
@@ -23,7 +20,7 @@ Ltac destruct_conjs :=
     match goal with
     | H : ∃ _:_,_ |- _ => case: H => *
     | H : _ ∧ _ |- _ => case: H => *
-    | H : _ * _ |- _ => case: H => * || destruct H
+    | H : _ × _ |- _ => case: H => * || destruct H
     end.
 
 

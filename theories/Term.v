@@ -155,6 +155,8 @@ Delimit Scope tm_scope with tm.
 
 Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity).
 
+Notation "e .[ ρ ]" := (Tm.map ρ%ren e) (at level 50) : tm_scope.
+
 Notation "@0" := (Tm.var Fin.F1) : tm_scope.
 Notation "@1" := (Tm.var (Fin.FS Fin.F1)) : tm_scope.
 Notation "▶[ κ ] A" := (Tm.ltr κ A%tm) (at level 50) : tm_scope.

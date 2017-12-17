@@ -523,7 +523,7 @@ Proof.
 Qed.
 
 Theorem loeb_induction {κ A e0 e1} :
-  τω ⊧ ⋄; ▶[κ]A ≫ (Tm.map (Ren.weak 1) A) ∋ e0 ∼ e1
+  τω ⊧ ⋄; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
   → τω ⊧ A ∋ (fix_ e0) ∼ (fix_ e1).
 Proof.
   move=> 𝒟.
@@ -534,7 +534,7 @@ Proof.
   suff: τω ⊧ ⋄; ▶[κ]A ∋⋆ (fun _ => fix_ e0) ∼ (fun _ => fix_ e1).
   - move=> ℱ.
     specialize (𝒟 _ _ ℱ).
-    replace (Tm.map (Ren.weak 1) A ⫽ (λ _ : Var 1, fix_ e0)) with A in 𝒟.
+    replace (A.[^1] ⫽ (λ _ : Var 1, fix_ e0)) with A in 𝒟.
     + apply: mem_eq_conv.
       * auto.
       * move=> v.
