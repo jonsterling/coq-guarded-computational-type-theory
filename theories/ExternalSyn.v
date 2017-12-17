@@ -138,19 +138,19 @@ Reserved Notation "⟦ e ⟧ κs" (at level 50).
 Fixpoint interp_tm `(e : ETm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   match e with
   | ETm.var i => Tm.var i
-  | ETm.fst e => (⟦e⟧ κs) .1
-  | ETm.snd e => (⟦e⟧ κs) .2
+  | ETm.fst e => ⟦e⟧ κs .1
+  | ETm.snd e => ⟦e⟧ κs .2
   | ETm.unit => 𝟙
   | ETm.bool => 𝟚
   | ETm.ax => ★
   | ETm.tt => Tm.tt
   | ETm.ff => Tm.ff
-  | ETm.prod A B => (⟦A⟧ κs) × (⟦B⟧ κs)
-  | ETm.arr A B => (⟦A⟧ κs) ⇒ (⟦B⟧ κs)
+  | ETm.prod A B => ⟦A⟧ κs × ⟦B⟧ κs
+  | ETm.arr A B => (⟦A⟧ κs) ⇒ ⟦B⟧ κs
   | ETm.pair A B => ⟨⟦A⟧ κs, ⟦B⟧ κs⟩
   | ETm.ltr r A => ▶[κs r] ⟦A⟧ κs
-  | ETm.isect A => ⋂[κ] ⟦A⟧ (κ ∷ κs)
-  | ETm.univ i => Tm.univ i
+  | ETm.isect A => ⋂[κ] ⟦A⟧ κ ∷ κs
+  | ETm.univ i => 𝕌[i]
   end
 where "⟦ e ⟧ κs" := (interp_tm e%etm κs) : tm_scope.
 
@@ -191,16 +191,15 @@ Ltac rewrite_all_hyps :=
 Local Open Scope program_scope.
 Local Open Scope tm_scope.
 
-Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} :
-  ∀ (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
-    ⟦ e ⟧ κs ∘ ρ = ⟦ e.⦃ρ⦄ ⟧ κs.
+Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2) :
+  ⟦ e ⟧ κs ∘ ρ = ⟦ e.⦃ρ⦄ ⟧ κs.
 Proof.
-  move=> e; move: Λ2.
+  move: Λ2 ρ κs.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
-  + f_equal; T.eqcd => ?.
-    rewrite_all_hyps.
-    f_equal; T.eqcd => i.
-    by dependent induction i.
+  f_equal; T.eqcd => ?.
+  rewrite_all_hyps.
+  f_equal; T.eqcd => i.
+  by dependent induction i.
 Qed.
 
 Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
