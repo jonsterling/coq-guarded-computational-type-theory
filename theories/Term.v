@@ -55,6 +55,26 @@ Module Tm.
     | univ i => univ i
     end.
 
+
+  Local Ltac rewrites :=
+    repeat
+      match goal with
+      | H : _ |- _ => rewrite H
+      end.
+
+  Theorem map_id {Ψ} (e : t Ψ) : map id e = e.
+  Proof.
+    induction e; auto; simpl; try by rewrites.
+    - f_equal.
+      replace (Ren.cong id) with (fun x : Var (S Ψ) => x).
+      + by rewrite IHe.
+      + T.eqcd => x.
+        dependent induction x; auto.
+    - f_equal.
+      T.eqcd => ?.
+      by rewrite H.
+  Qed.
+
   Module Sub.
     Definition t (Ψ1 Ψ2 : Ctx) := Var Ψ1 → t Ψ2.
 
@@ -68,6 +88,12 @@ Module Tm.
         | Fin.F1 _ => var Fin.F1
         | Fin.FS _ y => map Fin.FS (σ y)
         end.
+
+    Program Fixpoint cong_n n {Ψ1 Ψ2} (ρ : t Ψ1 Ψ2) : t (n + Ψ1) (n + Ψ2) :=
+      match n with
+      | 0 => ρ
+      | S m => cong (cong_n m ρ)
+      end.
 
   End Sub.
 
@@ -90,6 +116,28 @@ Module Tm.
     | isect A => isect (fun κ => subst σ (A κ))
     | univ i => univ i
     end.
+
+
+  (* This is not quite done; hard lemma *)
+  Theorem subst_coh :
+    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
+      subst σ23 (subst σ12 e) = subst (fun x => subst σ23 (σ12 x)) e.
+  Proof.
+    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
+    generalize Ψ2 Ψ3 σ12 σ23.
+    induction e => ? ? σ' σ''; simpl; try by [rewrites].
+    - f_equal.
+      rewrite IHe.
+      + f_equal.
+        T.eqcd => x.
+        dependent destruction x; auto.
+        simpl.
+        admit.
+      + exact (fun _ => Tm.tt). (*weird zombie goal*)
+    - f_equal.
+      T.eqcd => ?.
+      rewrite H; eauto.
+  Admitted.
 End Tm.
 
 Delimit Scope tm_scope with tm.
@@ -173,7 +221,7 @@ Notation "e ⇓ v" := (eval e%tm v%tm) (at level 50).
 
 Ltac destruct_evals :=
   repeat
-    match goal with 
+    match goal with
     | H : _ ↦ _ |- _ => dependent destruction H
     | H : _ ↦⋆ _ |- _ => dependent destruction H
     | H : _ ⇓ _ |- _ => dependent destruction H
@@ -215,3 +263,19 @@ Proof.
 Qed.
 
 Hint Resolve closed_approx_refl.
+
+Program Definition fix_ (f : Tm.t 1) : Tm.t 0 :=
+  (𝛌{f ⫽ (fun _ => @0 ⋅ @0)} ⋅ 𝛌{f ⫽ (fun _ => (@0 ⋅ @0))})%tm.
+
+Theorem fix_approx :
+  ∀ f, (fix_ f) ≼₀ (f ⫽ (fun _ => fix_ f)).
+Proof.
+  move=> f v [𝒟1 𝒟2].
+  constructor.
+  - dependent destruction 𝒟1.
+    + dependent destruction 𝒟2.
+    + dependent destruction H.
+      * dependent destruction H.
+      * by rewrite Tm.subst_coh in 𝒟1.
+  - assumption.
+Qed.
