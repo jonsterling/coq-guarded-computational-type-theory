@@ -546,7 +546,9 @@ Proof.
            case: (fix_unfold e1 v) => _; apply.
         ** by apply: mem_eq_symm.
 
-    + admit. (* true, but a hard substitution lemma *)
+    + rewrite Tm.subst_ren_coh -{1}(Tm.subst_ret A).
+      f_equal; T.eqcd => x.
+      dependent destruction x.
 
   - simpl; split; auto.
     exists (fun e0e1 => ▷[κ] (R e0e1)).

@@ -100,3 +100,12 @@ Ltac use H :=
     replace ty1 with ty2;
     [ exact H | idtac ]
   end.
+
+
+Ltac rewrites_with T :=
+  move=> *; simpl; T;
+  repeat (match goal with | [H : context[eq _ _] |- _] => rewrite H end);
+  T;
+  auto.
+
+Ltac rewrites := rewrites_with idtac.

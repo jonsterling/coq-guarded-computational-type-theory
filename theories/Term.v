@@ -55,24 +55,22 @@ Module Tm.
     | univ i => univ i
     end.
 
+  Local Ltac rewrites_aux :=
+    repeat f_equal;
+    try (let x := fresh in T.eqcd => x).
 
   Local Ltac rewrites :=
-    repeat
-      match goal with
-      | H : _ |- _ => rewrite H
-      end.
+    T.rewrites_with rewrites_aux.
 
   Theorem map_id {Ψ} (e : t Ψ) : map id e = e.
   Proof.
     induction e; auto; simpl; try by rewrites.
-    - f_equal.
-      replace (Ren.cong id) with (fun x : Var (S Ψ) => x).
-      + by rewrite IHe.
-      + T.eqcd => x.
-        dependent induction x; auto.
-    - f_equal.
-      T.eqcd => ?.
-      by rewrite H.
+
+    f_equal.
+    replace (Ren.cong id) with (fun x : Var (S Ψ) => x).
+    - by rewrite IHe.
+    - T.eqcd => x.
+      dependent induction x; auto.
   Qed.
 
   Module Sub.
@@ -117,99 +115,54 @@ Module Tm.
     | univ i => univ i
     end.
 
-
-
-  Lemma subst_ret_n :
-    ∀ n {Ψ} (e : t (n + Ψ)), subst (Sub.cong_n n (fun x => var x)) e = e.
-  Proof.
-    move=> n Ψ e.
-    dependent induction e; simpl; auto; try by [rewrites].
-    - dependent induction n; dependent induction v; auto.
-      simpl; by rewrite IHn.
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
-    - specialize (IHe (S n)).
-      rewrite IHe; auto.
-    - f_equal.
-      T.eqcd => κ.
-      specialize (H κ n).
-      rewrite H; auto.
-  Qed.
-
-  Theorem subst_ret :
-    ∀ {Ψ} (e : t Ψ), subst (fun x => var x) e = e.
-  Proof.
-    move=> Ψ.
-    apply: (subst_ret_n 0).
-  Qed.
-
-  (* This is not quite done; hard lemmas *)
-
-  Lemma map_subst_coh n {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) e :
-    subst (Sub.cong_n n σ) (map (Ren.weak n) e)
-    =
-    map (Ren.weak n) (subst σ e).
-  Proof.
-  Admitted.
-
-  Lemma subst_coh_n :
-    ∀ n {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
-      subst (Sub.cong_n n σ23) (subst (Sub.cong_n n σ12) e)
+  Theorem ren_coh :
+    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Ren.t Ψ1 Ψ2) (σ23 : Ren.t Ψ2 Ψ3) (e : t _),
+      map σ23 (map σ12 e)
       =
-      subst (Sub.cong_n n (fun x => subst σ23 (σ12 x))) e.
+      map (fun x => σ23 (σ12 x)) e.
   Proof.
-    move=> n Ψ1 Ψ2 Ψ3 σ12 σ23 e.
-    dependent induction e; simpl; auto; try by [rewrites].
+    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e;
+    move: Ψ2 Ψ3 σ12 σ23.
+    induction e; rewrites.
+    by dependent induction H.
+  Qed.
 
-    - dependent induction n; dependent destruction v; try by [simpl; auto].
-      simpl in *.
-      rewrite -IHn.
-      move: (map_subst_coh 1 (Sub.cong_n n σ23) (Sub.cong_n n σ12 v)).
-      simpl; simplify_eqs => Q.
-      by rewrite Q.
+  Theorem ren_subst_cong_coh :
+    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Ren.t Ψ2 Ψ3),
+      (fun x => map (Ren.cong σ23) (Sub.cong σ12 x))
+      =
+      Sub.cong (fun x => map σ23 (σ12 x)).
+  Proof.
+    move=> Ψ1 Ψ2 Ψ3 σ12 σ23.
+    T.eqcd => x; move: Ψ2 Ψ3 σ12 σ23.
+    dependent induction x;
+    T.rewrites_with ltac:(try rewrite ren_coh).
+  Qed.
 
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
+  Theorem ren_subst_coh :
+    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Ren.t Ψ2 Ψ3) e,
+      (map σ23 (subst σ12 e))
+      =
+      subst (fun x => map σ23 (σ12 x)) e.
+  Proof.
+    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
+    move: Ψ2 Ψ3 σ12 σ23.
+    induction e; rewrites.
+    by rewrite -ren_subst_cong_coh.
+  Qed.
 
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
-
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
-
-    - specialize (IHe1 n).
-      specialize (IHe2 n).
-      rewrite IHe1; auto.
-      rewrite IHe2; auto.
-
-    - specialize (IHe (S n)).
-      rewrite IHe; auto.
-
-    - f_equal.
-      T.eqcd => κ.
-      specialize (H κ n).
-      auto.
-  Admitted.
+  Theorem subst_ren_coh :
+    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Ren.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) e,
+      (subst σ23 (map σ12 e))
+      =
+      subst (fun x => σ23 (σ12 x)) e.
+  Proof.
+    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
+    move: Ψ2 Ψ3 σ12 σ23.
+    induction e; rewrites.
+    f_equal; f_equal.
+    by dependent destruction H.
+  Qed.
 
   Theorem subst_coh :
     ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
@@ -218,9 +171,26 @@ Module Tm.
       subst (fun x => subst σ23 (σ12 x)) e.
   Proof.
     move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
-    apply: (subst_coh_n 0).
+    move: Ψ2 Ψ3 σ12 σ23.
+    induction e; rewrites.
+    dependent induction H; auto; simpl.
+    by rewrite ren_subst_coh subst_ren_coh.
   Qed.
 
+  Lemma cong_id : ∀ {Ψ}, Sub.cong (fun x:Var Ψ => var x) = (fun x => var x).
+  Proof.
+    move=> Ψ.
+    T.eqcd => x.
+    dependent destruction x; auto.
+  Qed.
+
+  Theorem subst_ret :
+    ∀ {Ψ} (e : t Ψ), subst (fun x => var x) e = e.
+  Proof.
+    move=> Ψ e.
+    induction e; rewrites.
+    by rewrite cong_id.
+  Qed.
 End Tm.
 
 Delimit Scope tm_scope with tm.
