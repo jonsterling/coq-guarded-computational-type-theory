@@ -96,8 +96,8 @@ Delimit Scope tm_scope with tm.
 
 Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity).
 
-Notation "@0" := (Tm.var _ Fin.F1) : tm_scope.
-Notation "@1" := (Tm.var _ (Fin.FS Fin.F1)) : tm_scope.
+Notation "@0" := (Tm.var Fin.F1) : tm_scope.
+Notation "@1" := (Tm.var (Fin.FS Fin.F1)) : tm_scope.
 Notation "▶[ κ ] A" := (Tm.ltr κ A%tm) (at level 50) : tm_scope.
 Notation "'𝟚'" := Tm.bool : tm_scope.
 Notation "'𝟙'" := Tm.unit : tm_scope.
@@ -111,7 +111,7 @@ Notation "⋂ A" := (Tm.isect A) (at level 50) : tm_scope.
 Notation "𝕌[ i ] " := (Tm.univ i%nat) : tm_scope.
 Notation "⟨ e1 , e2 ⟩" := (Tm.pair e1%tm e2%tm) : tm_scope.
 Notation "e1 ⋅ e2" := (Tm.app e1%tm e2%tm) (at level 50) : tm_scope.
-Notation "'𝛌' e" := (Tm.lam e%tm) (at level 50) : tm_scope.
+Notation "'𝛌{' e }" := (Tm.lam e%tm) (at level 50) : tm_scope.
 
 Reserved Notation "e 'val'" (at level 50).
 Reserved Notation "e ⇓ e'" (at level 50).
@@ -128,7 +128,7 @@ Inductive is_val : Tm.t 0 → Ω :=
 | val_tt : Tm.tt val
 | val_ff : Tm.ff val
 | val_pair : ∀ {e1 e2}, ⟨e1, e2⟩ val
-| val_lam : ∀ {e}, (𝛌 e) val
+| val_lam : ∀ {e}, 𝛌{ e } val
 where "v 'val'" := (is_val v%tm).
 
 Inductive eval : Tm.t 0 → Tm.t 0 → Ω :=
@@ -150,9 +150,10 @@ Inductive eval : Tm.t 0 → Tm.t 0 → Ω :=
       → e.2 ⇓ v
 
 | eval_app :
-    ∀ {e1 e1' e2},
-      e1 ⇓ (𝛌 e1')
-      → e1 ⋅ e2 ⇓ Tm.subst (fun _ => e2) e1'
+    ∀ {e1 e1' e2 v},
+      (e1 ⇓ 𝛌{e1'})
+      → Tm.subst (fun _ => e2) e1' ⇓ v
+      → e1 ⋅ e2 ⇓ v
 
 where "e ⇓ e'" := (eval e%tm e'%tm).
 
