@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logi
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation OrderTheory Axioms Term Closure Tower Sequent TypeSystem.
+From gctt Require Import Notation Var OrderTheory Axioms Term Closure Tower Sequent TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -420,6 +420,16 @@ Proof.
   apply: H; eauto.
 Qed.
 
+Theorem mem_eq_symm {A e0 e1} :
+  τω ⊧ A ∋ e0 ∼ e1
+  → τω ⊧ A ∋ e1 ∼ e0.
+Proof.
+  move=> [R [𝒟 ℰ]].
+  exists R; split; auto.
+  edestruct τω_cper_valued; eauto.
+  destruct per.
+  by apply: symmetric.
+Qed.
 
 Theorem mem_eq_conv {τ A e00 e01 e1} :
   TS.cper_valued τ
@@ -511,6 +521,47 @@ Proof.
     apply: ty_eq_refl_left.
     eassumption.
 Qed.
+
+Theorem loeb_induction {κ A e0 e1} :
+  τω ⊧ ⋄; ▶[κ]A ≫ (Tm.map (Ren.weak 1) A) ∋ e0 ∼ e1
+  → τω ⊧ A ∋ (fix_ e0) ∼ (fix_ e1).
+Proof.
+  move=> 𝒟.
+  apply: (@Later.loeb κ).
+  move=> /Later.yank_existential; case; auto; move=> R ℰ.
+  rewrite Later.cart in ℰ.
+  case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
+  suff: τω ⊧ ⋄; ▶[κ]A ∋⋆ (fun _ => fix_ e0) ∼ (fun _ => fix_ e1).
+  - move=> ℱ.
+    specialize (𝒟 _ _ ℱ).
+    replace (Tm.map (Ren.weak 1) A ⫽ (λ _ : Var 1, fix_ e0)) with A in 𝒟.
+    + apply: mem_eq_conv.
+      * auto.
+      * move=> v.
+        case: (fix_unfold e0 v) => _; apply.
+      * apply: mem_eq_symm.
+        apply: mem_eq_conv.
+        ** auto.
+        ** move=> v.
+           case: (fix_unfold e1 v) => _; apply.
+        ** by apply: mem_eq_symm.
+
+    + admit. (* true, but a hard substitution lemma *)
+
+  - simpl; split; auto.
+    exists (fun e0e1 => ▷[κ] (R e0e1)).
+    split.
+    + exists n.
+      Tac.prove.
+      Later.gather.
+      move=> [? ?].
+      replace ((λ _ : Var 1, fix_ e0) ∘ (λ x : Fin.t 0, Fin.FS x)) with (fun x : Var 0 => Tm.var x).
+      * by rewrite Tm.subst_ret.
+      * T.eqcd => x.
+         dependent induction x.
+    + by Later.gather; case.
+
+Admitted.
 
 
 Definition quote_bool (b : bool) : Tm.t 0 :=

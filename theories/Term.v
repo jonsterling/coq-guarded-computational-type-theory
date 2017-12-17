@@ -117,8 +117,19 @@ Module Tm.
     | univ i => univ i
     end.
 
+  (* This is not quite done; hard lemmas *)
 
-  (* This is not quite done; hard lemma *)
+  Theorem subst_ret :
+    ∀ {Ψ} (e : t Ψ), subst (fun x => var x) e = e.
+  Proof.
+    move=> Ψ e.
+    induction e; simpl; auto; try by [rewrites].
+    - admit.
+    - f_equal.
+      T.eqcd => ?.
+      by rewrite H.
+  Admitted.
+
   Theorem subst_coh :
     ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
       subst σ23 (subst σ12 e) = subst (fun x => subst σ23 (σ12 x)) e.
@@ -279,15 +290,23 @@ Proof.
   by T.destruct_eqs.
 Qed.
 
-Theorem fix_approx :
-  ∀ f, (fix_ f) ≼₀ (f ⫽ (fun _ => fix_ f)).
+Theorem fix_unfold :
+  ∀ f, (fix_ f) ≈₀ (f ⫽ (fun _ => fix_ f)).
 Proof.
-  move=> f v [𝒟1 𝒟2].
-  constructor.
-  - dependent destruction 𝒟1.
-    + dependent destruction 𝒟2.
-    + dependent destruction H.
+  move=> f v.
+  split.
+  - move=> [𝒟1 𝒟2].
+    constructor.
+    + dependent destruction 𝒟1.
+      * dependent destruction 𝒟2.
       * dependent destruction H.
-      * by rewrite Tm.subst_coh in 𝒟1.
-  - assumption.
+        ** dependent destruction H.
+        ** by rewrite Tm.subst_coh in 𝒟1.
+    + assumption.
+
+  - move=> [𝒟1 𝒟2].
+    constructor; auto.
+    econstructor.
+    + constructor; constructor.
+    + by rewrite Tm.subst_coh.
 Qed.
