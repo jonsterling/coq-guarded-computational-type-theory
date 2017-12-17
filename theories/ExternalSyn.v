@@ -161,7 +161,7 @@ Program Fixpoint interp_ctx `(Γ : ECtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
   | ⋄%ectx => ⋄%ictx
   | (Γ ; A)%ectx => (⟦ Γ ⟧ κs ; ⟦ A ⟧ κs)%ictx
   end
-where "⟦ Γ ⟧ κs" := (interp_ctx Γ%ectx κs).
+where "⟦ Γ ⟧ κs" := (interp_ctx Γ%ectx κs) : ctx_scope.
 
 Arguments interp_ctx [Λ Ψ] Γ%ectx κs.
 
