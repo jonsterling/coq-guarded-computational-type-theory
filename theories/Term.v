@@ -117,18 +117,47 @@ Module Tm.
     | univ i => univ i
     end.
 
-  (* This is not quite done; hard lemmas *)
+
+
+  Lemma subst_ret_n :
+    ∀ n {Ψ} (e : t (n + Ψ)), subst (Sub.cong_n n (fun x => var x)) e = e.
+  Proof.
+    move=> n Ψ e.
+    dependent induction e; simpl; auto; try by [rewrites].
+    - dependent induction n; dependent induction v; auto.
+      simpl; by rewrite IHn.
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+    - specialize (IHe1 n).
+      specialize (IHe2 n).
+      rewrite IHe1; auto.
+      rewrite IHe2; auto.
+    - specialize (IHe (S n)).
+      rewrite IHe; auto.
+    - f_equal.
+      T.eqcd => κ.
+      specialize (H κ n).
+      rewrite H; auto.
+  Qed.
 
   Theorem subst_ret :
     ∀ {Ψ} (e : t Ψ), subst (fun x => var x) e = e.
   Proof.
-    move=> Ψ e.
-    induction e; simpl; auto; try by [rewrites].
-    - admit.
-    - f_equal.
-      T.eqcd => ?.
-      by rewrite H.
-  Admitted.
+    move=> Ψ.
+    apply: (subst_ret_n 0).
+  Qed.
+
+  (* This is not quite done; hard lemmas *)
 
   Theorem subst_coh :
     ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
