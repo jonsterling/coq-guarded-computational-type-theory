@@ -8,6 +8,7 @@ Module T := Tactic.
 
 
 Set Implicit Arguments.
+Delimit Scope tm_scope with tm.
 
 Module Tm.
   Inductive t (Ψ : Ctx) :=
@@ -35,6 +36,28 @@ Module Tm.
   Arguments ff [Ψ].
   Arguments univ [Ψ] i.
 
+
+  Module Notations.
+    Notation "@0" := (Tm.var Fin.F1) : tm_scope.
+    Notation "@1" := (Tm.var (Fin.FS Fin.F1)) : tm_scope.
+    Notation "▶[ κ ] A" := (Tm.ltr κ A%tm) (at level 50) : tm_scope.
+    Notation "'𝟚'" := Tm.bool : tm_scope.
+    Notation "'𝟙'" := Tm.unit : tm_scope.
+    Notation "★" := Tm.ax : tm_scope.
+    Notation "e .1" := (Tm.fst e%tm) (at level 50) : tm_scope.
+    Notation "e .2" := (Tm.snd e%tm) (at level 50) : tm_scope.
+    Infix "×" := Tm.prod : tm_scope.
+    Infix "⇒" := Tm.arr (at level 30) : tm_scope.
+    Notation "⋂[ κ ] A" := (Tm.isect (fun κ => A%tm)) (at level 50) : tm_scope.
+    Notation "⋂ A" := (Tm.isect A) (at level 50) : tm_scope.
+    Notation "𝕌[ i ] " := (Tm.univ i%nat) : tm_scope.
+    Notation "⟨ e1 , e2 ⟩" := (Tm.pair e1%tm e2%tm) : tm_scope.
+    Notation "e1 ⋅ e2" := (Tm.app e1%tm e2%tm) (at level 50) : tm_scope.
+    Notation "'𝛌{' e }" := (Tm.lam e%tm) (at level 50) : tm_scope.
+  End Notations.
+
+  Import Notations.
+
   Program Fixpoint map {Ψ1 Ψ2} (ρ : Ren.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
     match e with
     | var i => var (ρ i)
@@ -54,6 +77,12 @@ Module Tm.
     | isect A => isect (fun κ => map ρ (A κ))
     | univ i => univ i
     end.
+
+  Module RenNotation.
+    Notation "e .[ ρ ]" := (Tm.map ρ%ren e) (at level 50) : tm_scope.
+  End RenNotation.
+
+  Import RenNotation.
 
   Local Ltac rewrites_aux :=
     repeat f_equal;
@@ -115,50 +144,56 @@ Module Tm.
     | univ i => univ i
     end.
 
+  Module SubstNotation.
+    Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity).
+  End SubstNotation.
+
+  Import SubstNotation.
+
   Theorem ren_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Ren.t Ψ1 Ψ2) (σ23 : Ren.t Ψ2 Ψ3) (e : t _),
-      map σ23 (map σ12 e)
+    ∀ {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) (e : t _),
+      e.[ρ12].[ρ23]%tm
       =
-      map (fun x => σ23 (σ12 x)) e.
+      e.[ρ23 ∘ ρ12]%tm.
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e;
-    move: Ψ2 Ψ3 σ12 σ23.
+    move=> Ψ1 Ψ2 Ψ3 ρ12 ρ23 e;
+    move: Ψ2 Ψ3 ρ12 ρ23.
     induction e; rewrites.
     by dependent induction H.
   Qed.
 
   Theorem ren_subst_cong_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Ren.t Ψ2 Ψ3),
-      (fun x => map (Ren.cong σ23) (Sub.cong σ12 x))
+    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3),
+      map (Ren.cong ρ23) ∘ Sub.cong σ12
       =
-      Sub.cong (fun x => map σ23 (σ12 x)).
+      Sub.cong (map ρ23 ∘ σ12).
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 σ12 σ23.
-    T.eqcd => x; move: Ψ2 Ψ3 σ12 σ23.
+    move=> Ψ1 Ψ2 Ψ3 σ12 ρ23.
+    T.eqcd => x; rewrite /compose; move: Ψ2 Ψ3 σ12 ρ23.
     dependent induction x;
     T.rewrites_with ltac:(try rewrite ren_coh).
   Qed.
 
   Theorem ren_subst_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Ren.t Ψ2 Ψ3) e,
-      (map σ23 (subst σ12 e))
+    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) e,
+      (e ⫽ σ12).[ρ23]%tm
       =
-      subst (fun x => map σ23 (σ12 x)) e.
+      e ⫽ (map ρ23 ∘ σ12).
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
-    move: Ψ2 Ψ3 σ12 σ23.
+    move=> Ψ1 Ψ2 Ψ3 σ12 ρ23 e.
+    move: Ψ2 Ψ3 σ12 ρ23.
     induction e; rewrites.
     by rewrite -ren_subst_cong_coh.
   Qed.
 
   Theorem subst_ren_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Ren.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) e,
-      (subst σ23 (map σ12 e))
+    ∀ {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) e,
+      e.[ρ12] ⫽ σ23
       =
-      subst (fun x => σ23 (σ12 x)) e.
+      e ⫽ (σ23 ∘ ρ12).
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
-    move: Ψ2 Ψ3 σ12 σ23.
+    move=> Ψ1 Ψ2 Ψ3 ρ12 σ23 e.
+    move: Ψ2 Ψ3 ρ12 σ23.
     induction e; rewrites.
     f_equal; f_equal.
     by dependent destruction H.
@@ -166,18 +201,19 @@ Module Tm.
 
   Theorem subst_coh :
     ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
-      subst σ23 (subst σ12 e)
+      e ⫽ σ12 ⫽ σ23
       =
-      subst (fun x => subst σ23 (σ12 x)) e.
+      e ⫽ (subst σ23 ∘ σ12).
   Proof.
     move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
     move: Ψ2 Ψ3 σ12 σ23.
+    rewrite /compose.
     induction e; rewrites.
     dependent induction H; auto; simpl.
     by rewrite ren_subst_coh subst_ren_coh.
   Qed.
 
-  Lemma cong_id : ∀ {Ψ}, Sub.cong (fun x:Var Ψ => var x) = (fun x => var x).
+  Lemma cong_id : ∀ {Ψ}, Sub.cong (@var Ψ) = @var (S Ψ).
   Proof.
     move=> Ψ.
     T.eqcd => x.
@@ -185,7 +221,7 @@ Module Tm.
   Qed.
 
   Theorem subst_ret :
-    ∀ {Ψ} (e : t Ψ), subst (fun x => var x) e = e.
+    ∀ {Ψ} (e : t Ψ), subst (@var Ψ) e = e.
   Proof.
     move=> Ψ e.
     induction e; rewrites.
@@ -193,28 +229,7 @@ Module Tm.
   Qed.
 End Tm.
 
-Delimit Scope tm_scope with tm.
-
-Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity).
-
-Notation "e .[ ρ ]" := (Tm.map ρ%ren e) (at level 50) : tm_scope.
-
-Notation "@0" := (Tm.var Fin.F1) : tm_scope.
-Notation "@1" := (Tm.var (Fin.FS Fin.F1)) : tm_scope.
-Notation "▶[ κ ] A" := (Tm.ltr κ A%tm) (at level 50) : tm_scope.
-Notation "'𝟚'" := Tm.bool : tm_scope.
-Notation "'𝟙'" := Tm.unit : tm_scope.
-Notation "★" := Tm.ax : tm_scope.
-Notation "e .1" := (Tm.fst e%tm) (at level 50) : tm_scope.
-Notation "e .2" := (Tm.snd e%tm) (at level 50) : tm_scope.
-Infix "×" := Tm.prod : tm_scope.
-Infix "⇒" := Tm.arr (at level 30) : tm_scope.
-Notation "⋂[ κ ] A" := (Tm.isect (fun κ => A%tm)) (at level 50) : tm_scope.
-Notation "⋂ A" := (Tm.isect A) (at level 50) : tm_scope.
-Notation "𝕌[ i ] " := (Tm.univ i%nat) : tm_scope.
-Notation "⟨ e1 , e2 ⟩" := (Tm.pair e1%tm e2%tm) : tm_scope.
-Notation "e1 ⋅ e2" := (Tm.app e1%tm e2%tm) (at level 50) : tm_scope.
-Notation "'𝛌{' e }" := (Tm.lam e%tm) (at level 50) : tm_scope.
+Export Tm.Notations Tm.RenNotation Tm.SubstNotation.
 
 Reserved Notation "e 'val'" (at level 50).
 Reserved Notation "e ↦ e'" (at level 50).
