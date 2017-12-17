@@ -59,7 +59,7 @@ Module General.
   Local Hint Resolve ty_eq_refl_left ty_eq_trans ty_eq_symm.
 
   Theorem hypothesis `{Γ : ECtx.t Λ Ψ} {A} :
-    ⟦ Λ ∣ Γ ; A ≫ (A.^1) ∋ @0 ≐ @0 ⟧.
+    ⟦ Λ ∣ Γ ; A ≫ A.[^1] ∋ @0 ≐ @0 ⟧.
   Proof.
     move=> κs Γctx ty γ0 γ1 γ01.
     case: γ01 => [_ γ01].
@@ -162,10 +162,10 @@ End General.
 Module Isect.
   Theorem irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
     ⟦ Λ ∣ Γ ≫ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ≫ A ≐ ⋂ (ETm.mapk (Ren.weak 1) A) ⟧.
+    → ⟦ Λ ∣ Γ ≫ A ≐ ⋂ (A.⦃^1⦄) ⟧.
   Proof.
     move=> 𝒟 κs ? ? γ1 ?; simplify_eqs.
-    replace (λ κ : 𝕂, (⟦ ETm.mapk _ _ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1).
+    replace (λ κ : 𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1).
     - apply: IR.isect_irrelevance.
       apply: 𝒟; eauto.
     - T.eqcd => *.

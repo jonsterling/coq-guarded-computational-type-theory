@@ -61,6 +61,11 @@ End ETm.
 
 Delimit Scope eclk_scope with eclk.
 Delimit Scope etm_scope with etm.
+Delimit Scope ren_scope with ren.
+
+Notation "e .[ ρ ]" := (ETm.mapv ρ%ren e) (at level 50) : etm_scope.
+Notation "e .⦃ ρ ⦄" := (ETm.mapk ρ%ren e) (at level 50) : etm_scope.
+Notation "^ n" := (Ren.weak n) (at level 50) : ren_scope.
 
 Notation "#0" := Fin.F1 : eclk_scope.
 Notation "#1" := (Fin.FS Fin.F1) : eclk_scope.
@@ -78,7 +83,6 @@ Infix "×" := ETm.prod : etm_scope.
 Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
 Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
 Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
-Notation "e .^ n" := (ETm.mapv (Ren.weak n) e%etm) (at level 50) : etm_scope.
 
 Module ECtx.
   Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
@@ -189,7 +193,7 @@ Local Open Scope tm_scope.
 
 Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} :
   ∀ (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
-    ⟦ e ⟧ κs ∘ ρ = ⟦ ETm.mapk ρ e ⟧ κs.
+    ⟦ e ⟧ κs ∘ ρ = ⟦ e.⦃ρ⦄ ⟧ κs.
 Proof.
   move=> e; move: Λ2.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
@@ -200,7 +204,7 @@ Proof.
 Qed.
 
 Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
-  (⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (⟦ ETm.mapv ρ e ⟧ κs) ⫽ γ.
+  (⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (⟦ e.[ρ] ⟧ κs) ⫽ γ.
 Proof.
   induction e; eauto; simpl; try by [rewrite_all_hyps].
   f_equal; T.eqcd => ?.
