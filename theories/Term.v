@@ -143,62 +143,52 @@ Module Tm.
 
   Import SubstNotation.
 
-  Theorem ren_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) (e : t _),
-      e.[ρ12].[ρ23]%tm
-      =
-      e.[ρ23 ∘ ρ12]%tm.
+  Theorem ren_coh {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) (e : t _) :
+    e.[ρ12].[ρ23]%tm
+    =
+    e.[ρ23 ∘ ρ12]%tm.
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 ρ12 ρ23 e;
     move: Ψ2 Ψ3 ρ12 ρ23.
     induction e; rewrites.
     by dependent induction H.
   Qed.
 
-  Theorem ren_subst_cong_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3),
-      map (Ren.cong ρ23) ∘ Sub.cong σ12
-      =
-      Sub.cong (map ρ23 ∘ σ12).
+  Theorem ren_subst_cong_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) :
+    map (Ren.cong ρ23) ∘ Sub.cong σ12
+    =
+    Sub.cong (map ρ23 ∘ σ12).
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 σ12 ρ23.
     T.eqcd => x; rewrite /compose; move: Ψ2 Ψ3 σ12 ρ23.
-    dependent induction x;
+    dependent destruction x;
     T.rewrites_with ltac:(try rewrite ren_coh).
   Qed.
 
-  Theorem ren_subst_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) e,
-      (e ⫽ σ12).[ρ23]%tm
-      =
-      e ⫽ (map ρ23 ∘ σ12).
+  Theorem ren_subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) e :
+    (e ⫽ σ12).[ρ23]%tm
+    =
+    e ⫽ (map ρ23 ∘ σ12).
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 σ12 ρ23 e.
     move: Ψ2 Ψ3 σ12 ρ23.
     induction e; rewrites.
     by rewrite -ren_subst_cong_coh.
   Qed.
 
-  Theorem subst_ren_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) e,
-      e.[ρ12] ⫽ σ23
-      =
-      e ⫽ (σ23 ∘ ρ12).
+  Theorem subst_ren_coh {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) e :
+    e.[ρ12] ⫽ σ23
+    =
+    e ⫽ (σ23 ∘ ρ12).
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 ρ12 σ23 e.
     move: Ψ2 Ψ3 ρ12 σ23.
     induction e; rewrites.
     f_equal; f_equal.
     by dependent destruction H.
   Qed.
 
-  Theorem subst_coh :
-    ∀ {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _),
-      e ⫽ σ12 ⫽ σ23
-      =
-      e ⫽ (subst σ23 ∘ σ12).
+  Theorem subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _) :
+    e ⫽ σ12 ⫽ σ23
+    =
+    e ⫽ (subst σ23 ∘ σ12).
   Proof.
-    move=> Ψ1 Ψ2 Ψ3 σ12 σ23 e.
     move: Ψ2 Ψ3 σ12 σ23.
     rewrite /compose.
     induction e; rewrites.
@@ -206,17 +196,15 @@ Module Tm.
     by rewrite ren_subst_coh subst_ren_coh.
   Qed.
 
-  Lemma cong_id : ∀ {Ψ}, Sub.cong (@var Ψ) = @var (S Ψ).
+  Lemma cong_id {Ψ} : Sub.cong (@var Ψ) = @var (S Ψ).
   Proof.
-    move=> Ψ.
     T.eqcd => x.
     dependent destruction x; auto.
   Qed.
 
-  Theorem subst_ret :
-    ∀ {Ψ} (e : t Ψ), subst (@var Ψ) e = e.
+  Theorem subst_ret {Ψ} e :
+    e ⫽ (@var Ψ) = e.
   Proof.
-    move=> Ψ e.
     induction e; rewrites.
     by rewrite cong_id.
   Qed.
