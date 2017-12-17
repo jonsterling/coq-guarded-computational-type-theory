@@ -267,6 +267,18 @@ Hint Resolve closed_approx_refl.
 Program Definition fix_ (f : Tm.t 1) : Tm.t 0 :=
   (𝛌{f ⫽ (fun _ => @0 ⋅ @0)} ⋅ 𝛌{f ⫽ (fun _ => (@0 ⋅ @0))})%tm.
 
+Theorem approx_invert :
+  ∀ e e' v,
+    e ⇓ v
+    → e ≼₀ e'
+    → e' ≼₀ e.
+Proof.
+  move=> e e' v 𝒟 ℰ v' ℱ.
+  specialize (ℰ v 𝒟).
+  evals_to_eq.
+  by T.destruct_eqs.
+Qed.
+
 Theorem fix_approx :
   ∀ f, (fix_ f) ≼₀ (f ⫽ (fun _ => fix_ f)).
 Proof.
