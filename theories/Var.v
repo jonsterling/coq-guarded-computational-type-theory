@@ -18,12 +18,6 @@ Module Ren.
       | Fin.FS _ y => Fin.FS (ρ y)
       end.
 
-  Program Fixpoint cong_n n {Ψ1 Ψ2} (ρ : t Ψ1 Ψ2) : t (n + Ψ1) (n + Ψ2) :=
-    match n with
-    | 0 => ρ
-    | S m => cong (cong_n m ρ)
-    end.
-
   Theorem cong_id {Ψ} : @cong Ψ Ψ (fun x => x) = id.
   Proof.
     T.eqcd => x.

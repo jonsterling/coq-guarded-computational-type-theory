@@ -115,13 +115,6 @@ Module Tm.
         | Fin.F1 _ => var Fin.F1
         | Fin.FS _ y => map Fin.FS (σ y)
         end.
-
-    Program Fixpoint cong_n n {Ψ1 Ψ2} (ρ : t Ψ1 Ψ2) : t (n + Ψ1) (n + Ψ2) :=
-      match n with
-      | 0 => ρ
-      | S m => cong (cong_n m ρ)
-      end.
-
   End Sub.
 
   Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
