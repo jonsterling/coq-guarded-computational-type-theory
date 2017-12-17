@@ -2,7 +2,7 @@ Require Import Unicode.Utf8 Program.
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Axioms Var.
+From gctt Require Import Notation Axioms Var.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -92,25 +92,44 @@ Module Tm.
     end.
 End Tm.
 
-Notation "e ⫽ σ" := (Tm.subst σ e) (at level 20, left associativity).
+Delimit Scope tm_scope with tm.
+
+Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity).
+
+Notation "@0" := (Tm.var _ Fin.F1) : tm_scope.
+Notation "@1" := (Tm.var _ (Fin.FS Fin.F1)) : tm_scope.
+Notation "▶[ κ ] A" := (Tm.ltr κ A%tm) (at level 50) : tm_scope.
+Notation "'𝟚'" := Tm.bool : tm_scope.
+Notation "'𝟙'" := Tm.unit : tm_scope.
+Notation "★" := Tm.ax : tm_scope.
+Notation "e .1" := (Tm.fst e%tm) (at level 50) : tm_scope.
+Notation "e .2" := (Tm.snd e%tm) (at level 50) : tm_scope.
+Infix "×" := Tm.prod : tm_scope.
+Infix "→" := Tm.arr : tm_scope.
+Notation "⋂[ κ ] A" := (Tm.isect (fun κ => A%tm)) (at level 50) : tm_scope.
+Notation "⋂ A" := (Tm.isect A) (at level 50) : tm_scope.
+Notation "𝕌[ i ] " := (Tm.univ i%nat) : tm_scope.
+Notation "⟨ e1 , e2 ⟩" := (Tm.pair e1%tm e2%tm) : tm_scope.
+Notation "e1 ⋅ e2" := (Tm.app e1%tm e2%tm) (at level 50) : tm_scope.
+Notation "'𝛌' e" := (Tm.lam e%tm) (at level 50) : tm_scope.
 
 Reserved Notation "e 'val'" (at level 50).
 Reserved Notation "e ⇓ e'" (at level 50).
 
 Inductive is_val : Tm.t 0 → Ω :=
-| val_bool : Tm.bool val
-| val_unit : Tm.unit val
-| val_prod : ∀ {e1 e2}, Tm.prod e1 e2 val
-| val_arr : ∀ {e1 e2}, Tm.arr e1 e2 val
-| val_ltr : ∀ {κ e}, Tm.ltr κ e val
-| val_isect : ∀ {e}, Tm.isect e val
-| val_univ : ∀ {i}, Tm.univ i val
-| val_ax : Tm.ax val
+| val_bool : 𝟚 val
+| val_unit : 𝟙 val
+| val_prod : ∀ {e1 e2}, (e1 × e2) val
+| val_arr : ∀ {e1 e2}, (e1 → e2) val
+| val_ltr : ∀ {κ e}, ▶[κ] e val
+| val_isect : ∀ {e}, ⋂ e val
+| val_univ : ∀ {i}, 𝕌[i] val
+| val_ax : ★ val
 | val_tt : Tm.tt val
 | val_ff : Tm.ff val
-| val_pair : ∀ {e1 e2}, Tm.pair e1 e2 val
-| val_lam : ∀ {e}, Tm.lam e val
-where "v 'val'" := (is_val v).
+| val_pair : ∀ {e1 e2}, ⟨e1, e2⟩ val
+| val_lam : ∀ {e}, (𝛌 e) val
+where "v 'val'" := (is_val v%tm).
 
 Inductive eval : Tm.t 0 → Tm.t 0 → Ω :=
 | eval_val :
@@ -126,16 +145,16 @@ Inductive eval : Tm.t 0 → Tm.t 0 → Ω :=
 
 | eval_snd :
     ∀ {e e1 e2 v},
-      e ⇓ Tm.pair e1 e2
+      e ⇓ ⟨e1, e2⟩
       → e2 ⇓ v
-      → Tm.snd e ⇓ v
+      → e.2 ⇓ v
 
 | eval_app :
     ∀ {e1 e1' e2},
-      e1 ⇓ Tm.lam e1'
-      → Tm.app e1 e2 ⇓ Tm.subst (fun _ => e2) e1'
+      e1 ⇓ (𝛌 e1')
+      → e1 ⋅ e2 ⇓ Tm.subst (fun _ => e2) e1'
 
-where "e ⇓ e'" := (eval e e').
+where "e ⇓ e'" := (eval e%tm e'%tm).
 
 
 Hint Constructors is_val.
@@ -162,7 +181,12 @@ Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.
 Ltac evals_to_eq :=
   repeat
     match goal with
-    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ => simpl in H1, H2; have: V1 = V2; [apply: determinacy; eauto | move {H1 H2} => *]
+    | H1 : ?A ⇓ ?V1, H2 : ?A ⇓ ?V2 |- _ =>
+      simpl in H1, H2;
+      have: V1 = V2;
+      [ apply: determinacy; eauto
+      | move {H1 H2} => *
+      ]
     end.
 
 
@@ -172,10 +196,13 @@ Definition closed_approx (e1 e2 : Tm.t 0) : Ω :=
 Definition closed_equiv (e1 e2 : Tm.t 0) : Ω :=
   ∀ v, e1 ⇓ v ↔ e2 ⇓ v.
 
-Infix "≼0" := closed_approx (at level 30).
-Infix "≈0" := closed_equiv (at level 30).
+Arguments closed_approx e1%tm e2%tm.
+Arguments closed_equiv e1%tm e2%tm.
 
-Theorem closed_approx_refl : ∀ e, e ≼0 e.
+Infix "≼₀" := closed_approx (at level 30).
+Infix "≈₀" := closed_equiv (at level 30).
+
+Theorem closed_approx_refl : ∀ e, e ≼₀ e.
 Proof.
   compute.
   auto.

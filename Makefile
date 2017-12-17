@@ -102,7 +102,8 @@ endif
 #                    #
 ######################
 
-VFILES:=theories/Tactic.v\
+VFILES:=theories/Notation.v\
+  theories/Tactic.v\
   theories/Var.v\
   theories/TypeSystem.v\
   theories/OrderTheory.v\

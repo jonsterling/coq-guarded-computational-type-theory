@@ -1,5 +1,5 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import OrderTheory Axioms Term TypeSystem.
+From gctt Require Import Notation OrderTheory Axioms Term TypeSystem.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -32,7 +32,7 @@ Module Connective.
         → R (v0, v1)
         → cext R (e0, e1).
 
-  Inductive has (τ : cts) : ctor → Tm.t 0 * rel → Ω :=
+  Inductive has (τ : cts) : ctor → Tm.t 0 × rel → Ω :=
   | has_unit : has τ unit (Tm.unit, cext unit_val)
   | has_bool : has τ bool (Tm.bool, cext bool_val)
   | has_prod :
@@ -71,7 +71,7 @@ Module Sig.
   (* For each refinement cts σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/rels. *)
-  Inductive t (σ τ : cts) : (Tm.t 0 * rel) → Ω :=
+  Inductive t (σ τ : cts) : (Tm.t 0 × rel) → Ω :=
   | init :
       ∀ X,
         σ X

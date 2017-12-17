@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Program.Basics Vect
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Term Axioms Var Sequent Tower.
+From gctt Require Import Notation Term Axioms Var Sequent Tower.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -59,31 +59,62 @@ Module ETm.
     map ρ (λ x, x).
 End ETm.
 
-Notation "e .^ n" := (ETm.mapv (Ren.weak n) e) (at level 50).
+Delimit Scope eclk_scope with eclk.
+Delimit Scope etm_scope with etm.
+
+Notation "#0" := Fin.F1 : eclk_scope.
+Notation "#1" := (Fin.FS Fin.F1) : eclk_scope.
+
+Notation "@0" := (ETm.var _ Fin.F1) : etm_scope.
+Notation "@1" := (ETm.var _ (Fin.FS Fin.F1)) : etm_scope.
+
+Notation "▶[ k ] A" := (ETm.ltr k%eclk A%etm) (at level 50) : etm_scope.
+Notation "𝟙" := ETm.unit : etm_scope.
+Notation "𝟚" := ETm.bool : etm_scope.
+Notation "★" := ETm.ax : etm_scope.
+Notation "e .1" := (ETm.fst e%etm) (at level 50) : etm_scope.
+Notation "e .2" := (ETm.snd e%etm) (at level 50) : etm_scope.
+Infix "×" := ETm.prod : etm_scope.
+Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
+Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
+Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
+Notation "e .^ n" := (ETm.mapv (Ren.weak n) e%etm) (at level 50) : etm_scope.
 
 Module ECtx.
   Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
   | nil : t Λ 0
   | snoc : ∀ {Ψ}, t Λ Ψ → ETm.t Λ Ψ → t Λ (S Ψ).
-
-  Arguments nil [Λ].
 End ECtx.
 
-Notation "`⋄" := ECtx.nil.
-Infix "`;" := (ECtx.snoc) (at level 50, left associativity).
+Delimit Scope ectx_scope with ectx.
+
+Arguments ECtx.nil [Λ].
+Arguments snoc [Ψ] Γ%ectx A%etm.
+
+Notation "⋄" := ECtx.nil : ectx_scope.
+Infix ";" := (ECtx.snoc) (at level 50, left associativity) : ectx_scope.
 
 Module EJdg.
   Inductive t Λ :=
   | eq_ty : ∀ {Ψ}, ECtx.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ
   | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ
   | conv : ∀ {Ψ}, ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ.
+
+  Arguments eq_ty [Λ Ψ] Γ%ectx A%etm B%etm.
+  Arguments eq_mem [Λ Ψ] Γ%ectx A%etm e1%etm e2%etm.
+  Arguments conv [Λ Ψ] e1%etm e2%etm.
 End EJdg.
 
-Notation "⌊ Λ ∣ Γ ≫ A ≐ B ⌋" := (@EJdg.eq_ty Λ _ Γ A B).
-Notation "⌊ Λ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋" := (@EJdg.eq_mem Λ _ Γ A e1 e2).
-Notation "⌊ Λ ∣ Ψ ⊢ e1 ≃ e2 ⌋" := (@EJdg.conv Λ Ψ e1 e2).
 
-Example example_judgment :=  ⌊ 1 ∣ `⋄ ≫ ETm.ltr Fin.F1 ETm.unit ≐ ETm.ltr Fin.F1 ETm.unit ⌋.
+Delimit Scope ejdg_scope with ejdg.
+
+Notation "Λ ∣ Γ ≫ A ≐ B" := (@EJdg.eq_ty Λ _ Γ A B) (at level 10) : ejdg_scope.
+Notation "Λ ∣ Γ ≫ A ∋ e1 ≐ e2" := (@EJdg.eq_mem Λ _ Γ A e1 e2) (at level 10) : ejdg_scope.
+Notation "Λ ∣ Ψ ⊢ e1 ≃ e2" := (@EJdg.conv Λ Ψ e1 e2) (at level 10) : ejdg_scope.
+
+Notation "⌊ 𝒥 ⌋" := 𝒥%ejdg (only parsing).
+
+Example example_judgment :=  ⌊ 1 ∣ ⋄ ≫ ▶[#0] 𝟙 ≐ ▶[#0] 𝟙 ⌋.
 
 Module Env.
   Definition t Λ := Var Λ → 𝕂.
@@ -104,28 +135,32 @@ Reserved Notation "Γ⟦ Γ ⟧ κs" (at level 50).
 Fixpoint interp_tm `(e : ETm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   match e with
   | ETm.var i => Tm.var i
-  | ETm.fst e => Tm.fst (T⟦e⟧ κs)
-  | ETm.snd e => Tm.snd (T⟦e⟧ κs)
-  | ETm.unit => Tm.unit
-  | ETm.bool => Tm.bool
-  | ETm.ax => Tm.ax
+  | ETm.fst e => (T⟦e⟧ κs) .1
+  | ETm.snd e => (T⟦e⟧ κs) .2
+  | ETm.unit => 𝟙
+  | ETm.bool => 𝟚
+  | ETm.ax => ★
   | ETm.tt => Tm.tt
   | ETm.ff => Tm.ff
-  | ETm.prod A B => Tm.prod (T⟦A⟧ κs) (T⟦B⟧ κs)
-  | ETm.arr A B => Tm.arr (T⟦A⟧ κs) (T⟦B⟧ κs)
-  | ETm.pair A B => Tm.pair (T⟦A⟧ κs) (T⟦B⟧ κs)
-  | ETm.ltr r A => Tm.ltr (κs r) (T⟦A⟧ κs)
-  | ETm.isect A => Tm.isect (λ κ, T⟦A⟧ (κ ∷ κs))
+  | ETm.prod A B => (T⟦A⟧ κs) × (T⟦B⟧ κs)
+  | ETm.arr A B => (T⟦A⟧ κs) → (T⟦B⟧ κs)
+  | ETm.pair A B => ⟨T⟦A⟧ κs, T⟦B⟧ κs⟩
+  | ETm.ltr r A => ▶[κs r] T⟦A⟧ κs
+  | ETm.isect A => ⋂[κ] T⟦A⟧ (κ ∷ κs)
   | ETm.univ i => Tm.univ i
   end
-where "T⟦ e ⟧ κs" := (interp_tm e κs).
+where "T⟦ e ⟧ κs" := (interp_tm e%etm κs) : tm_scope.
+
+Arguments interp_tm [Λ Ψ] e%etm κs.
 
 Program Fixpoint interp_ctx `(Γ : ECtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
   match Γ with
-  | `⋄ => ⋄
-  | Γ `; A => Γ⟦ Γ ⟧ κs ; T⟦ A ⟧ κs
+  | ⋄%ectx => ⋄%ictx
+  | (Γ ; A)%ectx => (Γ⟦ Γ ⟧ κs ; T⟦ A ⟧ κs)%ictx
   end
-where "Γ⟦ Γ ⟧ κs" := (interp_ctx Γ κs).
+where "Γ⟦ Γ ⟧ κs" := (interp_ctx Γ%ectx κs).
+
+Arguments interp_ctx [Λ Ψ] Γ%ectx κs.
 
 Definition interp_jdg `(J : EJdg.t Λ) : Ω :=
   ∀ (κs : Env.t Λ),
@@ -141,7 +176,8 @@ Definition interp_jdg `(J : EJdg.t Λ) : Ω :=
       (T⟦ e1 ⟧ κs) ≈ (T⟦ e2 ⟧ κs)
     end.
 
-Notation "J⟦ J ⟧" := (interp_jdg J) (at level 50).
+Arguments interp_jdg [Λ] J%ejdg.
+Notation "J⟦ J ⟧" := (interp_jdg J%ejdg) (at level 50).
 
 Ltac rewrite_all_hyps :=
   repeat
@@ -150,6 +186,7 @@ Ltac rewrite_all_hyps :=
     end.
 
 Local Open Scope program_scope.
+Local Open Scope tm_scope.
 
 Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} :
   ∀ (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2),
@@ -171,3 +208,5 @@ Proof.
   rewrite IHe.
   by rewrite Ren.cong_id.
 Qed.
+
+Local Close Scope tm_scope.

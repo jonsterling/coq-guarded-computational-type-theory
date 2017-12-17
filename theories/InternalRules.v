@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logi
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory Axioms Term Closure Tower Sequent TypeSystem.
+From gctt Require Import Notation OrderTheory Axioms Term Closure Tower Sequent TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -110,26 +110,26 @@ Proof.
 Qed.
 
 Theorem unit_formation :
-  τω ⊧ Tm.unit ∼ Tm.unit.
+  τω ⊧ 𝟙 ∼ 𝟙.
 Proof.
   unshelve Tac.prove; constructor.
 Qed.
 
 Theorem unit_ax_equality :
-  τω ⊧ Tm.unit ∋ Tm.ax ∼ Tm.ax.
+  τω ⊧ 𝟙 ∋ ★ ∼ ★.
 Proof.
   unshelve Tac.prove; constructor.
 Qed.
 
 Lemma univ_formation_S {n : nat} :
-  τ[S n] ⊧ (Tm.univ n) ∼ (Tm.univ n).
+  τ[S n] ⊧ 𝕌[n] ∼ 𝕌[n].
 Proof.
   Tac.prove.
 Qed.
 
 Theorem univ_formation_lvl {n i : nat} :
   i < n
-  → τ[n] ⊧ (Tm.univ i) ∼ (Tm.univ i).
+  → τ[n] ⊧ 𝕌[i] ∼ 𝕌[i].
 Proof.
   case => [| j q ].
   + apply: univ_formation_S.
@@ -137,7 +137,7 @@ Proof.
 Qed.
 
 Theorem univ_formation {i} :
-  τω ⊧ (Tm.univ i) ∼ (Tm.univ i).
+  τω ⊧ 𝕌[i] ∼ 𝕌[i].
 Proof.
   apply: eq_ty_from_level.
   apply: univ_formation_lvl.
@@ -148,7 +148,7 @@ Qed.
 Theorem prod_formation {n A0 A1 B0 B1} :
   τ[n] ⊧ A0 ∼ A1
   → τ[n] ⊧ B0 ∼ B1
-  → τ[n] ⊧ (Tm.prod A0 B0) ∼ (Tm.prod A1 B1).
+  → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
 Proof.
   Tac.prove.
 Qed.
@@ -156,7 +156,7 @@ Qed.
 Theorem prod_intro {n A B e00 e01 e10 e11} :
   τ[n] ⊧ A ∋ e00 ∼ e10
   → τ[n] ⊧ B ∋ e01 ∼ e11
-  → τ[n] ⊧ (Tm.prod A B) ∋ (Tm.pair e00 e01) ∼ (Tm.pair e10 e11).
+  → τ[n] ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
 Proof.
   Tac.prove.
 Qed.
@@ -167,7 +167,7 @@ Lemma TowerChoice {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
   → ∃ S, ∀ κ, τ[n] (A1 κ, S κ) ∧ τ[n] (A2 κ, S κ).
 Proof.
   move=> X.
-  apply: (unique_choice (fun κ R => τ[n] (A1 κ, R) ∧ τ[n] (A2 κ, R))) => κ.
+  apply (@unique_choice _ _ (fun κ R => τ[n] (A1 κ, R) ∧ τ[n] (A2 κ, R))) => κ.
   case: (X κ) => S T.
   eexists; split; eauto => S' T';
   apply: Tower.extensionality; eauto;
@@ -176,19 +176,19 @@ Qed.
 
 Theorem isect_formation {n B0 B1} :
   (∀ κ, τ[n] ⊧ (B1 κ) ∼ (B0 κ))
-  → τ[n] ⊧ (Tm.isect B0) ∼ (Tm.isect B1).
+  → τ[n] ⊧ ⋂ B0 ∼ ⋂ B1.
 Proof.
   move=> 𝒟.
   case: (TowerChoice 𝒟) => S ℰ.
   Tac.prove;
-    T.specialize_hyps;
-    rewrite /Tower.t in ℰ;
-    T.destruct_conjs; eauto.
+  T.specialize_hyps;
+  rewrite /Tower.t in ℰ;
+  T.destruct_conjs; eauto.
 Qed.
 
 Theorem isect_irrelevance {A B}:
   τω ⊧ A ∼ B
-  → τω ⊧ A ∼ (Tm.isect (fun _ => B)).
+  → τω ⊧ A ∼ ⋂[_] B.
 Proof.
   Tac.prove.
 
@@ -219,7 +219,7 @@ Hint Resolve rel_total rel_inh.
 
 Theorem later_formation {κ} {A B} :
   ▷[κ] (τω ⊧ A ∼ B)
-  → τω ⊧ (Tm.ltr κ A) ∼ (Tm.ltr κ B).
+  → τω ⊧ ▶[κ] A ∼ ▶[κ] B.
 Proof.
   move=> /Later.yank_existential; case; auto.
   move=> R H0.
@@ -236,7 +236,7 @@ Qed.
 
 Theorem later_intro {κ} {A e1 e2} :
   ▷[κ] (τω ⊧ A ∋ e1 ∼ e2)
-  → τω ⊧ (Tm.ltr κ A) ∋ e1 ∼ e2.
+  → τω ⊧ ▶[κ] A ∋ e1 ∼ e2.
 Proof.
   move=> /Later.yank_existential.
   case; eauto.
@@ -250,8 +250,8 @@ Qed.
 
 (* This proof is really horrific! *)
 Theorem later_mem_univ_inversion {κ i} {A0 A1} :
-  τω ⊧ (Tm.univ i) ∋ (Tm.ltr κ A0) ∼ (Tm.ltr κ A1)
-  → ▷[κ] (τω ⊧ (Tm.univ i) ∋ A0 ∼ A1).
+  (τω ⊧ 𝕌[i] ∋ ▶[κ] A0 ∼ ▶[κ] A1)
+  → ▷[κ] (τω ⊧ 𝕌[i] ∋ A0 ∼ A1).
 Proof.
   move=> /eq_mem_to_level [n [R [𝒟 A0A1]]].
   Tower.destruct_tower.
@@ -296,8 +296,8 @@ Qed.
 
 
 Theorem later_mem_univ {κ i} {A0 A1} :
-  τω ⊧ (Tm.ltr κ (Tm.univ i)) ∋ A0 ∼ A1
-  → τω ⊧ Tm.univ i ∋ (Tm.ltr κ A0) ∼ (Tm.ltr κ A1).
+  τω ⊧ ▶[κ] 𝕌[i] ∋ A0 ∼ A1
+  → τω ⊧ 𝕌[i] ∋ ▶[κ] A0 ∼ ▶[κ] A1.
 Proof.
   move=> /eq_mem_to_level [n [R [𝒟 ℰ]]].
   Tower.destruct_tower.
@@ -310,7 +310,7 @@ Proof.
     reflexivity.
   - have H1 := Later.map spine_inversion H0.
     induction n.
-    + exists (fun _ => ▷[κ0] True).
+    + exists (fun _ => ▷[κ0] ⊤).
       (* any relation will do! *)
       replace (Clo.t (Spine.t i)) with τ[i]; last by [auto].
       split; Tac.prove;
@@ -334,8 +334,8 @@ Proof.
 Qed.
 
 Theorem later_force_reflexive {A} :
-  τω ⊧ (Tm.isect A) ∼ (Tm.isect A)
-  → τω ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∼ (Tm.isect A).
+  (τω ⊧ ⋂ A ∼ ⋂ A)
+  → τω ⊧ ⋂[κ] ▶[κ] (A κ) ∼ ⋂[κ] (A κ).
 Proof.
   move=> [R [[nH H] _]].
   exists R; T.split; auto; exists nH.
@@ -367,9 +367,9 @@ Proof.
 Qed.
 
 Theorem later_force_mem {A e0 e1} :
-  τω ⊧ (Tm.isect A) ∼ (Tm.isect A)
-  → τω ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∋ e0 ∼ e1
-  → τω ⊧ Tm.isect A ∋ e0 ∼ e1.
+  τω ⊧ (⋂ A) ∼ (⋂ A)
+  → τω ⊧ ⋂[κ] ▶[κ] A κ ∋ e0 ∼ e1
+  → τω ⊧ ⋂ A ∋ e0 ∼ e1.
 Proof.
   move=> 𝒟 ℰ.
   apply: rewrite_ty_in_mem.
@@ -393,7 +393,7 @@ Qed.
 
 Theorem ty_eq_conv {τ A0 A1 B} :
   TS.type_computational τ
-  → A0 ≼0 A1
+  → A0 ≼₀ A1
   → τ ⊧ A0 ∼ B
   → τ ⊧ A1 ∼ B.
 Proof.
@@ -406,7 +406,7 @@ Qed.
 
 Theorem mem_eq_conv_ty {τ A0 A1 e0 e1} :
   TS.type_computational τ
-  → A0 ≼0 A1
+  → A0 ≼₀ A1
   → τ ⊧ A0 ∋ e0 ∼ e1
   → τ ⊧ A1 ∋ e0 ∼ e1.
 Proof.
@@ -418,7 +418,7 @@ Qed.
 
 Theorem mem_eq_conv {τ A e00 e01 e1} :
   TS.cper_valued τ
-  → e00 ≼0 e01
+  → e00 ≼₀ e01
   → τ ⊧ A ∋ e00 ∼ e1
   → τ ⊧ A ∋ e01 ∼ e1.
 Proof.
@@ -496,8 +496,8 @@ Proof.
 Qed.
 
 Theorem later_force {A B} :
-  τω ⊧ (Tm.isect A) ∼ (Tm.isect B)
-  → τω ⊧ (Tm.isect (λ κ, Tm.ltr κ (A κ))) ∼ (Tm.isect B).
+  (τω ⊧ ⋂ A ∼ ⋂ B)
+  → τω ⊧ ⋂[κ] ▶[κ] A κ ∼ ⋂[κ] B κ.
 Proof.
   move=> 𝒟.
   apply: ty_eq_trans.
@@ -517,7 +517,7 @@ Definition quote_bool (b : bool) : Tm.t 0 :=
 Notation "⌊ b ⌋𝔹" := (quote_bool b).
 
 Theorem canonicity {e} :
-  τω ⊧ Tm.bool ∋ e ∼ e
+  τω ⊧ 𝟚 ∋ e ∼ e
   → ∃ b : bool, e ⇓ ⌊b⌋𝔹.
 Proof.
   move=> /eq_mem_to_level [n [R [𝒟 ?]]].

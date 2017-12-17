@@ -1,17 +1,16 @@
 Require Import Unicode.Utf8 Program.Tactics Logic.FunctionalExtensionality.
+From gctt Require Import Notation.
 
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 Set Implicit Arguments.
 
-Notation "'Ω'" := Prop.
-
 Axiom 𝕂 : Type.
-Axiom LocalClock : ∃ κ : 𝕂, True.
+Axiom LocalClock : ∃ κ : 𝕂, ⊤.
 
 Module Later.
-  Axiom t : 𝕂 -> Ω -> Ω.
-  Axiom map : forall κ (p q : Ω), (p -> q) -> (t κ p -> t κ q).
+  Axiom t : 𝕂 → Ω → Ω.
+  Axiom map : forall κ (p q : Ω), (p → q) → (t κ p → t κ q).
   Axiom cart : ∀ κ (p q : Ω), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
   Axiom force : ∀ p, (∀ κ, t κ (p κ)) = (∀ κ, p κ).
   Axiom loeb : ∀ κ p, (t κ p → p) → p.
@@ -41,7 +40,7 @@ Module Later.
     end.
 
   Axiom Total : Type → Ω.
-  Definition Inh (A : Type) : Ω := ∃ x : A, True.
+  Definition Inh (A : Type) : Ω := ∃ x : A, ⊤.
 
   Axiom yank_existential :
     ∀ A P κ,
@@ -66,7 +65,7 @@ Module Later.
   Theorem pow_inh : ∀ A, Inh (A → Ω).
   Proof.
     move=> A.
-    by exists (fun _ => True).
+    by exists (fun _ => ⊤).
   Qed.
 
   Theorem nat_inh : Inh nat.
@@ -82,44 +81,38 @@ Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 0).
 (* True in any topos. *)
 Axiom constructive_definite_description :
   forall (A : Type) (P : A → Ω),
-    (exists! x, P x) -> { x : A | P x }.
+    (exists! x, P x)
+    →{ x : A | P x }.
 
-Theorem dependent_unique_choice :
-  forall (A:Type) (B:A -> Type) (R:forall x:A, B x -> Ω),
-    (forall x:A, exists! y : B x, R x y) ->
-    (exists f : (forall x:A, B x), forall x:A, R x (f x)).
+Theorem dependent_unique_choice {A B} {R : ∀ x : A, B x → Ω}:
+  (forall x:A, exists! y : B x, R x y)
+  → (∃ f, ∀ x:A, R x (f x)).
 Proof.
-  move=> A B R H.
-  eexists => x.
+  move=> ?.
+  eexists => ?.
   apply: proj2_sig.
-  apply: constructive_definite_description.
-  auto.
+  by apply: constructive_definite_description.
 Qed.
 
 
-Theorem unique_choice :
-  forall {A B:Type} (R:A -> B -> Ω),
-    (forall x:A,  exists! y : B, R x y) ->
-    (exists f : A -> B, forall x:A, R x (f x)).
+Theorem unique_choice {A B} {R : A → B → Ω}:
+  (∀ x:A, exists! y : B, R x y)
+  → (∃ f : A → B, ∀ x:A, R x (f x)).
 Proof.
-  move=> A B.
   apply: dependent_unique_choice.
 Qed.
-
 
 Axiom propositional_extensionality :
   ∀ (P Q : Ω),
     (P ↔ Q)
-    -> P = Q.
+    → P = Q.
 
-Theorem binrel_extensionality :
-  ∀ (T1 T2 : Type) (R1 R2 : T1 * T2 → Ω),
-    (∀ x y, R1 (x, y) ↔ R2 (x, y))
-    → R1 = R2.
+Theorem binrel_extensionality {T1 T2} {R1 R2 : T1 × T2 → Ω} :
+  (∀ x y, R1 (x, y) ↔ R2 (x, y))
+  → R1 = R2.
 Proof.
-  move=> T1 T2 R1 R2 F.
+  move=> ?.
   apply: functional_extensionality.
-  move=> [x y].
-  apply: propositional_extensionality.
-  eauto.
+  move=> [? ?].
+  by apply: propositional_extensionality.
 Qed.
