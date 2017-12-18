@@ -442,6 +442,20 @@ Proof.
   case: (H A R); eauto.
 Qed.
 
+
+Theorem mem_eq_conv_both {A e00 e01 e10 e11} :
+  e00 ≼₀ e01
+  → e10 ≼₀ e11
+  → τω ⊧ A ∋ e00 ∼ e10
+  → τω ⊧ A ∋ e01 ∼ e11.
+Proof.
+  move=> ? ? ?.
+  apply: mem_eq_conv; eauto.
+  apply: mem_eq_symm.
+  apply: mem_eq_conv; eauto.
+  by apply: mem_eq_symm.
+Qed.
+
 Theorem ty_eq_trans {A B C} :
   τω ⊧ B ∼ C
   → τω ⊧ A ∼ B
@@ -533,21 +547,13 @@ Proof.
   case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
 
   T.efwd 𝒟.
-  - apply: mem_eq_conv; first by auto.
-    + move=> v.
-      case: (fix_unfold e0 v) => _; apply.
-    + apply: mem_eq_symm.
-      apply: mem_eq_conv; first by auto.
-      * move=> v.
-        case: (fix_unfold e1 v) => _; apply.
-      * apply: mem_eq_symm.
-        T.use 𝒟; f_equal.
-        by Term.simplify_subst.
+  - apply: mem_eq_conv_both.
+    + move=> v; case: (fix_unfold e0 v) => _; apply.
+    + move=> v; case: (fix_unfold e1 v) => _; apply.
+    + T.use 𝒟; f_equal; by Term.simplify_subst.
 
   - simpl; split; auto.
-    exists (fun e0e1 => ▷[κ] (R e0e1)).
-
-    split.
+    exists (fun e0e1 => ▷[κ] (R e0e1)); split.
     + exists n.
       Tac.prove.
       Later.gather.
