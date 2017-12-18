@@ -531,15 +531,13 @@ Proof.
   move=> /Later.yank_existential; case; auto; move=> R ℰ.
   rewrite Later.cart in ℰ.
   case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
-  suff: τω ⊧ ⋄; ▶[κ]A ∋⋆ (Tm.Sub.inst0 (Tm.fix_ e0)) ∼ (Tm.Sub.inst0 (Tm.fix_ e1)).
-  - move=> {𝒟} / (𝒟 _ _) => 𝒟.
-    apply: mem_eq_conv.
-    + auto.
+
+  T.efwd 𝒟.
+  - apply: mem_eq_conv; first by auto.
     + move=> v.
       case: (fix_unfold e0 v) => _; apply.
     + apply: mem_eq_symm.
-      apply: mem_eq_conv.
-      * auto.
+      apply: mem_eq_conv; first by auto.
       * move=> v.
         case: (fix_unfold e1 v) => _; apply.
       * apply: mem_eq_symm.
@@ -559,21 +557,19 @@ Proof.
 Qed.
 
 
-
 Theorem loeb_induction_open κ {Ψ} {Γ : Prectx Ψ} {A e0 e1} :
   τω ⊧ Γ; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
   → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
 Proof.
-  move=> 𝒟 γ0 γ1 γ01; simpl.
+  move=> 𝒟 γ0 γ1 γ01 //=.
   apply: (@loeb_induction_closed κ).
-  move=> γ0' γ1' γ01'.
-  suff: τω ⊧ Γ; (▶[ κ] A) ∋⋆ Tm.subst γ0' ∘ Tm.Sub.cong γ0 ∼ (Tm.subst γ1' ∘ Tm.Sub.cong γ1).
-  + move=> {𝒟} /(𝒟 _ _) => 𝒟.
-    T.use 𝒟; Term.simplify_subst.
-  + split; simplify_eqs.
-    * T.use γ01; Term.simplify_subst.
-    * case: γ01' => _; simplify_eqs => γ01'.
-      T.use γ01'; Term.simplify_subst.
+  move=> γ0' γ1' [_]; simplify_eqs => γ01'.
+  T.efwd 𝒟.
+  - T.use 𝒟; f_equal; rewrite ? Tm.subst_coh; eauto.
+    Term.simplify_subst.
+  - split; simplify_eqs.
+    + T.use γ01; Term.simplify_subst.
+    + T.use γ01'; Term.simplify_subst.
 Qed.
 
 Definition quote_bool (b : bool) : Tm.t 0 :=

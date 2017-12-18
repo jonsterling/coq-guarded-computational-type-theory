@@ -109,3 +109,42 @@ Ltac rewrites_with T :=
   auto.
 
 Ltac rewrites := rewrites_with idtac.
+
+
+
+
+
+Local Ltac myred H :=
+  let ty := type of H in
+  match ty with
+  | ∀ _ : _, _ => idtac
+  | _ => try red in H
+  end.
+
+Ltac efwd H :=
+  let ty0 := type of H in
+  myred H;
+  let ty := type of H in
+  lazymatch ty with
+  | ?A → ?B =>
+    let x := fresh in
+    (suff: A);
+    [move=> x;
+     specialize (H x);
+     let ty2 := type of H in
+     replace ty2 with B in H;
+     [efwd H | by [auto]]
+    | idtac]
+  | ∀ x : ?A, @?B x =>
+    let x := fresh in
+    evar (x : A);
+    specialize (H x);
+    let ty2 := type of H in
+    replace ty2 with (@B x) in H;
+    rewrite /x in H;
+    rewrite /x; clear x;
+    [efwd H | by [auto]]
+  | _ =>
+    replace ty with ty0 in H;
+    [idtac | by [auto]]
+  end.
