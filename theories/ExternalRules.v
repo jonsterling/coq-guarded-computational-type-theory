@@ -232,4 +232,16 @@ Module Later.
       apply: ℰ.
       by case: γ01.
   Qed.
+
+  Example BitStream {Λ Ψ} (k : Var Λ) : ETm.t Λ Ψ :=
+    (ETm.fix_ (𝟚 × ▶[k] @0))%etm.
+
+  Example BitStream_wf `{Γ : ECtx.t Λ Ψ} {k i} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (BitStream k) ≐ (BitStream k) ⟧.
+  Proof.
+    rewrite /BitStream.
+    apply: (induction k).
+    (* need product formation *)
+  Abort.
+
 End Later.
