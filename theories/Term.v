@@ -206,6 +206,7 @@ Module Tm.
     by rewrite ren_subst_coh subst_ren_coh.
   Qed.
 
+
   Lemma cong_id {Ψ} : Sub.cong (@var Ψ) = @var (S Ψ).
   Proof.
     T.eqcd => x.
@@ -218,6 +219,16 @@ Module Tm.
     induction e; rewrites;
     by rewrite cong_id.
   Qed.
+
+  Theorem subst_closed (σ : Sub.t 0 0) (e : t 0) :
+    e ⫽ σ = e.
+  Proof.
+    rewrite -{2}(subst_ret e).
+    f_equal.
+    T.eqcd => x.
+    dependent destruction x.
+  Qed.
+
 End Tm.
 
 Export Tm.Notations Tm.RenNotation Tm.SubstNotation.

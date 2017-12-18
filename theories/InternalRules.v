@@ -571,27 +571,38 @@ Proof.
   move=> 𝒟 γ0 γ1 γ01; simpl.
   apply: (@loeb_induction_closed κ).
   move=> γ0' γ1' γ01'.
-
-  repeat rewrite Tm.subst_coh.
   specialize (𝒟 (Tm.subst γ0' ∘ Tm.Sub.cong γ0) (Tm.subst γ1' ∘ Tm.Sub.cong γ1)).
-  suff: τω ⊧ Γ; (▶[ κ] A) ∋⋆ Tm.subst γ0' ∘ Tm.Sub.cong γ0 ∼ (Tm.subst γ1' ∘ Tm.Sub.cong γ1).
-  - move=> Q.
-    specialize (𝒟 Q).
-    replace ((A ⫽ γ0 .[ ^ 1]) ⫽ γ0') with ((A .[ ^ 1]) ⫽ (Tm.subst γ0' ∘ Tm.Sub.cong γ0)); auto.
-    repeat rewrite Tm.subst_ren_coh.
-    rewrite Tm.subst_coh.
-    f_equal.
-    admit. (* another substitution lemma *)
+  replace ((A ⫽ γ0 .[ ^ 1]) ⫽ γ0') with (A ⫽ γ0).
 
-  - simpl.
-    split.
-    + admit.
-      (* should have been γ01 *)
-    + case: γ01' => _.
-      simpl => H.
-      rewrite Tm.subst_coh in H.
-      admit.
-Admitted.
+  - repeat rewrite Tm.subst_coh.
+    suff: τω ⊧ Γ; (▶[ κ] A) ∋⋆ Tm.subst γ0' ∘ Tm.Sub.cong γ0 ∼ (Tm.subst γ1' ∘ Tm.Sub.cong γ1).
+    + move=> ℰ.
+      specialize (𝒟 ℰ).
+
+      replace ((A .[ ^ 1]) ⫽ (Tm.subst γ0' ∘ Tm.Sub.cong γ0)) with (A ⫽ γ0) in 𝒟; auto.
+      rewrite Tm.subst_ren_coh.
+      f_equal.
+      rewrite /compose.
+      T.eqcd => x.
+      simplify_eqs.
+      by rewrite Tm.subst_ren_coh Tm.subst_closed.
+
+    + simpl; split.
+      * T.use γ01.
+        f_equal; T.eqcd => x //=;
+        rewrite /compose //=;
+        by rewrite Tm.subst_ren_coh Tm.subst_closed.
+
+      * case: γ01' => _; simplify_eqs => γ01'.
+        T.use γ01'; repeat f_equal.
+        rewrite Tm.subst_coh; f_equal.
+        rewrite /compose //=; T.eqcd => x.
+        by rewrite Tm.subst_ren_coh.
+
+  - rewrite Tm.subst_ren_coh Tm.subst_coh /compose; f_equal.
+    T.eqcd => x; simplify_eqs.
+    by rewrite Tm.subst_closed.
+Qed.
 
 Definition quote_bool (b : bool) : Tm.t 0 :=
   match b with
