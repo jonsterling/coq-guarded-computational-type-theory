@@ -123,6 +123,13 @@ Module Tm.
         | Fin.FS _ y => var y
         end.
 
+    Theorem cong_coh {Ψ1 Ψ2 Ψ3} (ρ : Ren.t Ψ1 Ψ2) (σ : Sub.t Ψ2 Ψ3) :
+      cong (σ ∘ ρ) = cong σ ∘ Ren.cong ρ.
+    Proof.
+      T.eqcd => x.
+      rewrite /compose //=.
+      dependent destruction x; auto.
+    Qed.
   End Sub.
 
   Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=

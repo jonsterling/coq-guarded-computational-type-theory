@@ -25,7 +25,8 @@ Module ETm.
   | pair : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
   | ltr : Var Λ → t Λ Ψ -> t Λ Ψ
   | isect : t (S Λ) Ψ -> t Λ Ψ
-  | univ : nat -> t Λ Ψ.
+  | univ : nat -> t Λ Ψ
+  | fix_ : t Λ (S Ψ) → t Λ Ψ.
 
   Arguments unit [Λ Ψ].
   Arguments bool [Λ Ψ].
@@ -50,6 +51,7 @@ Module ETm.
     | ltr k A => ltr (ρΛ k) (map ρΛ ρΨ A)
     | isect A => isect (map (Ren.cong ρΛ) ρΨ A)
     | univ i => univ i
+    | fix_ e => fix_ (map ρΛ (Ren.cong ρΨ) e)
     end.
 
   Definition mapv {Λ} `(ρΨ : Ren.t Ψ1 Ψ2) : t Λ Ψ1 → t Λ Ψ2 :=
@@ -149,6 +151,7 @@ Fixpoint interp_tm `(e : ETm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   | ETm.ltr r A => ▶[κs r] ⟦A⟧ κs
   | ETm.isect A => ⋂[κ] ⟦A⟧ κ ∷ κs
   | ETm.univ i => 𝕌[i]
+  | ETm.fix_ e => Tm.fix_ (⟦e⟧ κs)
   end
 where "⟦ e ⟧ κs" := (interp_tm e%etm κs) : tm_scope.
 
@@ -194,19 +197,27 @@ Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1
 Proof.
   move: Λ2 ρ κs.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
-  f_equal; T.eqcd => ?.
-  rewrite_all_hyps.
-  f_equal; T.eqcd => i.
-  by dependent induction i.
+  - f_equal; T.eqcd => ?.
+    rewrite_all_hyps.
+    f_equal; T.eqcd => i.
+    by dependent induction i.
+  - f_equal.
+    rewrite Ren.cong_id.
+    by rewrite_all_hyps.
 Qed.
 
 Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Tm.Sub.t Ψ1 Ψ2) ρ κs :
   (⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (⟦ e.[ρ] ⟧ κs) ⫽ γ.
 Proof.
-  induction e; eauto; simpl; try by [rewrite_all_hyps].
-  f_equal; T.eqcd => ?.
-  rewrite IHe.
-  by rewrite Ren.cong_id.
+  move: Ψ1 Ψ2 γ ρ κs.
+  induction e; eauto; simpl; try by [T.rewrites].
+  - move=> *; f_equal; T.eqcd => ?.
+    rewrite IHe.
+    by rewrite Ren.cong_id.
+  - move=> *; f_equal.
+    rewrite -IHe.
+    f_equal.
+    by rewrite Tm.Sub.cong_coh.
 Qed.
 
 Local Close Scope tm_scope.
