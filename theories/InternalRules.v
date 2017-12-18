@@ -566,7 +566,7 @@ Qed.
 
 
 
-Theorem loeb_induction_open {Ψ} {Γ : Prectx Ψ} {κ A e0 e1} :
+Theorem loeb_induction_open κ {Ψ} {Γ : Prectx Ψ} {A e0 e1} :
   τω ⊧ Γ; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
   → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
 Proof.

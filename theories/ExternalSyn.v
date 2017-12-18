@@ -96,7 +96,7 @@ Arguments ECtx.nil [Λ].
 Arguments snoc [Ψ] Γ%ectx A%etm.
 
 Notation "⋄" := ECtx.nil : ectx_scope.
-Infix ";" := (ECtx.snoc) (at level 50, left associativity) : ectx_scope.
+Notation "Γ ; A" := (ECtx.snoc Γ%ectx A%etm) (at level 50, left associativity) : ectx_scope.
 
 Module EJdg.
   Inductive t Λ :=
@@ -218,6 +218,16 @@ Proof.
     rewrite -IHe.
     f_equal.
     by rewrite Tm.Sub.cong_coh.
+Qed.
+
+Theorem interp_tm_var_ren_naturality {Λ Ψ0 Ψ1} (e : ETm.t Λ Ψ0) (ρ : Ren.t Ψ0 Ψ1) κs :
+  (⟦ e ⟧ κs).[ ρ ] = (⟦ e.[ρ] ⟧ κs).
+Proof.
+  by rewrite
+     -(Tm.subst_ret (⟦ e .[ ρ] ⟧ κs))
+     -(Tm.subst_ret (⟦ e ⟧ κs .[ρ]))
+     Tm.subst_ren_coh
+     interp_tm_var_naturality.
 Qed.
 
 Local Close Scope tm_scope.

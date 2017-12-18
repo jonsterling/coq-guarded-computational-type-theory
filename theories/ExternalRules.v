@@ -3,7 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Generalizable All Variables.
 
-Require Import Unicode.Utf8 Program.Equality.
+Require Import Unicode.Utf8 Program.Equality Program.Basics.
 From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
@@ -208,5 +208,28 @@ Module Later.
     move=> 𝒟 ? ? ? ? ?; simpl.
     apply: IR.later_force.
     apply: 𝒟; eauto.
+  Qed.
+
+  Theorem induction `{Γ : ECtx.t Λ Ψ} k {A e0 e1} :
+    ⟦ Λ ∣ Γ; ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ (ETm.fix_ e0) ≐ (ETm.fix_ e1) ⟧.
+  Proof.
+    move=> 𝒟 κs ? ℰ; simpl.
+    apply: (@IR.loeb_induction_open (κs k)).
+    simplify_eqs.
+
+    move: {𝒟} (𝒟 κs); simplify_eqs => 𝒟.
+    rewrite interp_tm_var_ren_naturality.
+    apply: 𝒟.
+    - split; auto.
+      move=> ? ? ? //=.
+      apply: IR.later_formation.
+      apply: Later.next.
+      auto.
+    - move=> ? ? γ01 //=.
+      rewrite -interp_tm_var_ren_naturality.
+      Term.simplify_subst.
+      apply: ℰ.
+      by case: γ01.
   Qed.
 End Later.
