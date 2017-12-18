@@ -564,6 +564,8 @@ Proof.
     + by Later.gather; case.
 Qed.
 
+
+
 Theorem loeb_induction_open {Ψ} {Γ : Prectx Ψ} {κ A e0 e1} :
   τω ⊧ Γ; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
   → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
@@ -571,37 +573,13 @@ Proof.
   move=> 𝒟 γ0 γ1 γ01; simpl.
   apply: (@loeb_induction_closed κ).
   move=> γ0' γ1' γ01'.
-  specialize (𝒟 (Tm.subst γ0' ∘ Tm.Sub.cong γ0) (Tm.subst γ1' ∘ Tm.Sub.cong γ1)).
-  replace ((A ⫽ γ0 .[ ^ 1]) ⫽ γ0') with (A ⫽ γ0).
-
-  - repeat rewrite Tm.subst_coh.
-    suff: τω ⊧ Γ; (▶[ κ] A) ∋⋆ Tm.subst γ0' ∘ Tm.Sub.cong γ0 ∼ (Tm.subst γ1' ∘ Tm.Sub.cong γ1).
-    + move=> ℰ.
-      specialize (𝒟 ℰ).
-
-      replace ((A .[ ^ 1]) ⫽ (Tm.subst γ0' ∘ Tm.Sub.cong γ0)) with (A ⫽ γ0) in 𝒟; auto.
-      rewrite Tm.subst_ren_coh.
-      f_equal.
-      rewrite /compose.
-      T.eqcd => x.
-      simplify_eqs.
-      by rewrite Tm.subst_ren_coh Tm.subst_closed.
-
-    + simpl; split.
-      * T.use γ01.
-        f_equal; T.eqcd => x //=;
-        rewrite /compose //=;
-        by rewrite Tm.subst_ren_coh Tm.subst_closed.
-
-      * case: γ01' => _; simplify_eqs => γ01'.
-        T.use γ01'; repeat f_equal.
-        rewrite Tm.subst_coh; f_equal.
-        rewrite /compose //=; T.eqcd => x.
-        by rewrite Tm.subst_ren_coh.
-
-  - rewrite Tm.subst_ren_coh Tm.subst_coh /compose; f_equal.
-    T.eqcd => x; simplify_eqs.
-    by rewrite Tm.subst_closed.
+  suff: τω ⊧ Γ; (▶[ κ] A) ∋⋆ Tm.subst γ0' ∘ Tm.Sub.cong γ0 ∼ (Tm.subst γ1' ∘ Tm.Sub.cong γ1).
+  + move=> {𝒟} /(𝒟 _ _) => 𝒟.
+    T.use 𝒟; Term.simplify_subst.
+  + split; simplify_eqs.
+    * T.use γ01; Term.simplify_subst.
+    * case: γ01' => _; simplify_eqs => γ01'.
+      T.use γ01'; Term.simplify_subst.
 Qed.
 
 Definition quote_bool (b : bool) : Tm.t 0 :=

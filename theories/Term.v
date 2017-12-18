@@ -362,3 +362,13 @@ Proof.
     split; auto.
     econstructor; eauto.
 Qed.
+
+Ltac simplify_subst_step :=
+  try rewrite Tm.subst_ren_coh;
+  try rewrite Tm.ren_subst_coh;
+  try rewrite Tm.subst_coh;
+  try rewrite Tm.subst_closed;
+  try rewrite /compose.
+
+Ltac simplify_subst :=
+  repeat (simplify_eqs; f_equal; try T.eqcd; intros; simplify_subst_step).
