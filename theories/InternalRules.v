@@ -11,8 +11,6 @@ Module T := Tactic.
 Require Import Coq.omega.Omega.
 Open Scope program_scope.
 
-Set Implicit Arguments.
-
 Module Tac.
   Ltac tower_intro :=
     rewrite /Tower.t -Clo.roll.
@@ -506,7 +504,7 @@ Proof.
   split; simplify_eqs.
   - apply: IHΓ.
     + by case: Γctx.
-    + case: γ01; eauto.
+    + by case: γ01; eauto.
   - suff: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
     + move=> [R [[? 𝒟0] [? 𝒟1]]].
       case: γ01 => [_ [S [[n ℰ] γ01]]].
@@ -536,7 +534,7 @@ Proof.
     eassumption.
 Qed.
 
-Theorem loeb_induction_closed {κ A e0 e1} :
+Theorem loeb_induction_closed κ {A e0 e1} :
   τω ⊧ ⋄; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
   → τω ⊧ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
 Proof.
@@ -568,7 +566,7 @@ Theorem loeb_induction_open κ {Ψ} {Γ : Prectx Ψ} {A e0 e1} :
   → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
 Proof.
   move=> 𝒟 γ0 γ1 γ01 //=.
-  apply: (@loeb_induction_closed κ).
+  apply: (loeb_induction_closed κ).
   move=> γ0' γ1' [_]; simplify_eqs => γ01'.
   T.efwd 𝒟.
   - T.use 𝒟; f_equal; rewrite ? Tm.subst_coh; eauto.
