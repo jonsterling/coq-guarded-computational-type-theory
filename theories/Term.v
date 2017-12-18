@@ -94,12 +94,8 @@ Module Tm.
   Theorem map_id {Ψ} (e : t Ψ) : map id e = e.
   Proof.
     induction e; auto; simpl; try by rewrites.
-
     f_equal.
-    replace (Ren.cong id) with (fun x : Var (S Ψ) => x).
-    - by rewrite IHe.
-    - T.eqcd => x.
-      dependent induction x; auto.
+    by rewrite Ren.cong_id.
   Qed.
 
   Module Sub.
@@ -278,7 +274,6 @@ Ltac destruct_evals :=
     | H : _ ⇓ _ |- _ => dependent destruction H
     | H : _ val |- _ => dependent destruction H
     end.
-
 
 (* TODO *)
 Axiom determinacy : ∀ A A0 A1, A ⇓ A0 → A ⇓ A1 → A0 = A1.
