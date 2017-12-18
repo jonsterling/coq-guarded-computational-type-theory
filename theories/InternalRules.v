@@ -532,26 +532,20 @@ Proof.
   rewrite Later.cart in ℰ.
   case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
   suff: τω ⊧ ⋄; ▶[κ]A ∋⋆ (Tm.Sub.inst0 (Tm.fix_ e0)) ∼ (Tm.Sub.inst0 (Tm.fix_ e1)).
-  - move=> ℱ.
-    specialize (𝒟 _ _ ℱ).
-    rewrite Tm.subst_ren_coh in 𝒟.
-    replace (A ⫽ (Tm.Sub.inst0 (Tm.fix_ e0) ∘ (^ 1)%ren)) with A in 𝒟.
-    + apply: mem_eq_conv.
+  - move=> {𝒟} / (𝒟 _ _) => 𝒟.
+    apply: mem_eq_conv.
+    + auto.
+    + move=> v.
+      case: (fix_unfold e0 v) => _; apply.
+    + apply: mem_eq_symm.
+      apply: mem_eq_conv.
       * auto.
       * move=> v.
-        case: (fix_unfold e0 v) => _; apply.
+        case: (fix_unfold e1 v) => _; apply.
       * apply: mem_eq_symm.
-        apply: mem_eq_conv.
-        ** auto.
-        ** move=> v.
-           case: (fix_unfold e1 v) => _; apply.
-        ** by apply: mem_eq_symm.
+        T.use 𝒟; f_equal.
+        by Term.simplify_subst.
 
-    + rewrite -(Tm.subst_ret A).
-      f_equal.
-      * T.eqcd => x.
-        dependent destruction x.
-      * by rewrite Tm.subst_ret.
   - simpl; split; auto.
     exists (fun e0e1 => ▷[κ] (R e0e1)).
 
