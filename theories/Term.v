@@ -27,7 +27,8 @@ Module Tm.
   | lam : t (S Ψ) → t Ψ
   | ltr : 𝕂 -> t Ψ -> t Ψ
   | isect : (𝕂 → t Ψ) → t Ψ
-  | univ : nat -> t Ψ.
+  | univ : nat -> t Ψ
+  | fix_ : t (S Ψ) → t Ψ.
 
   Arguments unit [Ψ].
   Arguments bool [Ψ].
@@ -76,6 +77,7 @@ Module Tm.
     | ltr κ A => ltr κ (map ρ A)
     | isect A => isect (fun κ => map ρ (A κ))
     | univ i => univ i
+    | fix_ e => fix_ (map (Ren.cong ρ) e)
     end.
 
   Module RenNotation.
@@ -94,8 +96,10 @@ Module Tm.
   Theorem map_id {Ψ} (e : t Ψ) : map id e = e.
   Proof.
     induction e; auto; simpl; try by rewrites.
-    f_equal.
-    by rewrite Ren.cong_id.
+    + f_equal.
+      by rewrite Ren.cong_id.
+    + f_equal.
+      by rewrite Ren.cong_id.
   Qed.
 
   Module Sub.
@@ -111,6 +115,14 @@ Module Tm.
         | Fin.F1 _ => var Fin.F1
         | Fin.FS _ y => map Fin.FS (σ y)
         end.
+
+    Program Definition inst0 {Ψ} (e : Tm.t Ψ) : t (S Ψ) Ψ :=
+      fun x =>
+        match x with
+        | Fin.F1 _ => e
+        | Fin.FS _ y => var y
+        end.
+
   End Sub.
 
   Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
@@ -131,6 +143,7 @@ Module Tm.
     | ltr κ A => ltr κ (subst σ A)
     | isect A => isect (fun κ => subst σ (A κ))
     | univ i => univ i
+    | fix_ e => fix_ (subst (Sub.cong σ) e)
     end.
 
   Module SubstNotation.
@@ -146,7 +159,8 @@ Module Tm.
   Proof.
     move: Ψ2 Ψ3 ρ12 ρ23.
     induction e; rewrites.
-    by dependent induction H.
+    - by dependent induction H.
+    - by dependent induction H.
   Qed.
 
   Theorem ren_subst_cong_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) :
@@ -165,7 +179,7 @@ Module Tm.
     e ⫽ (map ρ23 ∘ σ12).
   Proof.
     move: Ψ2 Ψ3 σ12 ρ23.
-    induction e; rewrites.
+    induction e; rewrites;
     by rewrite -ren_subst_cong_coh.
   Qed.
 
@@ -175,8 +189,8 @@ Module Tm.
     e ⫽ (σ23 ∘ ρ12).
   Proof.
     move: Ψ2 Ψ3 ρ12 σ23.
-    induction e; rewrites.
-    f_equal; f_equal.
+    induction e; rewrites;
+    f_equal; f_equal;
     by dependent destruction H.
   Qed.
 
@@ -187,8 +201,8 @@ Module Tm.
   Proof.
     move: Ψ2 Ψ3 σ12 σ23.
     rewrite /compose.
-    induction e; rewrites.
-    dependent induction H; auto; simpl.
+    induction e; rewrites;
+    dependent induction H; auto; simpl;
     by rewrite ren_subst_coh subst_ren_coh.
   Qed.
 
@@ -201,7 +215,7 @@ Module Tm.
   Theorem subst_ret {Ψ} e :
     e ⫽ (@var Ψ) = e.
   Proof.
-    induction e; rewrites.
+    induction e; rewrites;
     by rewrite cong_id.
   Qed.
 End Tm.
@@ -245,7 +259,8 @@ Inductive step : Tm.t 0 → Tm.t 0 → Ω :=
 
 | step_fst_pair : ∀ {e1 e2}, ⟨e1,e2⟩.1 ↦ e1
 | step_snd_pair : ∀ {e1 e2}, ⟨e1,e2⟩.2 ↦ e2
-| step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ (fun _ => e2))
+| step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ Tm.Sub.inst0 e2)
+| step_fix : ∀ e, Tm.fix_ e ↦ (e ⫽ Tm.Sub.inst0 (Tm.fix_ e))
 where "e ↦ e'" := (step e%tm e'%tm).
 
 Hint Constructors is_val.
@@ -310,9 +325,6 @@ Qed.
 
 Hint Resolve closed_approx_refl.
 
-Program Definition fix_ (f : Tm.t 1) : Tm.t 0 :=
-  (𝛌{f ⫽ (fun _ => @0 ⋅ @0)} ⋅ 𝛌{f ⫽ (fun _ => (@0 ⋅ @0))})%tm.
-
 Theorem approx_invert :
   ∀ e e' v,
     e ⇓ v
@@ -326,22 +338,16 @@ Proof.
 Qed.
 
 Theorem fix_unfold :
-  ∀ f, (fix_ f) ≈₀ (f ⫽ (fun _ => fix_ f)).
+  ∀ f, (Tm.fix_ f) ≈₀ (f ⫽ Tm.Sub.inst0 (Tm.fix_ f)).
 Proof.
   move=> f v.
   split.
   - move=> [𝒟1 𝒟2].
-    constructor.
-    + dependent destruction 𝒟1.
-      * dependent destruction 𝒟2.
-      * dependent destruction H.
-        ** dependent destruction H.
-        ** by rewrite Tm.subst_coh in 𝒟1.
-    + assumption.
-
+    split; auto.
+    dependent destruction 𝒟1.
+    + by dependent destruction 𝒟2.
+    + by dependent destruction H.
   - move=> [𝒟1 𝒟2].
-    constructor; auto.
-    econstructor.
-    + constructor; constructor.
-    + by rewrite Tm.subst_coh.
+    split; auto.
+    econstructor; eauto.
 Qed.

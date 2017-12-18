@@ -522,19 +522,20 @@ Proof.
     eassumption.
 Qed.
 
-Theorem loeb_induction {κ A e0 e1} :
+Theorem loeb_induction_closed {κ A e0 e1} :
   τω ⊧ ⋄; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
-  → τω ⊧ A ∋ (fix_ e0) ∼ (fix_ e1).
+  → τω ⊧ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
 Proof.
   move=> 𝒟.
   apply: (@Later.loeb κ).
   move=> /Later.yank_existential; case; auto; move=> R ℰ.
   rewrite Later.cart in ℰ.
   case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
-  suff: τω ⊧ ⋄; ▶[κ]A ∋⋆ (fun _ => fix_ e0) ∼ (fun _ => fix_ e1).
+  suff: τω ⊧ ⋄; ▶[κ]A ∋⋆ (Tm.Sub.inst0 (Tm.fix_ e0)) ∼ (Tm.Sub.inst0 (Tm.fix_ e1)).
   - move=> ℱ.
     specialize (𝒟 _ _ ℱ).
-    replace (A.[^1] ⫽ (λ _ : Var 1, fix_ e0)) with A in 𝒟.
+    rewrite Tm.subst_ren_coh in 𝒟.
+    replace (A ⫽ (Tm.Sub.inst0 (Tm.fix_ e0) ∘ (^ 1)%ren)) with A in 𝒟.
     + apply: mem_eq_conv.
       * auto.
       * move=> v.
@@ -546,24 +547,51 @@ Proof.
            case: (fix_unfold e1 v) => _; apply.
         ** by apply: mem_eq_symm.
 
-    + rewrite Tm.subst_ren_coh -{1}(Tm.subst_ret A).
-      f_equal; T.eqcd => x.
-      dependent destruction x.
-
+    + rewrite -(Tm.subst_ret A).
+      f_equal.
+      * T.eqcd => x.
+        dependent destruction x.
+      * by rewrite Tm.subst_ret.
   - simpl; split; auto.
     exists (fun e0e1 => ▷[κ] (R e0e1)).
+
     split.
     + exists n.
       Tac.prove.
       Later.gather.
       move=> [? ?].
-      replace ((λ _ : Var 1, fix_ e0) ∘ (λ x : Fin.t 0, Fin.FS x)) with (fun x : Var 0 => Tm.var x).
-      * by rewrite Tm.subst_ret.
-      * T.eqcd => x.
-         dependent induction x.
+      by rewrite Tm.subst_ret.
     + by Later.gather; case.
-
 Qed.
+
+Theorem loeb_induction_open {Ψ} {Γ : Prectx Ψ} {κ A e0 e1} :
+  τω ⊧ Γ; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
+  → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
+Proof.
+  move=> 𝒟 γ0 γ1 γ01; simpl.
+  apply: (@loeb_induction_closed κ).
+  move=> γ0' γ1' γ01'.
+
+  repeat rewrite Tm.subst_coh.
+  specialize (𝒟 (Tm.subst γ0' ∘ Tm.Sub.cong γ0) (Tm.subst γ1' ∘ Tm.Sub.cong γ1)).
+  suff: τω ⊧ Γ; (▶[ κ] A) ∋⋆ Tm.subst γ0' ∘ Tm.Sub.cong γ0 ∼ (Tm.subst γ1' ∘ Tm.Sub.cong γ1).
+  - move=> Q.
+    specialize (𝒟 Q).
+    replace ((A ⫽ γ0 .[ ^ 1]) ⫽ γ0') with ((A .[ ^ 1]) ⫽ (Tm.subst γ0' ∘ Tm.Sub.cong γ0)); auto.
+    repeat rewrite Tm.subst_ren_coh.
+    rewrite Tm.subst_coh.
+    f_equal.
+    admit. (* another substitution lemma *)
+
+  - simpl.
+    split.
+    + admit.
+      (* should have been γ01 *)
+    + case: γ01' => _.
+      simpl => H.
+      rewrite Tm.subst_coh in H.
+      admit.
+Admitted.
 
 Definition quote_bool (b : bool) : Tm.t 0 :=
   match b with
