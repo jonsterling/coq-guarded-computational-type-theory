@@ -147,7 +147,6 @@ Proof.
   eauto.
 Qed.
 
-(* TODO: put these in τω *)
 Theorem prod_formation {n A0 A1 B0 B1} :
   τ[n] ⊧ A0 ∼ A1
   → τ[n] ⊧ B0 ∼ B1
