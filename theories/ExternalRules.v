@@ -162,6 +162,30 @@ Module General.
   Qed.
 End General.
 
+Module Bool.
+  Theorem univ_eq `{Γ : ECtx.t Λ Ψ} {i} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ 𝟚 ≐ 𝟚 ⟧.
+  Proof.
+    move=> ? ? ? ? ? ? //=.
+    apply: IR.univ_mem_formation.
+    apply: IR.bool_formation_lvl.
+  Qed.
+End Bool.
+
+Module Prod.
+  Theorem univ_eq `{Γ : ECtx.t Λ Ψ} {i A0 A1 B0 B1} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (A0 × B0) ≐ (A1 × B1) ⟧.
+  Proof.
+    move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01 //=.
+    apply: IR.prod_formation_univ.
+    - by apply: 𝒟.
+    - by apply: ℰ.
+  Qed.
+End Prod.
+
+
 Module Isect.
   Theorem irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
     ⟦ Λ ∣ Γ ≫ A ≐ A ⟧
@@ -233,15 +257,20 @@ Module Later.
       by case: γ01.
   Qed.
 
+End Later.
+
+
+Module Examples.
   Example BitStream {Λ Ψ} (k : Var Λ) : ETm.t Λ Ψ :=
     (ETm.fix_ (𝟚 × ▶[k] @0))%etm.
 
   Example BitStream_wf `{Γ : ECtx.t Λ Ψ} {k i} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (BitStream k) ≐ (BitStream k) ⟧.
   Proof.
-    rewrite /BitStream.
-    apply: (induction k).
-    (* need product formation *)
-  Abort.
-
-End Later.
+    apply: (Later.induction k).
+    apply: Prod.univ_eq.
+    - apply: Bool.univ_eq.
+    - apply: Later.formation.
+      apply: General.hypothesis.
+  Qed.
+End Examples.
