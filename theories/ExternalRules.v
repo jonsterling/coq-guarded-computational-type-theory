@@ -187,6 +187,18 @@ End Prod.
 
 
 Module Isect.
+  Theorem univ_eq `{Γ : ECtx.t Λ Ψ} {i A0 A1} :
+    ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ⋂ A0 ≐ ⋂ A1 ⟧.
+  Proof.
+    move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01 //=.
+    apply: IR.univ_mem_formation.
+    apply: IR.isect_formation => κ.
+    T.efwd 𝒟; first (apply: IR.univ_mem_inversion);
+    try rewrite -interp_ctx_clk_naturality;
+    by [simplify_eqs; eauto].
+  Qed.
+
   Theorem irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
     ⟦ Λ ∣ Γ ≫ A ≐ A ⟧
     → ⟦ Λ ∣ Γ ≫ A ≐ ⋂ (A.⦃^1⦄) ⟧.
@@ -261,8 +273,15 @@ End Later.
 
 
 Module Examples.
+  (* Guarded stream of bits. *)
   Example BitStream {Λ Ψ} (k : Var Λ) : ETm.t Λ Ψ :=
     (ETm.fix_ (𝟚 × ▶[k] @0))%etm.
+
+  Arguments BitStream [Λ Ψ] k%eclk.
+
+  (* Coinductive sequence of bits. *)
+  Example BitSeq {Λ Ψ} : ETm.t Λ Ψ :=
+    (⋂ (BitStream #0))%etm.
 
   Example BitStream_wf `{Γ : ECtx.t Λ Ψ} {k i} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (BitStream k) ≐ (BitStream k) ⟧.
@@ -273,4 +292,11 @@ Module Examples.
     - apply: Later.formation.
       apply: General.hypothesis.
   Qed.
+
+  Example BitSeq_wf `{Γ : ECtx.t Λ Ψ} {i} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitSeq ≐ BitSeq ⟧.
+  Proof.
+    apply: Isect.univ_eq.
+    apply: BitStream_wf.
+  Abort.
 End Examples.
