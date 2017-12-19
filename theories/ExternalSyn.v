@@ -84,19 +84,33 @@ Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
 Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
 Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
 
+Delimit Scope ectx_scope with ectx.
+
 Module ECtx.
   Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
   | nil : t Λ 0
   | snoc : ∀ {Ψ}, t Λ Ψ → ETm.t Λ Ψ → t Λ (S Ψ).
+
+  Arguments nil [Λ].
+  Arguments snoc [Λ Ψ] Γ%ectx A%etm.
+
+  Module Notation.
+    Notation "⋄" := nil : ectx_scope.
+    Notation "Γ ; A" := (@snoc _ _ Γ%ectx A%etm) (at level 50, left associativity) : ectx_scope.
+  End Notation.
+
+  Import Notation.
+
+  Fixpoint map {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) (Γ : t Λ1 Ψ) : t Λ2 Ψ :=
+    match Γ with
+    | ⋄%ectx => nil
+    | (Γ;A)%ectx => (map ρ Γ ; (A.⦃ρ⦄))%ectx
+    end.
 End ECtx.
 
-Delimit Scope ectx_scope with ectx.
+Export ECtx.Notation.
 
-Arguments ECtx.nil [Λ].
-Arguments snoc [Ψ] Γ%ectx A%etm.
-
-Notation "⋄" := ECtx.nil : ectx_scope.
-Notation "Γ ; A" := (ECtx.snoc Γ%ectx A%etm) (at level 50, left associativity) : ectx_scope.
+Notation "Γ .⦃ ρ ⦄" := (ECtx.map ρ%ren Γ%ectx) (at level 50) : ectx_scope.
 
 Module EJdg.
   Inductive t Λ :=
