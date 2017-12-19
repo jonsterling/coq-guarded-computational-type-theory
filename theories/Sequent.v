@@ -82,3 +82,17 @@ Arguments open_equiv [Ψ] e1%tm e2%tm.
 
 Notation "e0 ≼ e1" := (open_approx e0%tm e1%tm) (at level 30) : type_scope.
 Notation "e0 ≈ e1" := (open_equiv e0%tm e1%tm) (at level 30) : type_scope.
+
+Theorem open_equiv_closed : @open_equiv 0 = closed_equiv.
+Proof.
+  T.eqcd => e0.
+  T.eqcd => e1.
+  apply: propositional_extensionality.
+  split => 𝒟.
+  - move=> v.
+    move: (𝒟 (@Tm.var 0) v).
+    by rewrite ! Tm.subst_closed.
+  - move=> γ v.
+    move: (𝒟 v).
+    by rewrite ! Tm.subst_closed.
+Qed.

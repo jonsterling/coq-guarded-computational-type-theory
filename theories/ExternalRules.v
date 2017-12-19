@@ -125,6 +125,19 @@ Module General.
     apply: IR.env_eq_symm; eauto.
   Qed.
 
+  Theorem mem_eq_symm `{Γ : ECtx.t Λ Ψ} {A e0 e1} :
+    ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ e1 ≐ e0 ⟧.
+  Proof.
+    move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01.
+    apply: IR.mem_eq_symm.
+    apply: IR.rewrite_ty_in_mem.
+    - apply: 𝒟; eauto.
+      apply: IR.env_eq_symm; eauto.
+    - apply: IR.ty_eq_symm.
+      apply: ℰ; eauto.
+  Qed.
+
   Theorem ty_eq_trans `{Γ : ECtx.t Λ Ψ} {A0 A1 A2} :
     ⟦ Λ ∣ Γ ≫ A1 ≐ A2 ⟧
     → ⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
@@ -159,6 +172,22 @@ Module General.
       apply: ty_eq_refl_left; eauto.
     - apply: 𝒟; eauto.
       apply: IR.env_eq_refl_left; eauto.
+  Qed.
+
+
+  Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} {A' e0' e1'} A e0 e1 :
+    ⟦ Λ ∣ Ψ ⊢ A ≃ A' ⟧
+    → ⟦ Λ ∣ Ψ ⊢ e0 ≃ e0' ⟧
+    → ⟦ Λ ∣ Ψ ⊢ e1 ≃ e1' ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A' ∋ e0' ≐ e1' ⟧.
+  Proof.
+    move=> *.
+    apply: conv_mem_ty; eauto.
+    apply: conv_mem; eauto.
+    apply: mem_eq_symm.
+    apply: conv_mem; eauto.
+    by apply: mem_eq_symm.
   Qed.
 End General.
 
@@ -273,6 +302,7 @@ End Later.
 
 
 Module Examples.
+
   (* Guarded stream of bits. *)
   Example BitStream {Λ Ψ} (k : Var Λ) : ETm.t Λ Ψ :=
     μ{ 𝟚 × ▶[k] @0 }%etm.
@@ -298,5 +328,22 @@ Module Examples.
   Proof.
     apply: Isect.univ_eq.
     apply: BitStream_wf.
+  Abort.
+
+  Example Ones {Λ Ψ} : ETm.t Λ Ψ :=
+    μ{ ⟨ETm.tt, @0⟩ }%etm.
+
+  Example Ones_wf `{Γ : ECtx.t Λ Ψ} {k} :
+    ⟦ Λ ∣ Γ ≫ BitStream k ∋ Ones ≐ Ones ⟧.
+  Proof.
+    rewrite /BitStream /Ones.
+    apply: (General.mem_conv_all (𝟚 × ▶[k] BitStream k)%etm ⟨ ETm.tt, Ones ⟩%etm ⟨ ETm.tt, Ones ⟩%etm).
+    - apply: Conversion.Structural.symm => ? ?.
+      by apply: fix_unfold.
+    - apply: Conversion.Structural.symm => ? ?.
+      by apply: fix_unfold.
+    - apply: Conversion.Structural.symm => ? ?.
+      by apply: fix_unfold.
+    -
   Abort.
 End Examples.
