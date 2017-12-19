@@ -225,7 +225,7 @@ Proof.
   - apply: Tower.monotonicity; last by [eauto]; omega.
 Qed.
 
-Lemma TowerChoice {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
+Lemma TowerChoiceTyEq {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
   (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
   → ∃ S, ∀ κ, τ[n] (A1 κ, S κ) ∧ τ[n] (A2 κ, S κ).
 Proof.
@@ -237,17 +237,69 @@ Proof.
   T.destruct_conjs; eauto.
 Qed.
 
+Lemma TowerChoiceMemEq {n : nat} {A : 𝕂 → Tm.t 0} {e0 e1} :
+  (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (e0, e1))
+  → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (e0, e1).
+Proof.
+  move=> X.
+  apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (e0, e1))) => κ.
+  case: (X κ) => S T.
+  eexists; split; eauto => S' T';
+  apply: Tower.extensionality; eauto;
+  T.destruct_conjs; eauto.
+Qed.
+
+Lemma TowerChoiceMemEqω {A : 𝕂 → Tm.t 0} {e0 e1} :
+  (∀ κ, ∃ Rκ, τω (A κ, Rκ) ∧ Rκ (e0, e1))
+  → ∃ S, ∀ κ, τω (A κ, S κ) ∧ S κ (e0, e1).
+Proof.
+  move=> X.
+  apply (@unique_choice _ _ (fun κ R => τω (A κ, R) ∧ R (e0, e1))) => κ.
+  case: (X κ) => S [T0 T1].
+  eexists; split; eauto => S' [T'0 T'1].
+  case: T0 => [n T0].
+  case: T'0 => [n' T'0].
+  apply: (@Tower.extensionality (n + n')).
+  - apply: Tower.monotonicity; last by [eauto].
+    omega.
+  - apply: Tower.monotonicity; last by [eauto].
+    omega.
+Qed.
+
 Theorem isect_formation {n B0 B1} :
   (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
   → τ[n] ⊧ ⋂ B0 ∼ ⋂ B1.
 Proof.
   move=> 𝒟.
-  case: (TowerChoice 𝒟) => S ℰ.
+  case: (TowerChoiceTyEq 𝒟) => S ℰ.
   Tac.prove;
   T.specialize_hyps;
   rewrite /Tower.t in ℰ;
   T.destruct_conjs; eauto.
 Qed.
+
+Theorem isect_intro {n A e0 e1} :
+  (∀ κ, τ[n] ⊧ (A κ) ∋ e0 ∼ e1)
+  → τ[n] ⊧ ⋂ A ∋ e0 ∼ e1.
+Proof.
+  move=> 𝒟.
+  case: (TowerChoiceMemEq 𝒟) => S ℰ.
+  Tac.prove.
+  - T.specialize_hyps;
+    rewrite /Tower.t in ℰ;
+    T.destruct_conjs; eauto.
+  - move=> κ.
+    T.specialize_hyps.
+    case: ℰ => [_ ?].
+    eauto.
+Qed.
+
+(* The following theorem doesn't appear to be true:
+   how can we pick a universe level without indeterminate choice? *)
+Theorem isect_intro_ω {A e0 e1} :
+  (∀ κ, τω ⊧ (A κ) ∋ e0 ∼ e1)
+  → τω ⊧ ⋂ A ∋ e0 ∼ e1.
+Abort.
 
 Theorem isect_irrelevance {A B}:
   τω ⊧ A ∼ B

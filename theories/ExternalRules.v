@@ -3,7 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Generalizable All Variables.
 
-Require Import Unicode.Utf8 Program.Equality Program.Basics.
+Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega.
 From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
@@ -270,6 +270,54 @@ Module Isect.
     by [simplify_eqs; eauto].
   Qed.
 
+  Theorem intro `{Γ : ECtx.t Λ Ψ} {A e0 e1} :
+    ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ A ∋ (e0.⦃^1⦄) ≐ (e1.⦃^1⦄) ⟧
+    → ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ≫ ⋂ A ∋ e0 ≐ e1 ⟧.
+  Proof.
+    move=> 𝒟 ℱ κs Γctx ℰ γ0 γ1 γ01 //=.
+    case: (ℰ γ0 γ1 γ01) => R [[n0 ℰ0] [n1 ℰ1]].
+    case: (ℰ γ1 γ0 (IR.env_eq_symm Γctx γ01)) => R' [[n0' ℰ0'] [n1' ℰ1']].
+
+    replace R' with R in ℰ0', ℰ1'.
+
+    - clear R'.
+      IR.Tac.accum_lvl n.
+      apply: (@IR.eq_mem_from_level n).
+      repeat Tower.destruct_tower.
+      apply: IR.isect_intro => κ.
+      T.specialize_hyps.
+      exists (S κ); split.
+      + apply: Tower.monotonicity; last by [eassumption].
+        rewrite /n; omega.
+      + specialize (𝒟 (κ ∷ κs)).
+        T.efwd 𝒟.
+        * case: 𝒟 => R' [[n2 𝒟0] 𝒟1].
+          replace R' with (S κ) in 𝒟0, 𝒟1.
+          ** T.use 𝒟1.
+             repeat f_equal;
+             rewrite -interp_tm_clk_naturality /compose;
+             by simplify_eqs.
+          ** apply: (@Tower.extensionality (n + n2)); simpl.
+             *** apply: Tower.monotonicity; last by [eauto].
+                 rewrite /n; omega.
+             *** apply: Tower.monotonicity; last by [eauto].
+                 rewrite /n; omega.
+        * T.use γ01; f_equal.
+          rewrite -interp_ctx_clk_naturality /compose.
+          by simplify_eqs.
+        * apply: ℱ; auto.
+        * T.use Γctx.
+          f_equal.
+          rewrite -interp_ctx_clk_naturality /compose.
+          by simplify_eqs.
+    - apply: (@Tower.extensionality (n1 + n0')); simpl.
+      * apply: Tower.monotonicity; last by [eassumption].
+        omega.
+      * apply: Tower.monotonicity; last by [eassumption].
+        omega.
+  Qed.
+
   Theorem irrelevance Λ Ψ Γ (A : ETm.t Λ Ψ) :
     ⟦ Λ ∣ Γ ≫ A ≐ A ⟧
     → ⟦ Λ ∣ Γ ≫ A ≐ ⋂ (A.⦃^1⦄) ⟧.
@@ -383,7 +431,7 @@ Module Examples.
   Example Ones {Λ Ψ} : ETm.t Λ Ψ :=
     μ{ ⟨ETm.tt, @0⟩ }%etm.
 
-  Example Ones_wf `{Γ : ECtx.t Λ Ψ} {k} :
+  Example Ones_wf_guarded `{Γ : ECtx.t Λ Ψ} {k} :
     ⟦ Λ ∣ Γ ≫ BitStream k ∋ Ones ≐ Ones ⟧.
   Proof.
     apply: (Later.induction k).
@@ -399,4 +447,12 @@ Module Examples.
         apply: BitStream_wf.
   Qed.
 
+  Example Ones_wf_infinite `{Γ : ECtx.t Λ Ψ} :
+    ⟦ Λ ∣ Γ ≫ BitSeq ∋ Ones ≐ Ones ⟧.
+  Proof.
+    apply: Isect.intro.
+    apply: Ones_wf_guarded.
+    apply: (General.univ_reflection 0).
+    apply: BitStream_wf.
+  Qed.
 End Examples.
