@@ -62,10 +62,10 @@ Module General.
     by rewrite -interp_tm_var_naturality.
   Qed.
 
-  Theorem conv_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 B} :
+  Theorem conv_ty `{Γ : ECtx.t Λ Ψ} A1 {A0 B} :
     ⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A0 ≐ B ⟧
-    → ⟦ Λ ∣ Γ ≫ A1 ≐ B ⟧.
+    → ⟦ Λ ∣ Γ ≫ A1 ≐ B ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ≐ B ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ?.
     apply: IR.ty_eq_conv.
@@ -455,4 +455,24 @@ Module Examples.
     apply: (General.univ_reflection 0).
     apply: BitStream_wf.
   Qed.
+
+  Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {k} :
+    ⟦ Λ ∣ Γ ≫ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
+  Proof.
+    Print General.
+    apply: (General.conv_ty (𝟚 × ▶[k] BitStream k)%etm).
+    - move=> ? ?; apply: fix_unfold; eauto.
+    - apply: (General.univ_reflection 0).
+      apply: Prod.univ_eq.
+      + apply: Bool.univ_eq.
+      + apply: Later.univ_eq.
+        apply: Later.intro.
+        * apply: BitStream_wf.
+        * apply: General.univ_formation.
+  Qed.
+
+  Example BitSeq_unfold `{Γ : ECtx.t Λ Ψ} :
+    ⟦ Λ ∣ Γ ≫ BitSeq ≐ (𝟚 × BitSeq) ⟧.
+  Proof.
+  Abort.
 End Examples.
