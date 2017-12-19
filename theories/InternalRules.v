@@ -201,12 +201,16 @@ Proof.
   by apply: prod_formation.
 Qed.
 
-Theorem prod_intro {n A B e00 e01 e10 e11} :
-  τ[n] ⊧ A ∋ e00 ∼ e10
-  → τ[n] ⊧ B ∋ e01 ∼ e11
-  → τ[n] ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
+Theorem prod_intro {A B e00 e01 e10 e11} :
+  τω ⊧ A ∋ e00 ∼ e10
+  → τω ⊧ B ∋ e01 ∼ e11
+  → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
 Proof.
-  Tac.prove.
+  move=> /eq_mem_to_level [n1 𝒟] /eq_mem_to_level [n2 ℰ].
+  apply: (@eq_mem_from_level (n1 + n2)).
+  move: 𝒟 ℰ; Tac.prove.
+  - apply: Tower.monotonicity; last by [eauto]; omega.
+  - apply: Tower.monotonicity; last by [eauto]; omega.
 Qed.
 
 Lemma TowerChoice {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
