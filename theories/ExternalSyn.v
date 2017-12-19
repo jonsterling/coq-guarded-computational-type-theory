@@ -112,9 +112,9 @@ End EJdg.
 
 Delimit Scope ejdg_scope with ejdg.
 
-Notation "Λ ∣ Γ ≫ A ≐ B" := (@EJdg.eq_ty Λ _ Γ A B) (at level 10) : ejdg_scope.
-Notation "Λ ∣ Γ ≫ A ∋ e1 ≐ e2" := (@EJdg.eq_mem Λ _ Γ A e1 e2) (at level 10) : ejdg_scope.
-Notation "Λ ∣ Ψ ⊢ e1 ≃ e2" := (@EJdg.conv Λ Ψ e1 e2) (at level 10) : ejdg_scope.
+Notation "Λ ∣ Γ ≫ A ≐ B" := (@EJdg.eq_ty Λ _ Γ%ectx A%etm B%etm) (at level 10) : ejdg_scope.
+Notation "Λ ∣ Γ ≫ A ∋ e1 ≐ e2" := (@EJdg.eq_mem Λ _ Γ%ectx A%etm e1%etm e2%etm) (at level 10) : ejdg_scope.
+Notation "Λ ∣ Ψ ⊢ e1 ≃ e2" := (@EJdg.conv Λ Ψ e1%etm e2%etm) (at level 10) : ejdg_scope.
 
 Notation "⌊ 𝒥 ⌋" := 𝒥%ejdg (only parsing).
 
