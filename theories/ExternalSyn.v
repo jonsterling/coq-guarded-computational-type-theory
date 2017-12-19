@@ -83,6 +83,7 @@ Infix "×" := ETm.prod : etm_scope.
 Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
 Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
 Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
+Notation "μ{ e }" := (ETm.fix_ e%etm) (at level 50) : etm_scope.
 
 Delimit Scope ectx_scope with ectx.
 

@@ -248,7 +248,7 @@ Module Later.
 
   Theorem induction `{Γ : ECtx.t Λ Ψ} k {A e0 e1} :
     ⟦ Λ ∣ Γ; ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ (ETm.fix_ e0) ≐ (ETm.fix_ e1) ⟧.
+    → ⟦ Λ ∣ Γ ≫ A ∋ μ{ e0 } ≐ μ{ e1 } ⟧.
   Proof.
     move=> 𝒟 κs ? ℰ; simpl.
     apply: (@IR.loeb_induction_open (κs k)).
@@ -275,7 +275,7 @@ End Later.
 Module Examples.
   (* Guarded stream of bits. *)
   Example BitStream {Λ Ψ} (k : Var Λ) : ETm.t Λ Ψ :=
-    (ETm.fix_ (𝟚 × ▶[k] @0))%etm.
+    μ{ 𝟚 × ▶[k] @0 }%etm.
 
   Arguments BitStream [Λ Ψ] k%eclk.
 
