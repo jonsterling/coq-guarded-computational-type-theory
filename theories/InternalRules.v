@@ -156,6 +156,47 @@ Proof.
   Tac.prove.
 Qed.
 
+Lemma univ_mem_inversion {i A0 A1} :
+  τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+  → τ[i] ⊧ A0 ∼ A1.
+Proof.
+  move=> [R [[n 𝒟] ℰ]].
+  Tower.destruct_tower.
+  destruct n; Spine.simplify.
+  - contradiction.
+  - case: H => //= [j [p [ev spec]]].
+    Term.destruct_evals.
+    rewrite spec in ℰ.
+    case: ℰ => //= [S [ℰ1 ℰ2]].
+    by exists S.
+Qed.
+
+Lemma univ_mem_formation {i A0 A1} :
+  τ[i] ⊧ A0 ∼ A1
+  → τω ⊧ 𝕌[i] ∋ A0 ∼ A1.
+Proof.
+  move=> 𝒟.
+  apply: (@eq_mem_from_level (S i)).
+  eexists; split.
+  - rewrite /Tower.t -Clo.roll.
+    apply: Sig.init.
+    Spine.simplify.
+    exists i; repeat T.split; eauto.
+    reflexivity.
+  - eauto.
+Qed.
+
+
+Theorem prod_formation_univ {i A0 A1 B0 B1} :
+  τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+  → τω ⊧ 𝕌[i] ∋ B0 ∼ B1
+  → τω ⊧ 𝕌[i] ∋ (A0 × B0) ∼ (A1 × B1).
+Proof.
+  move=> /univ_mem_inversion 𝒟 /univ_mem_inversion ℰ.
+  apply: univ_mem_formation.
+  by apply: prod_formation.
+Qed.
+
 Theorem prod_intro {n A B e00 e01 e10 e11} :
   τ[n] ⊧ A ∋ e00 ∼ e10
   → τ[n] ⊧ B ∋ e01 ∼ e11
@@ -163,7 +204,6 @@ Theorem prod_intro {n A B e00 e01 e10 e11} :
 Proof.
   Tac.prove.
 Qed.
-
 
 Lemma TowerChoice {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
   (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
