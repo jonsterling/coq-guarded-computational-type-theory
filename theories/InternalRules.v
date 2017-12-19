@@ -176,12 +176,11 @@ Lemma univ_mem_formation {i A0 A1} :
 Proof.
   move=> 𝒟.
   apply: (@eq_mem_from_level (S i)).
-  eexists; split.
+  esplit; split.
   - rewrite /Tower.t -Clo.roll.
     apply: Sig.init.
     Spine.simplify.
-    exists i; repeat T.split; eauto.
-    reflexivity.
+    exists i; repeat split; eauto.
   - eauto.
 Qed.
 
