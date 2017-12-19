@@ -222,7 +222,7 @@ Proof.
 Qed.
 
 Theorem isect_formation {n B0 B1} :
-  (∀ κ, τ[n] ⊧ (B1 κ) ∼ (B0 κ))
+  (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
   → τ[n] ⊧ ⋂ B0 ∼ ⋂ B1.
 Proof.
   move=> 𝒟.
