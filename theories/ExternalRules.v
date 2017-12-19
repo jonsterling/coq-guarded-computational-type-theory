@@ -431,12 +431,30 @@ Module Examples.
   Example Ones {Λ Ψ} : ETm.t Λ Ψ :=
     μ{ ⟨ETm.tt, @0⟩ }%etm.
 
+
+  Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {k} :
+    ⟦ Λ ∣ Γ ≫ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
+  Proof.
+    Print General.
+    apply: (General.conv_ty (𝟚 × ▶[k] BitStream k)%etm).
+    - move=> ? ?; apply: fix_unfold; eauto.
+    - apply: (General.univ_reflection 0).
+      apply: Prod.univ_eq.
+      + apply: Bool.univ_eq.
+      + apply: Later.univ_eq.
+        apply: Later.intro.
+        * apply: BitStream_wf.
+        * apply: General.univ_formation.
+  Qed.
+
   Example Ones_wf_guarded `{Γ : ECtx.t Λ Ψ} {k} :
     ⟦ Λ ∣ Γ ≫ BitStream k ∋ Ones ≐ Ones ⟧.
   Proof.
     apply: (Later.induction k).
-    apply: (General.conv_mem_ty (𝟚 × ▶[k] BitStream k)%etm).
-    - move=> ? ?; apply: fix_unfold.
+    Print General.
+    apply: General.replace_ty_in_mem.
+    - apply: General.ty_eq_symm.
+      apply: BitStream_unfold.
     - apply: Prod.intro.
       + apply: Bool.tt_equality.
       + apply: General.hypothesis.
@@ -456,20 +474,6 @@ Module Examples.
     apply: BitStream_wf.
   Qed.
 
-  Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {k} :
-    ⟦ Λ ∣ Γ ≫ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
-  Proof.
-    Print General.
-    apply: (General.conv_ty (𝟚 × ▶[k] BitStream k)%etm).
-    - move=> ? ?; apply: fix_unfold; eauto.
-    - apply: (General.univ_reflection 0).
-      apply: Prod.univ_eq.
-      + apply: Bool.univ_eq.
-      + apply: Later.univ_eq.
-        apply: Later.intro.
-        * apply: BitStream_wf.
-        * apply: General.univ_formation.
-  Qed.
 
   Example BitSeq_unfold `{Γ : ECtx.t Λ Ψ} :
     ⟦ Λ ∣ Γ ≫ BitSeq ≐ (𝟚 × BitSeq) ⟧.
