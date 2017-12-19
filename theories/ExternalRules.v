@@ -8,14 +8,6 @@ From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent Inter
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
-Module Unit.
-  Theorem ax_equality Λ Ψ (Γ : ECtx.t Λ Ψ) :
-    ⟦ Λ ∣ Γ ≫ 𝟙 ∋ ★ ≐ ★ ⟧.
-  Proof.
-    move=> ? ? ? ? ? ?.
-    apply: IR.unit_ax_equality.
-  Qed.
-End Unit.
 
 Module Conversion.
   Module Structural.
@@ -84,8 +76,8 @@ Module General.
 
   Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00 e01 e1} :
     ⟦ Λ ∣ Ψ ⊢ e00 ≃ e01 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e01 ≐ e1 ⟧.
+    → ⟦ Λ ∣ Γ ≫ A ∋ e01 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
     apply: IR.mem_eq_conv.
@@ -94,10 +86,10 @@ Module General.
     - apply: ℰ; eauto.
   Qed.
 
-  Theorem conv_mem_ty `{Γ : ECtx.t Λ Ψ} {A0 A1 e0 e1} :
+  Theorem conv_mem_ty `{Γ : ECtx.t Λ Ψ} A1 {A0 e0 e1} :
     ⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A0 ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A1 ∋ e0 ≐ e1 ⟧.
+    → ⟦ Λ ∣ Γ ≫ A1 ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ? ? ? ? ?.
     apply: IR.mem_eq_conv_ty.
@@ -175,12 +167,12 @@ Module General.
   Qed.
 
 
-  Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} {A' e0' e1'} A e0 e1 :
+  Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} A' e0' e1' {A e0 e1} :
     ⟦ Λ ∣ Ψ ⊢ A ≃ A' ⟧
     → ⟦ Λ ∣ Ψ ⊢ e0 ≃ e0' ⟧
     → ⟦ Λ ∣ Ψ ⊢ e1 ≃ e1' ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A' ∋ e0' ≐ e1' ⟧.
+    → ⟦ Λ ∣ Γ ≫ A' ∋ e0' ≐ e1' ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> *.
     apply: conv_mem_ty; eauto.
@@ -189,7 +181,35 @@ Module General.
     apply: conv_mem; eauto.
     by apply: mem_eq_symm.
   Qed.
+
+  Theorem univ_formation `{Γ : ECtx.t Λ Ψ} {i} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ≐ 𝕌[i] ⟧.
+  Proof.
+    move=> ? ? ? ? ? //=.
+    apply: IR.univ_formation.
+  Qed.
+
+  Theorem univ_reflection i `{Γ : ECtx.t Λ Ψ} {A B} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ B ⟧
+    → ⟦ Λ ∣ Γ ≫ A ≐ B ⟧.
+  Proof.
+    move=> 𝒟 ? ? ? ? ?.
+    apply: IR.eq_ty_from_level.
+    apply: IR.univ_mem_inversion.
+    apply: 𝒟; auto.
+    apply: univ_formation; auto.
+  Qed.
 End General.
+
+Module Unit.
+  Theorem ax_equality `{Γ : ECtx.t Λ Ψ} :
+    ⟦ Λ ∣ Γ ≫ 𝟙 ∋ ★ ≐ ★ ⟧.
+  Proof.
+    move=> ? ? ? ? ? ?.
+    apply: IR.unit_ax_equality.
+  Qed.
+End Unit.
+
 
 Module Bool.
   Theorem univ_eq `{Γ : ECtx.t Λ Ψ} {i} :
@@ -199,7 +219,16 @@ Module Bool.
     apply: IR.univ_mem_formation.
     apply: IR.bool_formation_lvl.
   Qed.
+
+  Theorem tt_equality `{Γ : ECtx.t Λ Ψ} :
+    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ ETm.tt ≐ ETm.tt ⟧.
+  Proof.
+    move=> ? ? ? ? ? ? //=.
+    apply: IR.bool_tt_equality.
+  Qed.
 End Bool.
+
+
 
 Module Prod.
   Theorem univ_eq `{Γ : ECtx.t Λ Ψ} {i A0 A1 B0 B1} :
@@ -211,6 +240,19 @@ Module Prod.
     apply: IR.prod_formation_univ.
     - by apply: 𝒟.
     - by apply: ℰ.
+  Qed.
+
+  Theorem intro `{Γ : ECtx.t Λ Ψ} {A B e00 e01 e10 e11} :
+    ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e10 ⟧
+    → ⟦ Λ ∣ Γ ≫ B ∋ e01 ≐ e11 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ≫ B ≐ B ⟧
+    → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨e00, e01⟩ ≐ ⟨e10, e11⟩ ⟧.
+  Proof.
+    move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
+    apply: IR.prod_intro.
+    apply: 𝒟; eauto.
+    apply: ℰ; eauto.
   Qed.
 End Prod.
 
@@ -242,17 +284,25 @@ Module Isect.
 End Isect.
 
 Module Later.
-  Theorem formation `{Γ : ECtx.t Λ Ψ} {k i A0 A1} :
+  Theorem formation `{Γ : ECtx.t Λ Ψ} {k A0 A1} :
+    ⟦ Λ ∣ Γ ≫ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ ▶[k] A0 ≐ ▶[k] A1 ⟧.
+  Proof.
+    move=> 𝒟 ? ? ? ? ? //=.
+    apply: IR.later_formation.
+    apply: Later.next.
+    by apply: 𝒟.
+  Qed.
+
+  Theorem univ_eq `{Γ : ECtx.t Λ Ψ} {k i A0 A1} :
     ⟦ Λ ∣ Γ ≫ ▶[k] 𝕌[i] ∋ A0 ≐ A1 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ▶[k] A0 ≐ ▶[k] A1 ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ? ?; simpl.
     apply: IR.later_mem_univ.
     apply: 𝒟; eauto.
-    move=> ? ? ?; simpl.
-    apply: IR.later_formation.
-    apply: Later.next.
-    apply: IR.univ_formation.
+    apply: formation; auto.
+    apply: General.univ_formation.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} {k A e0 e1} :
@@ -319,7 +369,7 @@ Module Examples.
     apply: (Later.induction k).
     apply: Prod.univ_eq.
     - apply: Bool.univ_eq.
-    - apply: Later.formation.
+    - apply: Later.univ_eq.
       apply: General.hypothesis.
   Qed.
 
@@ -336,14 +386,17 @@ Module Examples.
   Example Ones_wf `{Γ : ECtx.t Λ Ψ} {k} :
     ⟦ Λ ∣ Γ ≫ BitStream k ∋ Ones ≐ Ones ⟧.
   Proof.
-    rewrite /BitStream /Ones.
-    apply: (General.mem_conv_all (𝟚 × ▶[k] BitStream k)%etm ⟨ ETm.tt, Ones ⟩%etm ⟨ ETm.tt, Ones ⟩%etm).
-    - apply: Conversion.Structural.symm => ? ?.
-      by apply: fix_unfold.
-    - apply: Conversion.Structural.symm => ? ?.
-      by apply: fix_unfold.
-    - apply: Conversion.Structural.symm => ? ?.
-      by apply: fix_unfold.
-    -
-  Abort.
+    apply: (Later.induction k).
+    apply: (General.conv_mem_ty (𝟚 × ▶[k] BitStream k)%etm).
+    - move=> ? ?; apply: fix_unfold.
+    - apply: Prod.intro.
+      + apply: Bool.tt_equality.
+      + apply: General.hypothesis.
+      + apply: (General.univ_reflection 0).
+        apply: Bool.univ_eq.
+      + apply: Later.formation.
+        apply: (General.univ_reflection 0).
+        apply: BitStream_wf.
+  Qed.
+
 End Examples.

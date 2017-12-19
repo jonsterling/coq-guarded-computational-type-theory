@@ -124,6 +124,18 @@ Proof.
   unshelve Tac.prove; constructor.
 Qed.
 
+Theorem bool_tt_equality :
+  τω ⊧ 𝟚 ∋ Tm.tt ∼ Tm.tt.
+Proof.
+  unshelve Tac.prove; constructor.
+Qed.
+
+Theorem bool_ff_equality :
+  τω ⊧ 𝟚 ∋ Tm.ff ∼ Tm.ff.
+Proof.
+  unshelve Tac.prove; constructor.
+Qed.
+
 Theorem bool_formation_lvl {i} :
   τ[i] ⊧ 𝟚 ∼ 𝟚.
 Proof.
