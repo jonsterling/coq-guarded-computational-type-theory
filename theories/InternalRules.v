@@ -124,6 +124,12 @@ Proof.
   unshelve Tac.prove; constructor.
 Qed.
 
+Theorem bool_formation_lvl {i} :
+  τ[i] ⊧ 𝟚 ∼ 𝟚.
+Proof.
+  Tac.prove.
+Qed.
+
 Lemma univ_formation_S {n : nat} :
   τ[S n] ⊧ 𝕌[n] ∼ 𝕌[n].
 Proof.
