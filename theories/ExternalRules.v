@@ -347,9 +347,6 @@ Module Isect.
       by rewrite -interp_tm_clk_naturality.
   Qed.
 
-
-  (* TODO: this proof is very poorly-arranged, and has a lot of duplication.
-     Figure out how to break it up into lemmas. *)
   Theorem cartesian `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
     ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
     → ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
@@ -357,85 +354,23 @@ Module Isect.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
     apply: IR.univ_mem_formation.
-    apply: IR.isect_preserves_products => κ.
-    - apply: IR.univ_mem_inversion.
-      move: {𝒟} (𝒟 (κ ∷ κs)); simplify_eqs => 𝒟.
-      suff:
-        τω ⊧ 𝕌[ i] ∋ (⟦ A0 ⟧ κ ∷ κs) ⫽ γ0 ∼ ((⟦ A1 ⟧ κ ∷ κs) ⫽ γ0)
-        ∧ τω ⊧ 𝕌[ i] ∋ (⟦ A0 ⟧ κ ∷ κs) ⫽ γ1 ∼ ((⟦ A1 ⟧ κ ∷ κs) ⫽ γ0).
-      + case=> ℋ0 ℋ1.
-        apply: IR.mem_eq_trans.
-        * apply: IR.mem_eq_symm; eassumption.
-        * T.efwd 𝒟.
-          ** assumption.
-          ** T.use γ01; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-          ** move=> ? ? ?.
-             apply: IR.univ_formation.
-          ** T.use ℱ; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-      + split.
-        * T.efwd 𝒟; eauto.
-          ** apply: IR.env_eq_refl_left; eauto.
-             T.use γ01; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-          ** move=> ? ? ?.
-             apply: IR.univ_formation.
-          ** T.use ℱ; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-        * T.efwd 𝒟; eauto.
-          ** apply: IR.env_eq_symm; eauto.
-             T.use γ01; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-          ** move=> ? ? ?.
-             apply: IR.univ_formation.
-          ** T.use ℱ; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-    - apply: IR.univ_mem_inversion.
-      move: {ℰ} (ℰ (κ ∷ κs)); simplify_eqs => ℰ.
-      suff:
-        τω ⊧ 𝕌[ i] ∋ (⟦ B0 ⟧ κ ∷ κs) ⫽ γ0 ∼ ((⟦ B1 ⟧ κ ∷ κs) ⫽ γ0)
-        ∧ τω ⊧ 𝕌[ i] ∋ (⟦ B0 ⟧ κ ∷ κs) ⫽ γ1 ∼ ((⟦ B1 ⟧ κ ∷ κs) ⫽ γ0).
-      + case=> ℋ0 ℋ1.
-        apply: IR.mem_eq_trans.
-        * apply: IR.mem_eq_symm; eassumption.
-        * T.efwd ℰ.
-          ** assumption.
-          ** T.use γ01; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-          ** move=> ? ? ?.
-             apply: IR.univ_formation.
-          ** T.use ℱ; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-      + split.
-        * T.efwd ℰ; eauto.
-          ** apply: IR.env_eq_refl_left; eauto.
-             T.use γ01; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-          ** move=> ? ? ?.
-             apply: IR.univ_formation.
-          ** T.use ℱ; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-        * T.efwd ℰ; eauto.
-          ** apply: IR.env_eq_symm; eauto.
-             T.use γ01; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
-          ** move=> ? ? ?.
-             apply: IR.univ_formation.
-          ** T.use ℱ; f_equal.
-             rewrite -interp_ctx_clk_naturality /compose.
-             by simplify_eqs.
+    apply: IR.isect_preserves_products => κ;
+    apply: IR.univ_mem_inversion;
+    [ specialize (𝒟 (κ ∷ κs));
+      have := (IR.functionality_square (𝒟 _ _))
+    | specialize (ℰ (κ ∷ κs));
+      have := (IR.functionality_square (ℰ _ _))
+    ];
+    rewrite -interp_ctx_clk_naturality /compose; simplify_eqs;
+    move=> ℋ; edestruct ℋ as [ℋ0 [ℋ1 ℋ2]]; eauto.
+
+    - apply: IR.mem_eq_trans.
+      + apply: IR.mem_eq_symm; eauto.
+      + eauto.
+
+    - apply: IR.mem_eq_trans.
+      + apply: IR.mem_eq_symm; eauto.
+      + eauto.
   Qed.
 End Isect.
 
