@@ -783,6 +783,30 @@ Proof.
       eauto.
 Qed.
 
+
+Section FunctionalitySquare.
+  Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : Tm.Sub.t Ψ 0}.
+
+  Lemma functionality_square :
+    τω ⊧ Γ ≫ A ∋ e0 ∼ e1
+    → τω ⊧ Γ ctx
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ1)
+      ∧ τω ⊧ A ⫽ γ1 ∋ (e0 ⫽ γ1) ∼ (e1 ⫽ γ1)
+      ∧ τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ0).
+  Proof.
+    move=> 𝒟 ℰ γ01.
+    repeat T.split.
+    - by apply: 𝒟.
+    - apply: 𝒟.
+      apply: env_eq_refl_left; auto.
+      apply: env_eq_symm; eauto.
+    - apply: 𝒟.
+      apply: env_eq_refl_left; eauto.
+  Qed.
+End FunctionalitySquare.
+
+
 Theorem later_force {i A B} :
   (τ[i] ⊧ ⋂ A ∼ ⋂ B)
   → τ[i] ⊧ ⋂[κ] ▶[κ] A κ ∼ ⋂[κ] B κ.
@@ -836,6 +860,7 @@ Proof.
     + T.use γ01; Term.simplify_subst.
     + T.use γ01'; Term.simplify_subst.
 Qed.
+
 
 Definition quote_bool (b : bool) : Tm.t 0 :=
   match b with
