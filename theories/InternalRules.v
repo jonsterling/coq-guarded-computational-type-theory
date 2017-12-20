@@ -356,9 +356,9 @@ Proof.
       * rewrite cext_equiv_cext_transparent in H.
         case: LocalClock => κ₀ _.
         case: (H κ₀) => //= [v0 [v1 [? [? ?]]]].
+
         econstructor; eauto.
         destruct_prod_val.
-
         constructor => κ;
         case: (H κ) => //= [v0' [v1' [? [? ?]]]];
         destruct_prod_val;
