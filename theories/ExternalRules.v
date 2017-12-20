@@ -271,13 +271,12 @@ Module Isect.
     → ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A ≐ A ⟧
     → ⟦ Λ ∣ Γ ≫ ⋂ A ∋ e0 ≐ e1 ⟧.
   Proof.
-    move=> 𝒟 ℱ κs Γctx ℰ γ0 γ1 γ01 //=.
+    move=> 𝒟 ℱ κs ? ℰ ? ? ? //=.
     apply: IR.isect_intro.
     - apply: IR.eq_ty_from_level.
       apply: IR.univ_mem_inversion.
       apply: univ_eq; eauto.
-      + move=> ? ? ?.
-        apply: IR.univ_formation.
+      + move=> ? ? ?; apply: IR.univ_formation.
       + apply: IR.env_eq_refl_left; eauto.
     - move=> κ.
       move: {𝒟} (𝒟 (κ ∷ κs)); rewrite -interp_ctx_clk_naturality -!interp_tm_clk_naturality /compose; simplify_eqs => 𝒟.
@@ -286,8 +285,7 @@ Module Isect.
       apply: IR.eq_ty_from_level.
       apply: IR.univ_mem_inversion.
       apply: ℱ; rewrite -interp_ctx_clk_naturality /compose; simplify_eqs; eauto.
-      move=> ? ? ?.
-      apply: IR.univ_formation.
+      move=> ? ? ?; apply: IR.univ_formation.
   Qed.
 
   Theorem irrelevance `{Γ : ECtx.t Λ Ψ} {i A} :
