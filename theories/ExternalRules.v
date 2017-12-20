@@ -61,20 +61,6 @@ Module General.
     simplify_eqs.
     by rewrite -interp_tm_var_naturality.
   Qed.
-(*
-  Theorem conv_ty `{Γ : ECtx.t Λ Ψ} A1 {A0 B} :
-    ⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A1 ≐ B ⟧
-    → ⟦ Λ ∣ Γ ≫ A0 ≐ B ⟧.
-  Proof.
-    move=> 𝒟 [n ℰ]. exists n.
-    move=> κs ℱ γ0 γ1 γ01.
-    apply: IR.ty_eq_conv.
-    - eauto.
-    - move=> ?; edestruct 𝒟; eauto.
-    - apply: ℰ; eauto.
-  Qed.
-*)
 
   Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00} e01 {e1} :
     ⟦ Λ ∣ Ψ ⊢ e00 ≃ e01 ⟧
