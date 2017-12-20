@@ -294,9 +294,6 @@ Proof.
     eauto.
 Qed.
 
-Definition cext_nonunique (R : rel) (es : Tm.t 0 × Tm.t 0) :=
-  exists (vs : Tm.t 0 × Tm.t 0), π₁ es ⇓ π₁ vs ∧ π₂ es ⇓ π₂ vs ∧ R vs.
-
 Definition cext_unique (R : rel) (es : Tm.t 0 × Tm.t 0) :=
   exists! (vs : Tm.t 0 × Tm.t 0), π₁ es ⇓ π₁ vs ∧ π₂ es ⇓ π₂ vs ∧ R vs.
 
@@ -313,19 +310,6 @@ Proof.
   Term.evals_to_eq; f_equal; auto.
 Qed.
 
-Lemma cext_equiv_cext_nonunique :
-  Connective.cext = cext_nonunique.
-Proof.
-  T.eqcd => R.
-  T.eqcd; case => e0 e1.
-  apply: propositional_extensionality; split.
-  - move=> 𝒞.
-    dependent destruction 𝒞.
-    exists (v0, v1); eauto.
-  - move=> //= [[v0 v1] //= [? [? ?]]].
-    econstructor; eauto.
-Qed.
-
 Lemma cext_equiv_cext_unique :
   Connective.cext = cext_unique.
 Proof.
@@ -337,6 +321,14 @@ Proof.
     econstructor; eauto.
 Qed.
 
+Local Ltac ts_flex_rel :=
+  match goal with
+  | |- τ[_] (_, ?R) =>
+    let R' := fresh in
+    evar (R' : rel);
+    (suff: R = R'); first T.rewrite_; rewrite /R'; clear R'
+  end.
+
 (* holy jesus! *)
 Theorem isect_preserves_products {n A0 B0 A1 B1} :
   (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
@@ -346,72 +338,37 @@ Proof.
   move=> 𝒟 ℰ.
   case: (TowerChoiceTyEq 𝒟) => S𝒟 𝒟'.
   case: (TowerChoiceTyEq ℰ) => Sℰ ℰ'.
-  exists (fun e0e1 => ∀ κ, Connective.cext (Connective.prod_val (S𝒟 κ) (Sℰ κ)) e0e1).
-  split.
-  - rewrite /Tower.t -Clo.roll.
-    apply: Sig.conn; eauto.
-    apply: Connective.has_isect.
-    move=> κ.
+  esplit; split.
+
+  - Tac.prove; T.specialize_hyps; T.destruct_conjs.
     rewrite /Tower.t -Clo.roll.
-    apply: Sig.conn; eauto.
-    T.specialize_hyps; T.destruct_conjs.
-    apply: Connective.has_prod; eauto.
-  - rewrite /Tower.t -Clo.roll.
-    apply: Sig.conn; eauto.
-    replace
-      (fun e0e1 => ∀ κ : 𝕂, Connective.cext (Connective.prod_val (S𝒟 κ) (Sℰ κ)) e0e1)
-      with
-        (Connective.cext
-           (Connective.prod_val
-              (fun e0e1 => ∀ κ, S𝒟 κ e0e1)
-              (fun e0e1 => ∀ κ, Sℰ κ e0e1))).
-    + apply: Connective.has_prod;
-      rewrite /Tower.t -Clo.roll;
-      apply: Sig.conn; eauto;
-      apply: Connective.has_isect => κ;
-      by [T.specialize_hyps; T.destruct_conjs].
+    Tac.prove.
+
+  - ts_flex_rel.
+    + Tac.prove; rewrite /Tower.t -Clo.roll; Tac.prove;
+      T.specialize_hyps; T.destruct_conjs; Tac.prove.
+
     + T.eqcd; case => e0 e1.
       apply: propositional_extensionality; split.
       * move=> H.
-        dependent destruction H.
-        dependent destruction H1.
-        move=> κ; eauto.
-      * move=> H.
-        rewrite cext_equiv_cext_nonunique.
         rewrite cext_equiv_cext_unique in H.
-        rewrite /cext_nonunique //=.
-        rewrite /cext_unique in H.
         case: (unique_choice H) => H0 H1.
         case: LocalClock => κ₀ _.
         case: (H1 κ₀) => ? [? prod_val].
         dependent destruction prod_val.
-        exists (H0 κ₀); repeat T.split; eauto.
-        rewrite -x.
-        constructor.
-        ** move=> κ.
-           case: (H1 κ) => XX [YY prod_val'].
-           simpl in *.
-           Term.evals_to_eq.
-           dependent destruction prod_val'.
-           T.use H4; repeat f_equal.
-           *** destruct x; simpl in *.
-               destruct x0; simpl in *.
-               by T.destruct_eqs.
-           *** destruct x; simpl in *.
-               destruct x0; simpl in *.
-               by T.destruct_eqs.
-        ** move=> κ.
-           case: (H1 κ) => XX [YY prod_val'].
-           simpl in *.
-           Term.evals_to_eq.
-           dependent destruction prod_val'.
-           T.use H5; repeat f_equal.
-           *** destruct x; simpl in *.
-               destruct x0; simpl in *.
-               by T.destruct_eqs.
-           *** destruct x; simpl in *.
-               destruct x0; simpl in *.
-               by T.destruct_eqs.
+        econstructor; repeat T.split; eauto.
+        rewrite -x //=.
+        constructor => κ;
+        case: (H1 κ) => //= ? [? prod_val'];
+        Term.evals_to_eq;
+        dependent destruction prod_val';
+        [T.use H4 | T.use H5]; repeat f_equal;
+        destruct x; destruct x0;
+        by T.destruct_eqs.
+      * move=> H.
+        dependent destruction H.
+        dependent destruction H1.
+        move=> κ; eauto.
 Qed.
 
 (* The following theorem doesn't appear to be true:
