@@ -294,30 +294,27 @@ Proof.
     eauto.
 Qed.
 
-Definition cext_unique (R : rel) (es : Tm.t 0 × Tm.t 0) :=
-  exists! (vs : Tm.t 0 × Tm.t 0), π₁ es ⇓ π₁ vs ∧ π₂ es ⇓ π₂ vs ∧ R vs.
+Definition cext_transparent (R : rel) (es : Tm.t 0 × Tm.t 0) :=
+  exists v0 v1, π₁ es ⇓ v0 ∧ π₂ es ⇓ v1 ∧ R (v0, v1).
 
-Theorem cext_implies_cext_unique {R es} :
+Theorem cext_implies_cext_transparent {R es} :
   Connective.cext R es
-  → cext_unique R es.
+  → cext_transparent R es.
 Proof.
   case: es => e0 e1; move=> 𝒞.
   dependent destruction 𝒞.
-  exists (v0, v1); simpl.
-  rewrite /unique.
-  repeat T.split; auto.
-  move=> [v0' v1'] //= [? [? ?]].
-  Term.evals_to_eq; f_equal; auto.
+  exists v0, v1; eauto.
 Qed.
 
-Lemma cext_equiv_cext_unique :
-  Connective.cext = cext_unique.
+Lemma cext_equiv_cext_transparent :
+  Connective.cext = cext_transparent.
 Proof.
   T.eqcd => R.
   T.eqcd; case => e0 e1.
   apply: propositional_extensionality; split.
-  - apply: cext_implies_cext_unique.
-  - move=> //= [[v0 v1] [[? [? ?]] _]].
+  - apply: cext_implies_cext_transparent.
+  - move=> //= [v0 [v1 ?]].
+    T.destruct_conjs.
     econstructor; eauto.
 Qed.
 
@@ -327,6 +324,11 @@ Local Ltac ts_flex_rel :=
     let R' := fresh in
     evar (R' : rel);
     (suff: R = R'); first T.rewrite_; rewrite /R'; clear R'
+  end.
+
+Local Ltac destruct_prod_val :=
+  match goal with
+  | H : Connective.prod_val _ _ _ |- _ => dependent destruction H
   end.
 
 (* holy jesus! *)
@@ -349,26 +351,23 @@ Proof.
       T.specialize_hyps; T.destruct_conjs; Tac.prove.
 
     + T.eqcd; case => e0 e1.
-      apply: propositional_extensionality; split.
-      * move=> H.
-        rewrite cext_equiv_cext_unique in H.
-        case: (unique_choice H) => H0 H1.
+      apply: propositional_extensionality; split => H.
+
+      * rewrite cext_equiv_cext_transparent in H.
         case: LocalClock => κ₀ _.
-        case: (H1 κ₀) => ? [? prod_val].
-        dependent destruction prod_val.
-        econstructor; repeat T.split; eauto.
-        rewrite -x //=.
+        case: (H κ₀) => //= [v0 [v1 [? [? ?]]]].
+        econstructor; eauto.
+        destruct_prod_val.
+
         constructor => κ;
-        case: (H1 κ) => //= ? [? prod_val'];
+        case: (H κ) => //= [v0' [v1' [? [? ?]]]];
+        destruct_prod_val;
         Term.evals_to_eq;
-        dependent destruction prod_val';
-        [T.use H4 | T.use H5]; repeat f_equal;
-        destruct x; destruct x0;
         by T.destruct_eqs.
-      * move=> H.
-        dependent destruction H.
-        dependent destruction H1.
-        move=> κ; eauto.
+
+      * Connective.destruct_cext.
+        repeat destruct_prod_val;
+        eauto.
 Qed.
 
 (* The following theorem doesn't appear to be true:
