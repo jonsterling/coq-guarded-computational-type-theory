@@ -148,3 +148,9 @@ Ltac efwd H :=
     replace ty with ty0 in H;
     [idtac | by [auto]]
   end.
+
+
+
+Ltac efwd_thru H :=
+  efwd H;
+  [use H; repeat f_equal; eauto | eauto..].

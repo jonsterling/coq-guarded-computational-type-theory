@@ -41,6 +41,26 @@ Module Tac.
     | |- ?A ⇓ ?Av => eauto
     end.
 
+  Ltac destruct_prod_val :=
+    match goal with
+    | H : Connective.prod_val _ _ _ |- _ => dependent destruction H
+    end.
+
+
+  (* When you need to show 'τ[n] (A, R)' but R is not of the right
+   shape.  This tactic will replace R with a unification variable,
+   which allows you to make progress in your proof; then, you have to
+   prove hat R was is the same as whatever the unification variable
+   got instantiated to. *)
+
+  Ltac ts_flex_rel :=
+    match goal with
+    | |- τ[_] (_, ?R) =>
+      let R' := fresh in
+      evar (R' : rel);
+      (suff: R = R'); first T.rewrite_; rewrite /R'; clear R'
+    end.
+
   Ltac prove_step :=
     try by [eassumption];
     match goal with
@@ -67,367 +87,611 @@ Module Tac.
   Ltac prove := repeat prove_step.
 End Tac.
 
+Module Level.
+  Theorem eq_ty_from_level n {A B} :
+    τ[n] ⊧ A ∼ B
+    → τω ⊧ A ∼ B.
+  Proof.
+    move=> [R [TA TB]].
+    eexists.
+    split.
+    + eexists; eauto.
+    + eexists; eauto.
+  Qed.
 
-Theorem eq_ty_from_level {n A B} :
-  τ[n] ⊧ A ∼ B
-  → τω ⊧ A ∼ B.
-Proof.
-  move=> [R [TA TB]].
-  eexists.
-  split.
-  + eexists; eauto.
-  + eexists; eauto.
-Qed.
+  Theorem eq_ty_to_level {A B} :
+    τω ⊧ A ∼ B
+    → ∃ n, τ[n] ⊧ A ∼ B.
+  Proof.
+    move=> [R [[n𝒟 𝒟] [nℰ ℰ]]].
+    exists (n𝒟 + nℰ), R.
+    T.split;
+    (apply: Tower.monotonicity; last by [eauto]); omega.
+  Qed.
 
-Theorem eq_ty_to_level {A B} :
-  τω ⊧ A ∼ B
-  → ∃ n, τ[n] ⊧ A ∼ B.
-Proof.
-  move=> [R [[n𝒟 𝒟] [nℰ ℰ]]].
-  exists (n𝒟 + nℰ), R.
-  T.split;
-  (apply: Tower.monotonicity; last by [eauto]); omega.
-Qed.
+  Theorem eq_mem_from_level n {A e1 e2} :
+    τ[n] ⊧ A ∋ e1 ∼ e2
+    → τω ⊧ A ∋ e1 ∼ e2.
+  Proof.
+    move=> [R [TA e1e2]].
+    eexists.
+    split.
+    + eexists; eauto.
+    + eauto.
+  Qed.
 
-Theorem eq_mem_from_level n {A e1 e2} :
-  τ[n] ⊧ A ∋ e1 ∼ e2
-  → τω ⊧ A ∋ e1 ∼ e2.
-Proof.
-  move=> [R [TA e1e2]].
-  eexists.
-  split.
-  + eexists; eauto.
-  + eauto.
-Qed.
+  Theorem eq_mem_to_level {A e1 e2} :
+    τω ⊧ A ∋ e1 ∼ e2
+    → ∃ n, τ[n] ⊧ A ∋ e1 ∼ e2.
+  Proof.
+    move=> [R [[n𝒟 𝒟] e1e2]].
+    exists n𝒟, R.
+    T.split.
+    - Tac.tower_mono.
+    - auto.
+  Qed.
 
-Theorem eq_mem_to_level {A e1 e2} :
-  τω ⊧ A ∋ e1 ∼ e2
-  → ∃ n, τ[n] ⊧ A ∋ e1 ∼ e2.
-Proof.
-  move=> [R [[n𝒟 𝒟] e1e2]].
-  exists n𝒟, R.
-  T.split.
-  - Tac.tower_mono.
-  - auto.
-Qed.
-
-
-Theorem unit_formation :
-  τω ⊧ 𝟙 ∼ 𝟙.
-Proof.
-  unshelve Tac.prove; constructor.
-Qed.
-
-Theorem unit_ax_equality :
-  τω ⊧ 𝟙 ∋ ★ ∼ ★.
-Proof.
-  unshelve Tac.prove; constructor.
-Qed.
-
-Theorem bool_tt_equality :
-  τω ⊧ 𝟚 ∋ Tm.tt ∼ Tm.tt.
-Proof.
-  unshelve Tac.prove; constructor.
-Qed.
-
-Theorem bool_ff_equality :
-  τω ⊧ 𝟚 ∋ Tm.ff ∼ Tm.ff.
-Proof.
-  unshelve Tac.prove; constructor.
-Qed.
-
-Theorem bool_formation_lvl {i} :
-  τ[i] ⊧ 𝟚 ∼ 𝟚.
-Proof.
-  Tac.prove.
-Qed.
-
-Lemma univ_formation_S {n : nat} :
-  τ[S n] ⊧ 𝕌[n] ∼ 𝕌[n].
-Proof.
-  Tac.prove.
-Qed.
-
-Theorem univ_formation_lvl {n i : nat} :
-  i < n
-  → τ[n] ⊧ 𝕌[i] ∼ 𝕌[i].
-Proof.
-  case => [| j q ].
-  + apply: univ_formation_S.
-  + Tac.prove.
-Qed.
-
-Theorem univ_formation {i} :
-  τω ⊧ 𝕌[i] ∼ 𝕌[i].
-Proof.
-  apply: eq_ty_from_level.
-  apply: univ_formation_lvl.
-  eauto.
-Qed.
-
-Theorem prod_formation {n A0 A1 B0 B1} :
-  τ[n] ⊧ A0 ∼ A1
-  → τ[n] ⊧ B0 ∼ B1
-  → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
-Proof.
-  Tac.prove.
-Qed.
-
-Lemma univ_mem_inversion {i A0 A1} :
-  τω ⊧ 𝕌[i] ∋ A0 ∼ A1
-  → τ[i] ⊧ A0 ∼ A1.
-Proof.
-  move=> [R [[n 𝒟] ℰ]].
-  Tower.destruct_tower.
-  destruct n; Spine.simplify.
-  - contradiction.
-  - case: H => //= [j [p [ev spec]]].
-    Term.destruct_evals.
-    rewrite spec in ℰ.
-    case: ℰ => //= [S [ℰ1 ℰ2]].
-    by exists S.
-Qed.
-
-Lemma univ_mem_formation {i A0 A1} :
-  τ[i] ⊧ A0 ∼ A1
-  → τω ⊧ 𝕌[i] ∋ A0 ∼ A1.
-Proof.
-  move=> 𝒟.
-  apply: (eq_mem_from_level (S i)).
-  esplit; split.
-  - rewrite /Tower.t -Clo.roll.
-    apply: Sig.init.
-    Spine.simplify.
-    exists i; repeat split; eauto.
-  - eauto.
-Qed.
-
-
-Theorem prod_formation_univ {i A0 A1 B0 B1} :
-  τω ⊧ 𝕌[i] ∋ A0 ∼ A1
-  → τω ⊧ 𝕌[i] ∋ B0 ∼ B1
-  → τω ⊧ 𝕌[i] ∋ (A0 × B0) ∼ (A1 × B1).
-Proof.
-  move=> /univ_mem_inversion 𝒟 /univ_mem_inversion ℰ.
-  apply: univ_mem_formation.
-  by apply: prod_formation.
-Qed.
-
-Theorem prod_intro {A B e00 e01 e10 e11} :
-  τω ⊧ A ∋ e00 ∼ e10
-  → τω ⊧ B ∋ e01 ∼ e11
-  → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
-Proof.
-  move=> /eq_mem_to_level [n1 𝒟] /eq_mem_to_level [n2 ℰ].
-  apply: (eq_mem_from_level (n1 + n2)).
-  move: 𝒟 ℰ; Tac.prove.
-  - apply: Tower.monotonicity; last by [eauto]; omega.
-  - apply: Tower.monotonicity; last by [eauto]; omega.
-Qed.
-
-Lemma TowerChoiceTyEq {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
-  (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
-  → ∃ S, ∀ κ, τ[n] (A1 κ, S κ) ∧ τ[n] (A2 κ, S κ).
-Proof.
-  move=> X.
-  apply (@unique_choice _ _ (fun κ R => τ[n] (A1 κ, R) ∧ τ[n] (A2 κ, R))) => κ.
-  case: (X κ) => S T.
-  eexists; split; eauto => S' T';
-  apply: Tower.extensionality; eauto;
-  T.destruct_conjs; eauto.
-Qed.
-
-Lemma TowerChoiceMemEq {n : nat} {A : 𝕂 → Tm.t 0} {e0 e1} :
-  (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (e0, e1))
-  → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (e0, e1).
-Proof.
-  move=> X.
-  apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (e0, e1))) => κ.
-  case: (X κ) => S T.
-  eexists; split; eauto => S' T';
-  apply: Tower.extensionality; eauto;
-  T.destruct_conjs; eauto.
-Qed.
-
-Lemma TowerChoiceMemEqω {A : 𝕂 → Tm.t 0} {e0 e1} :
-  (∀ κ, ∃ Rκ, τω (A κ, Rκ) ∧ Rκ (e0, e1))
-  → ∃ S, ∀ κ, τω (A κ, S κ) ∧ S κ (e0, e1).
-Proof.
-  move=> X.
-  apply (@unique_choice _ _ (fun κ R => τω (A κ, R) ∧ R (e0, e1))) => κ.
-  case: (X κ) => S [T0 T1].
-  eexists; split; eauto => S' [T'0 T'1].
-  case: T0 => [n T0].
-  case: T'0 => [n' T'0].
-  apply: (@Tower.extensionality (n + n')).
-  - apply: Tower.monotonicity; last by [eauto].
-    omega.
-  - apply: Tower.monotonicity; last by [eauto].
-    omega.
-Qed.
-
-Theorem isect_formation {n B0 B1} :
-  (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
-  → τ[n] ⊧ ⋂ B0 ∼ ⋂ B1.
-Proof.
-  move=> 𝒟.
-  case: (TowerChoiceTyEq 𝒟) => S ℰ.
-  Tac.prove;
-  T.specialize_hyps;
-  rewrite /Tower.t in ℰ;
-  T.destruct_conjs; eauto.
-Qed.
-
-Theorem isect_intro_at_lvl {n A e0 e1} :
-  (∀ κ, τ[n] ⊧ (A κ) ∋ e0 ∼ e1)
-  → τ[n] ⊧ ⋂ A ∋ e0 ∼ e1.
-Proof.
-  move=> 𝒟.
-  case: (TowerChoiceMemEq 𝒟) => S ℰ.
-  Tac.prove.
-  - T.specialize_hyps;
-    rewrite /Tower.t in ℰ;
-    T.destruct_conjs; eauto.
-  - move=> κ.
-    T.specialize_hyps.
-    case: ℰ => [_ ?].
-    eauto.
-Qed.
-
-Lemma mem_eq_at_lvl_of_typehood {m n A B e0 e1} :
-  τ[n] ⊧ A ∋ e0 ∼ e1
-  → τ[m] ⊧ A ∼ B
-  → τ[m] ⊧ A ∋ e0 ∼ e1.
-Proof.
-  move=> [R [𝒟0 𝒟1]] [S [ℰ0 ℰ1]].
-  exists S; split; first by assumption.
-  replace S with R; first by assumption.
-  Tac.tower_ext; Tac.tower_mono.
-Qed.
-
-(* NOTE that the type equality premise is necessary for this rule to be true! *)
-Theorem isect_intro {A e0 e1} :
-  τω ⊧ (⋂ A) ∼ (⋂ A)
-  → (∀ κ, τω ⊧ (A κ) ∋ e0 ∼ e1)
-  → τω ⊧ ⋂ A ∋ e0 ∼ e1.
-Proof.
-  move=> /eq_ty_to_level [n𝒟 𝒟] ℰ.
-  apply: (eq_mem_from_level n𝒟).
-  apply: isect_intro_at_lvl => κ.
-  T.specialize_hyps.
-
-  case: {ℰ} (eq_mem_to_level ℰ) => nℰ ℰ.
-  apply: mem_eq_at_lvl_of_typehood; first by eassumption.
-
-  case: 𝒟 => R [𝒟 _].
-  Tower.destruct_tower.
-  eexists; split; T.specialize_hyps; eauto.
-Qed.
-
-
-Definition cext_transparent (R : rel) (es : Tm.t 0 × Tm.t 0) :=
-  exists v0 v1, π₁ es ⇓ v0 ∧ π₂ es ⇓ v1 ∧ R (v0, v1).
-
-Theorem cext_implies_cext_transparent {R es} :
-  Connective.cext R es
-  → cext_transparent R es.
-Proof.
-  case: es => e0 e1; move=> 𝒞.
-  dependent destruction 𝒞.
-  exists v0, v1; eauto.
-Qed.
-
-Lemma cext_equiv_cext_transparent :
-  Connective.cext = cext_transparent.
-Proof.
-  T.eqcd => R.
-  T.eqcd; case => e0 e1.
-  apply: propositional_extensionality; split.
-  - apply: cext_implies_cext_transparent.
-  - move=> //= [v0 [v1 ?]].
-    T.destruct_conjs.
-    econstructor; eauto.
-Qed.
-
-(* When you need to show 'τ[n] (A, R)' but R is not of the right
-   shape.  This tactic will replace R with a unification variable,
-   which allows you to make progress in your proof; then, you have to
-   prove hat R was is the same as whatever the unification variable
-   got instantiated to. *)
-
-Local Ltac ts_flex_rel :=
-  match goal with
-  | |- τ[_] (_, ?R) =>
-    let R' := fresh in
-    evar (R' : rel);
-    (suff: R = R'); first T.rewrite_; rewrite /R'; clear R'
-  end.
+  Lemma mem_eq_at_lvl_of_typehood {m n A B e0 e1} :
+    τ[n] ⊧ A ∋ e0 ∼ e1
+    → τ[m] ⊧ A ∼ B
+    → τ[m] ⊧ A ∋ e0 ∼ e1.
+  Proof.
+    move=> [R [𝒟0 𝒟1]] [S [ℰ0 ℰ1]].
+    exists S; split; first by assumption.
+    replace S with R; first by assumption.
+    Tac.tower_ext; Tac.tower_mono.
+  Qed.
+End Level.
 
 
 
-Local Ltac destruct_prod_val :=
-  match goal with
-  | H : Connective.prod_val _ _ _ |- _ => dependent destruction H
-  end.
-
-(* holy jesus! *)
-Theorem isect_preserves_products {n A0 B0 A1 B1} :
-  (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
-  → (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
-  → τ[n] ⊧ (⋂[κ] (A0 κ × B0 κ)) ∼ ((⋂ A1) × (⋂ B1)).
-Proof.
-  move=> 𝒟 ℰ.
-  case: (TowerChoiceTyEq 𝒟) => S𝒟 𝒟'.
-  case: (TowerChoiceTyEq ℰ) => Sℰ ℰ'.
-  esplit; split.
-
-  - Tac.prove; T.specialize_hyps; T.destruct_conjs.
-    rewrite /Tower.t -Clo.roll.
+Module General.
+  Theorem replace_ty_in_mem_eq {A0 A1 e1 e2} :
+    τω ⊧ A0 ∋ e1 ∼ e2
+    → τω ⊧ A0 ∼ A1
+    → τω ⊧ A1 ∋ e1 ∼ e2.
+  Proof.
     Tac.prove.
 
-  - ts_flex_rel.
-    + Tac.prove; rewrite /Tower.t -Clo.roll; Tac.prove;
-      T.specialize_hyps; T.destruct_conjs; Tac.prove.
+    match goal with
+    | _ : ?R0 ?X |- ?R1 ?X =>
+      replace R1 with R0; auto
+    end.
 
-    + T.eqcd; case => e0 e1.
-      apply: propositional_extensionality; split => H.
+    Tac.tower_ext; Tac.tower_mono.
+  Qed.
 
-      * rewrite cext_equiv_cext_transparent in H.
-        case: LocalClock => κ₀ _.
-        case: (H κ₀) => //= [v0 [v1 [? [? ?]]]].
+  Theorem ty_eq_refl_left {τ A B} :
+    τ ⊧ A ∼ B
+    → τ ⊧ A ∼ A.
+  Proof.
+    Tac.prove.
+  Qed.
 
-        econstructor; eauto.
-        destruct_prod_val.
-        constructor => κ;
-        case: (H κ) => //= [v0' [v1' [? [? ?]]]];
-        destruct_prod_val;
-        Term.evals_to_eq;
-        by T.destruct_eqs.
+  Theorem ty_eq_symm {τ A B} :
+    τ ⊧ A ∼ B
+    → τ ⊧ B ∼ A.
+  Proof.
+    Tac.prove.
+  Qed.
 
-      * Connective.destruct_cext.
-        repeat destruct_prod_val;
+  Theorem ty_eq_conv {τ A0 A1 B} :
+    TS.type_computational τ
+    → A0 ≼₀ A1
+    → τ ⊧ A0 ∼ B
+    → τ ⊧ A1 ∼ B.
+  Proof.
+    move=> H A01 [R [𝒟A0 𝒟B]].
+    exists R; split; auto.
+    apply: H.
+    - exact 𝒟A0.
+    - auto.
+  Qed.
+
+  Theorem mem_eq_conv_ty {τ A0 A1 e0 e1} :
+    TS.type_computational τ
+    → A0 ≼₀ A1
+    → τ ⊧ A0 ∋ e0 ∼ e1
+    → τ ⊧ A1 ∋ e0 ∼ e1.
+  Proof.
+    move=> H A01 [R [𝒟 e01]].
+    exists R; split; auto.
+    apply: H; eauto.
+  Qed.
+
+  Theorem mem_eq_symm {A e0 e1} :
+    τω ⊧ A ∋ e0 ∼ e1
+    → τω ⊧ A ∋ e1 ∼ e0.
+  Proof.
+    move=> [R [𝒟 ℰ]].
+    exists R; split; auto.
+    edestruct τω_cper_valued; eauto.
+    destruct per.
+      by apply: symmetric.
+  Qed.
+
+  Theorem mem_eq_conv {τ A e00 e01 e1} :
+    TS.cper_valued τ
+    → e00 ≼₀ e01
+    → τ ⊧ A ∋ e00 ∼ e1
+    → τ ⊧ A ∋ e01 ∼ e1.
+  Proof.
+    move=> H e00e01 [R [ℰ e00e1]].
+    exists R; split; auto.
+    case: (H A R); eauto.
+  Qed.
+
+
+  Theorem mem_eq_conv_both {A e00 e01 e10 e11} :
+    e00 ≼₀ e01
+    → e10 ≼₀ e11
+    → τω ⊧ A ∋ e00 ∼ e10
+    → τω ⊧ A ∋ e01 ∼ e11.
+  Proof.
+    move=> ? ? ?.
+    apply: mem_eq_conv; eauto.
+    apply: mem_eq_symm.
+    apply: mem_eq_conv; eauto.
+      by apply: mem_eq_symm.
+  Qed.
+
+  Theorem ty_eq_trans {A B C} :
+    τω ⊧ B ∼ C
+    → τω ⊧ A ∼ B
+    → τω ⊧ A ∼ C.
+  Proof.
+    move=> [R1 [[? 𝒟0] [? 𝒟1]]] [R2 [[? ℰ0] [? ℰ1]]].
+    exists R2; T.split.
+    - eexists; eauto.
+    - replace R2 with R1.
+      + eexists; eauto.
+      + symmetry; Tac.tower_ext; Tac.tower_mono.
+  Qed.
+
+  Theorem ty_eq_trans_at_lvl {i A B C} :
+    τ[i] ⊧ B ∼ C
+    → τ[i] ⊧ A ∼ B
+    → τ[i] ⊧ A ∼ C.
+  Proof.
+    move=> [R1 [𝒟0 𝒟1]] [R2 [ℰ0 ℰ1]].
+    exists R2; T.split; auto.
+    replace R2 with R1; auto.
+    symmetry.
+    apply: Tower.extensionality; eauto.
+  Qed.
+
+
+  Theorem mem_eq_trans {A e0 e1 e2} :
+    τω ⊧ A ∋ e1 ∼ e2
+    → τω ⊧ A ∋ e0 ∼ e1
+    → τω ⊧ A ∋ e0 ∼ e2.
+  Proof.
+    Tac.prove.
+    edestruct Tower.cper_valued.
+    - eauto.
+    - destruct per.
+      apply: transitive; eauto.
+      match goal with
+      | H : ?R1 (e1, e2) |- ?R2 (e1, e2) =>
+        replace R2 with R1; auto
+      end.
+      Tac.tower_ext; Tac.tower_mono.
+  Qed.
+
+  Theorem mem_eq_refl_left {A e0 e1} :
+    τω ⊧ A ∋ e0 ∼ e1
+    → τω ⊧ A ∋ e0 ∼ e0.
+  Proof.
+    move=> 𝒟.
+    apply: mem_eq_trans.
+    - apply: mem_eq_symm.
+      eassumption.
+    - eassumption.
+  Qed.
+
+  Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
+    τω ⊧ Γ ctx
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τω ⊧ Γ ∋⋆ γ1 ∼ γ0.
+  Proof.
+    move=> Γctx γ01.
+    induction Γ; eauto.
+    split; simplify_eqs.
+    - apply: IHΓ; eauto.
+      + by case: Γctx.
+      + by case: γ01.
+    - suff: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
+      + move=> [R [[? 𝒟0] [? 𝒟1]]].
+        case: γ01 => [_ [S [[n ℰ] γ01]]].
+        destruct (Tower.cper_valued ℰ) as [[symm _] _].
+        exists R; T.split.
+        * eexists; eauto.
+        * replace R with S.
+          ** by apply: symm.
+          ** Tac.tower_ext; Tac.tower_mono.
+
+      + case: Γctx => _ 𝒟.
+        apply: ty_eq_symm.
+        apply: 𝒟.
+          by case: γ01.
+  Qed.
+
+  Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
+    τω ⊧ Γ ctx
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
+  Proof.
+    move=> Γctx γ01.
+    induction Γ; eauto.
+    split; simplify_eqs.
+    - apply: IHΓ.
+      + by case: Γctx.
+      + by case: γ01; eauto.
+    - suff: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
+      + move=> [R [[? 𝒟0] [? 𝒟1]]].
+        case: γ01 => [_ [S [[n ℰ] γ01]]].
+        destruct (Tower.cper_valued ℰ) as [[symm trans] _].
+        exists R; T.split.
+        * eexists; eauto.
+        * move: ℰ γ01; simplify_eqs; move=> ℰ γ01.
+          replace R with S.
+          ** apply: trans; eauto.
+          ** Tac.tower_ext; Tac.tower_mono.
+      + case: Γctx => _ 𝒟.
+        apply: ty_eq_refl_left.
+        apply: 𝒟.
+        case: γ01.
         eauto.
-Qed.
-
-Theorem isect_irrelevance {i A B}:
-  τ[i] ⊧ A ∼ B
-  → τ[i] ⊧ A ∼ ⋂[_] B.
-Proof.
-  Tac.prove.
-
-  match goal with
-  | |- Connective.has _ _ (_, ?R) =>
-    replace R with (fun e0e1 => ∀ κ:𝕂, R e0e1)
-  end.
-
-  + Tac.prove.
-  + T.eqcd => ?.
-    apply: propositional_extensionality.
-    case: LocalClock => ? _.
-    T.split; eauto.
-Qed.
+  Qed.
 
 
+  Section FunctionalitySquare.
+    Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : Tm.Sub.t Ψ 0}.
+
+    Lemma functionality_square :
+      τω ⊧ Γ ≫ A ∋ e0 ∼ e1
+      → τω ⊧ Γ ctx
+      → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
+      → τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ1)
+        ∧ τω ⊧ A ⫽ γ1 ∋ (e0 ⫽ γ1) ∼ (e1 ⫽ γ1)
+        ∧ τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ0).
+    Proof.
+      move=> 𝒟 ℰ γ01.
+      repeat T.split.
+      - by apply: 𝒟.
+      - apply: 𝒟.
+        apply: env_eq_refl_left; auto.
+        apply: env_eq_symm; eauto.
+      - apply: 𝒟.
+        apply: env_eq_refl_left; eauto.
+    Qed.
+  End FunctionalitySquare.
+End General.
+
+Module Univ.
+  Lemma formation_S {n : nat} :
+    τ[S n] ⊧ 𝕌[n] ∼ 𝕌[n].
+  Proof.
+    Tac.prove.
+  Qed.
+
+  Theorem formation_lvl {n i : nat} :
+    i < n
+    → τ[n] ⊧ 𝕌[i] ∼ 𝕌[i].
+  Proof.
+    case => [| j q ].
+    + apply: formation_S.
+    + Tac.prove.
+  Qed.
+
+  Theorem formation_ω {i} :
+    τω ⊧ 𝕌[i] ∼ 𝕌[i].
+  Proof.
+    apply: Level.eq_ty_from_level.
+    apply: formation_lvl.
+    eauto.
+  Qed.
+
+  Lemma intro {i A0 A1} :
+    τ[i] ⊧ A0 ∼ A1
+    → τω ⊧ 𝕌[i] ∋ A0 ∼ A1.
+  Proof.
+    move=> 𝒟.
+    apply: (Level.eq_mem_from_level (S i)).
+    esplit; split.
+    - rewrite /Tower.t -Clo.roll.
+      apply: Sig.init.
+      Spine.simplify.
+      exists i; repeat split; eauto.
+    - eauto.
+  Qed.
+
+  Lemma inversion {i A0 A1} :
+    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+    → τ[i] ⊧ A0 ∼ A1.
+  Proof.
+    move=> [R [[n 𝒟] ℰ]].
+    Tower.destruct_tower.
+    destruct n; Spine.simplify.
+    - contradiction.
+    - case: H => //= [j [p [ev spec]]].
+      Term.destruct_evals.
+      rewrite spec in ℰ.
+      case: ℰ => //= [S [ℰ1 ℰ2]].
+      by exists S.
+  Qed.
+
+  Theorem spine_inversion {n i R} :
+    τ[n] (Tm.univ i, R)
+    → Spine.t n (Tm.univ i, R).
+  Proof.
+    move=> ?.
+    by Tower.destruct_tower.
+  Qed.
+
+  Ltac tac :=
+    simpl;
+    match goal with
+    | |- τω ⊧ _ ≫ _ ∼ _ => move=> ? ? ?; tac
+    | |- τω ⊧ 𝕌[_] ∼ 𝕌[_] => apply: formation_ω
+    | |- τω ⊧ _ ∼ _ => apply: Level.eq_ty_from_level; tac
+    | |- τ[_] ⊧ _ ∼ _ => apply: inversion
+    end.
+End Univ.
+
+
+Module Unit.
+  Theorem formation i :
+    τ[i] ⊧ 𝟙 ∼ 𝟙.
+  Proof.
+    unshelve Tac.prove; constructor.
+  Qed.
+
+  Theorem ax_equality :
+    τω ⊧ 𝟙 ∋ ★ ∼ ★.
+  Proof.
+    unshelve Tac.prove; constructor.
+  Qed.
+End Unit.
+
+Module Bool.
+  Theorem tt_equality :
+    τω ⊧ 𝟚 ∋ Tm.tt ∼ Tm.tt.
+  Proof.
+    unshelve Tac.prove; constructor.
+  Qed.
+
+  Theorem ff_equality :
+    τω ⊧ 𝟚 ∋ Tm.ff ∼ Tm.ff.
+  Proof.
+    unshelve Tac.prove; constructor.
+  Qed.
+
+  Theorem formation i :
+    τ[i] ⊧ 𝟚 ∼ 𝟚.
+  Proof.
+    Tac.prove.
+  Qed.
+
+  Ltac tac :=
+    simpl;
+    match goal with
+    | |- τ[_] ⊧ 𝟚 ∼ 𝟚 => apply: formation
+    | |- τω ⊧ 𝟚 ∋ _ ∼ _ => apply: tt_equality + apply: ff_equality
+    | |- τω ⊧ 𝕌[_] ∋ _ ∼ _ => apply: Univ.intro; tac
+    end.
+End Bool.
+
+
+Module Prod.
+
+  Theorem formation {n A0 A1 B0 B1} :
+    τ[n] ⊧ A0 ∼ A1
+    → τ[n] ⊧ B0 ∼ B1
+    → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
+  Proof.
+    Tac.prove.
+  Qed.
+
+  Theorem univ_eq {i A0 A1 B0 B1} :
+    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ 𝕌[i] ∋ B0 ∼ B1
+    → τω ⊧ 𝕌[i] ∋ (A0 × B0) ∼ (A1 × B1).
+  Proof.
+    move=> /Univ.inversion 𝒟 /Univ.inversion ℰ.
+    apply: Univ.intro.
+    by apply: formation.
+  Qed.
+
+  Theorem intro {A B e00 e01 e10 e11} :
+    τω ⊧ A ∋ e00 ∼ e10
+    → τω ⊧ B ∋ e01 ∼ e11
+    → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
+  Proof.
+    move=> /Level.eq_mem_to_level [n1 𝒟] /Level.eq_mem_to_level [n2 ℰ].
+    apply: (Level.eq_mem_from_level (n1 + n2)).
+    move: 𝒟 ℰ; Tac.prove.
+    - apply: Tower.monotonicity; last by [eauto]; omega.
+    - apply: Tower.monotonicity; last by [eauto]; omega.
+  Qed.
+End Prod.
+
+Module TowerChoice.
+  Lemma ty_eq {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
+    (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
+    → ∃ S, ∀ κ, τ[n] (A1 κ, S κ) ∧ τ[n] (A2 κ, S κ).
+  Proof.
+    move=> X.
+    apply (@unique_choice _ _ (fun κ R => τ[n] (A1 κ, R) ∧ τ[n] (A2 κ, R))) => κ.
+    case: (X κ) => S T.
+    eexists; split; eauto => S' T';
+    apply: Tower.extensionality; eauto;
+    T.destruct_conjs; eauto.
+  Qed.
+
+  Lemma mem_eq {n : nat} {A : 𝕂 → Tm.t 0} {e0 e1} :
+    (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (e0, e1))
+    → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (e0, e1).
+  Proof.
+    move=> X.
+    apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (e0, e1))) => κ.
+    case: (X κ) => S T.
+    eexists; split; eauto => S' T';
+    apply: Tower.extensionality; eauto;
+    T.destruct_conjs; eauto.
+  Qed.
+(*
+  Lemma TowerChoiceMemEqω {A : 𝕂 → Tm.t 0} {e0 e1} :
+    (∀ κ, ∃ Rκ, τω (A κ, Rκ) ∧ Rκ (e0, e1))
+    → ∃ S, ∀ κ, τω (A κ, S κ) ∧ S κ (e0, e1).
+  Proof.
+    move=> X.
+    apply (@unique_choice _ _ (fun κ R => τω (A κ, R) ∧ R (e0, e1))) => κ.
+    case: (X κ) => S [T0 T1].
+    eexists; split; eauto => S' [T'0 T'1].
+    case: T0 => [n T0].
+    case: T'0 => [n' T'0].
+    apply: (@Tower.extensionality (n + n')).
+    - apply: Tower.monotonicity; last by [eauto].
+      omega.
+    - apply: Tower.monotonicity; last by [eauto].
+      omega.
+  Qed.
+*)
+End TowerChoice.
+
+Module Isect.
+  Theorem formation {n B0 B1} :
+    (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
+    → τ[n] ⊧ ⋂ B0 ∼ ⋂ B1.
+  Proof.
+    move=> 𝒟.
+    case: (TowerChoice.ty_eq 𝒟) => S ℰ.
+    Tac.prove;
+      T.specialize_hyps;
+      rewrite /Tower.t in ℰ;
+      T.destruct_conjs; eauto.
+  Qed.
+
+  Theorem intro_at_lvl {n A e0 e1} :
+    (∀ κ, τ[n] ⊧ (A κ) ∋ e0 ∼ e1)
+    → τ[n] ⊧ ⋂ A ∋ e0 ∼ e1.
+  Proof.
+    move=> 𝒟.
+    case: (TowerChoice.mem_eq 𝒟) => S ℰ.
+    Tac.prove.
+    - T.specialize_hyps;
+      rewrite /Tower.t in ℰ;
+      T.destruct_conjs; eauto.
+    - move=> κ.
+      T.specialize_hyps.
+      case: ℰ => [_ ?].
+      eauto.
+  Qed.
+
+  (* NOTE that the type equality premise is necessary for this rule to be true! *)
+  Theorem intro {A e0 e1} :
+    τω ⊧ (⋂ A) ∼ (⋂ A)
+    → (∀ κ, τω ⊧ (A κ) ∋ e0 ∼ e1)
+    → τω ⊧ ⋂ A ∋ e0 ∼ e1.
+  Proof.
+    move=> /Level.eq_ty_to_level [n𝒟 𝒟] ℰ.
+    apply: (Level.eq_mem_from_level n𝒟).
+    apply: intro_at_lvl => κ.
+    T.specialize_hyps.
+
+    case: {ℰ} (Level.eq_mem_to_level ℰ) => nℰ ℰ.
+    apply: Level.mem_eq_at_lvl_of_typehood; first by eassumption.
+
+    case: 𝒟 => R [𝒟 _].
+    Tower.destruct_tower.
+    eexists; split; T.specialize_hyps; eauto.
+  Qed.
+
+
+
+  Definition cext_transparent (R : rel) (es : Tm.t 0 × Tm.t 0) :=
+    exists v0 v1, π₁ es ⇓ v0 ∧ π₂ es ⇓ v1 ∧ R (v0, v1).
+
+  Theorem cext_implies_cext_transparent {R es} :
+    Connective.cext R es
+    → cext_transparent R es.
+  Proof.
+    case: es => e0 e1; move=> 𝒞.
+    dependent destruction 𝒞.
+    exists v0, v1; eauto.
+  Qed.
+
+  Lemma cext_equiv_cext_transparent :
+    Connective.cext = cext_transparent.
+  Proof.
+    T.eqcd => R.
+    T.eqcd; case => e0 e1.
+    apply: propositional_extensionality; split.
+    - apply: cext_implies_cext_transparent.
+    - move=> //= [v0 [v1 ?]].
+      T.destruct_conjs.
+      econstructor; eauto.
+  Qed.
+
+  Theorem cartesian {n A0 B0 A1 B1} :
+    (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
+    → (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
+    → τ[n] ⊧ (⋂[κ] (A0 κ × B0 κ)) ∼ ((⋂ A1) × (⋂ B1)).
+  Proof.
+    move=> 𝒟 ℰ.
+    case: (TowerChoice.ty_eq 𝒟) => S𝒟 𝒟'.
+    case: (TowerChoice.ty_eq ℰ) => Sℰ ℰ'.
+    esplit; split.
+
+    - Tac.prove; T.specialize_hyps; T.destruct_conjs.
+      rewrite /Tower.t -Clo.roll.
+      Tac.prove.
+
+    - Tac.ts_flex_rel.
+      + Tac.prove; rewrite /Tower.t -Clo.roll; Tac.prove;
+          T.specialize_hyps; T.destruct_conjs; Tac.prove.
+
+      + T.eqcd; case => e0 e1.
+        apply: propositional_extensionality; split => H.
+
+        * rewrite cext_equiv_cext_transparent in H.
+          case: LocalClock => κ₀ _.
+          case: (H κ₀) => //= [v0 [v1 [? [? ?]]]].
+
+          econstructor; eauto.
+          Tac.destruct_prod_val.
+          constructor => κ;
+          case: (H κ) => //= [v0' [v1' [? [? ?]]]];
+          Tac.destruct_prod_val;
+          Term.evals_to_eq;
+          by T.destruct_eqs.
+
+        * Connective.destruct_cext.
+          repeat Tac.destruct_prod_val;
+          eauto.
+  Qed.
+
+  Theorem irrelevance {i A B}:
+    τ[i] ⊧ A ∼ B
+    → τ[i] ⊧ A ∼ ⋂[_] B.
+  Proof.
+    Tac.prove.
+
+    match goal with
+    | |- Connective.has _ _ (_, ?R) =>
+      replace R with (fun e0e1 => ∀ κ:𝕂, R e0e1)
+    end.
+
+    + Tac.prove.
+    + T.eqcd => ?.
+      apply: propositional_extensionality.
+      case: LocalClock => ? _.
+      T.split; eauto.
+  Qed.
+End Isect.
+
+(* TODO: move these elsewhere *)
 Theorem rel_total : Later.Total rel.
 Proof.
   by rewrite /rel.
@@ -440,432 +704,205 @@ Qed.
 
 Hint Resolve rel_total rel_inh.
 
-Theorem later_formation {κ} {A B} :
-  ▷[κ] (τω ⊧ A ∼ B)
-  → τω ⊧ ▶[κ] A ∼ ▶[κ] B.
-Proof.
-  move=> /Later.yank_existential; case; auto.
-  move=> R H0.
-  suff: ▷[κ] (∃ n, τ[n] (A, R) ∧ τ[n] (B, R)).
-  - move=> /Later.yank_existential; case; auto.
-    move=> n H1.
-    Tac.prove; Later.gather; case; Tac.prove.
-  - Later.gather.
-    move=> [[n1 H1] [n2 H2]].
-    Tac.accum_lvl n.
-    exists n.
-    split; Tac.tower_mono.
-Qed.
-
-Theorem later_intro {κ} {A e1 e2} :
-  ▷[κ] (τω ⊧ A ∋ e1 ∼ e2)
-  → τω ⊧ ▶[κ] A ∋ e1 ∼ e2.
-Proof.
-  move=> /Later.yank_existential.
-  case; eauto.
-  move=> R 𝒟.
-  rewrite Later.cart in 𝒟.
-  case: 𝒟 => [/Later.yank_existential 𝒟0 𝒟1].
-  case: 𝒟0; eauto.
-  move=> n 𝒟0.
-  Tac.prove.
-Qed.
-
-(* This proof is really horrific! *)
-Theorem later_mem_univ_inversion {κ i} {A0 A1} :
-  (τω ⊧ 𝕌[i] ∋ ▶[κ] A0 ∼ ▶[κ] A1)
-  → ▷[κ] (τω ⊧ 𝕌[i] ∋ A0 ∼ A1).
-Proof.
-  move=> /eq_mem_to_level [n [R [𝒟 A0A1]]].
-  Tower.destruct_tower.
-  induction n; Spine.simplify; try by [contradiction].
-  case: H => //= [j [? [? [Rspec]]]].
-  apply: Later.push_existential.
-  exists R.
-  Term.destruct_evals.
-  rewrite Later.cart.
-  split.
-  - apply: Later.next.
-    exists (S n).
-    rewrite /Tower.t -Clo.roll.
-    apply: Sig.init.
-    Spine.simplify.
-    eauto.
-  - rewrite Rspec in A0A1.
-    case: A0A1 => //= [S [H1 H2]].
-    replace (Clo.t (Spine.t j)) with (Tower.t j) in H1, H2; last by [auto].
-    Tower.destruct_tower.
-    Tower.destruct_tower.
-    suff: ▷[κ] (R = R0).
-    + move=> E; Later.gather.
-      move=> //= [H5 [H6 E]].
-      exists R.
-      split; first by [auto].
-      by rewrite -E in H5.
-    + refine (Later.map (functional_extensionality R R0) _).
-      apply: Later.push_universal.
-      move=> e0e1.
-      rewrite -Later.commute_eq.
-      by apply: (equal_f x).
-Qed.
-
-Theorem spine_inversion {n i R} :
-  τ[n] (Tm.univ i, R)
-  → Spine.t n (Tm.univ i, R).
-Proof.
-  move=> ?.
-  by Tower.destruct_tower.
-Qed.
-
-
-Theorem later_mem_univ {κ i} {A0 A1} :
-  τω ⊧ ▶[κ] 𝕌[i] ∋ A0 ∼ A1
-  → τω ⊧ 𝕌[i] ∋ ▶[κ] A0 ∼ ▶[κ] A1.
-Proof.
-  move=> /eq_mem_to_level [n [R [𝒟 ℰ]]].
-  Tower.destruct_tower.
-  esplit; T.split.
-  - exists (i + 1).
-    Tac.prove.
-    replace (i + 1) with (S i); last by [omega].
-    Spine.simplify.
-    esplit; repeat T.split; eauto.
-    reflexivity.
-  - have H1 := Later.map spine_inversion H0.
-    induction n.
-    + exists (fun _ => ▷[κ0] ⊤).
-      (* any relation will do! *)
-      replace (Clo.t (Spine.t i)) with τ[i]; last by [auto].
-      split; simpl; Tac.prove;
-      Later.gather => *; T.destruct_conjs;
-      Spine.simplify; by [contradiction].
-    + move {IHn}; suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
-      * move=> /Later.yank_existential; case; eauto.
-        move=> S H2; rewrite Later.cart in H2.
-        case: H2 => [H20 H21].
-        exists (fun e0e1 => ▷[κ0] (S e0e1)).
-        simpl in *.
-        split; rewrite -Clo.roll;
-        (apply: Sig.conn; first by [eauto]);
-        by [apply: Connective.has_later].
-      * Later.gather.
-        move=> [H1 [H2 H3]].
-        Spine.simplify.
-        case: H3 => [j [? [? R0spec]]].
-        Term.destruct_evals.
-        simpl in *; by [rewrite R0spec in H1].
-Qed.
-
-Theorem later_force_reflexive {i A} :
-  (τ[i] ⊧ ⋂ A ∼ ⋂ A)
-  → τ[i] ⊧ ⋂[κ] ▶[κ] (A κ) ∼ ⋂[κ] (A κ).
-Proof.
-  move=> [R [𝒟 _]].
-  exists R; T.split; auto.
-  Tower.destruct_tower.
-  replace (fun e0e1 => ∀ κ, S κ e0e1) with (fun e0e1 => ∀ κ, ▷[κ] (S κ e0e1)).
-  - Tac.prove.
-    T.specialize_hyps.
-    rewrite -Clo.roll.
-    by Tac.prove; apply: Later.next.
-  - T.eqcd => ?.
-    apply: Later.force.
-Qed.
-
-
-Theorem rewrite_ty_in_mem {A0 A1 e1 e2} :
-  τω ⊧ A0 ∋ e1 ∼ e2
-  → τω ⊧ A0 ∼ A1
-  → τω ⊧ A1 ∋ e1 ∼ e2.
-Proof.
-  Tac.prove.
-
-  match goal with
-  | _ : ?R0 ?X |- ?R1 ?X =>
-    replace R1 with R0; auto
-  end.
-
-  Tac.tower_ext; Tac.tower_mono.
-Qed.
-
-Theorem ty_eq_refl_left {τ A B} :
-  τ ⊧ A ∼ B
-  → τ ⊧ A ∼ A.
-Proof.
-  Tac.prove.
-Qed.
-
-Theorem ty_eq_symm {τ A B} :
-  τ ⊧ A ∼ B
-  → τ ⊧ B ∼ A.
-Proof.
-  Tac.prove.
-Qed.
-
-Theorem ty_eq_conv {τ A0 A1 B} :
-  TS.type_computational τ
-  → A0 ≼₀ A1
-  → τ ⊧ A0 ∼ B
-  → τ ⊧ A1 ∼ B.
-Proof.
-  move=> H A01 [R [𝒟A0 𝒟B]].
-  exists R; split; auto.
-  apply: H.
-  - exact 𝒟A0.
-  - auto.
-Qed.
-
-Theorem mem_eq_conv_ty {τ A0 A1 e0 e1} :
-  TS.type_computational τ
-  → A0 ≼₀ A1
-  → τ ⊧ A0 ∋ e0 ∼ e1
-  → τ ⊧ A1 ∋ e0 ∼ e1.
-Proof.
-  move=> H A01 [R [𝒟 e01]].
-  exists R; split; auto.
-  apply: H; eauto.
-Qed.
-
-Theorem mem_eq_symm {A e0 e1} :
-  τω ⊧ A ∋ e0 ∼ e1
-  → τω ⊧ A ∋ e1 ∼ e0.
-Proof.
-  move=> [R [𝒟 ℰ]].
-  exists R; split; auto.
-  edestruct τω_cper_valued; eauto.
-  destruct per.
-  by apply: symmetric.
-Qed.
-
-Theorem mem_eq_conv {τ A e00 e01 e1} :
-  TS.cper_valued τ
-  → e00 ≼₀ e01
-  → τ ⊧ A ∋ e00 ∼ e1
-  → τ ⊧ A ∋ e01 ∼ e1.
-Proof.
-  move=> H e00e01 [R [ℰ e00e1]].
-  exists R; split; auto.
-  case: (H A R); eauto.
-Qed.
-
-
-Theorem mem_eq_conv_both {A e00 e01 e10 e11} :
-  e00 ≼₀ e01
-  → e10 ≼₀ e11
-  → τω ⊧ A ∋ e00 ∼ e10
-  → τω ⊧ A ∋ e01 ∼ e11.
-Proof.
-  move=> ? ? ?.
-  apply: mem_eq_conv; eauto.
-  apply: mem_eq_symm.
-  apply: mem_eq_conv; eauto.
-  by apply: mem_eq_symm.
-Qed.
-
-Theorem ty_eq_trans {A B C} :
-  τω ⊧ B ∼ C
-  → τω ⊧ A ∼ B
-  → τω ⊧ A ∼ C.
-Proof.
-  move=> [R1 [[? 𝒟0] [? 𝒟1]]] [R2 [[? ℰ0] [? ℰ1]]].
-  exists R2; T.split.
-  - eexists; eauto.
-  - replace R2 with R1.
-    + eexists; eauto.
-    + symmetry; Tac.tower_ext; Tac.tower_mono.
-Qed.
-
-Theorem ty_eq_trans_at_lvl {i A B C} :
-  τ[i] ⊧ B ∼ C
-  → τ[i] ⊧ A ∼ B
-  → τ[i] ⊧ A ∼ C.
-Proof.
-  move=> [R1 [𝒟0 𝒟1]] [R2 [ℰ0 ℰ1]].
-  exists R2; T.split; auto.
-  replace R2 with R1; auto.
-  symmetry.
-  apply: Tower.extensionality; eauto.
-Qed.
-
-
-Theorem mem_eq_trans {A e0 e1 e2} :
-  τω ⊧ A ∋ e1 ∼ e2
-  → τω ⊧ A ∋ e0 ∼ e1
-  → τω ⊧ A ∋ e0 ∼ e2.
-Proof.
-  Tac.prove.
-  edestruct Tower.cper_valued.
-  - eauto.
-  - destruct per.
-    apply: transitive; eauto.
-    match goal with
-    | H : ?R1 (e1, e2) |- ?R2 (e1, e2) =>
-      replace R2 with R1; auto
-    end.
-    Tac.tower_ext; Tac.tower_mono.
-Qed.
-
-Theorem mem_eq_refl_left {A e0 e1} :
-  τω ⊧ A ∋ e0 ∼ e1
-  → τω ⊧ A ∋ e0 ∼ e0.
-Proof.
-  move=> 𝒟.
-  apply: mem_eq_trans.
-  - apply: mem_eq_symm.
-    eassumption.
-  - eassumption.
-Qed.
-
-Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
-  τω ⊧ Γ ctx
-  → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-  → τω ⊧ Γ ∋⋆ γ1 ∼ γ0.
-Proof.
-  move=> Γctx γ01.
-  induction Γ; eauto.
-  split; simplify_eqs.
-  - apply: IHΓ; eauto.
-    + by case: Γctx.
-    + by case: γ01.
-  - suff: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
-    + move=> [R [[? 𝒟0] [? 𝒟1]]].
-      case: γ01 => [_ [S [[n ℰ] γ01]]].
-      destruct (Tower.cper_valued ℰ) as [[symm _] _].
-      exists R; T.split.
-      * eexists; eauto.
-      * replace R with S.
-        ** by apply: symm.
-        ** Tac.tower_ext; Tac.tower_mono.
-
-    + case: Γctx => _ 𝒟.
-      apply: ty_eq_symm.
-      apply: 𝒟.
-      by case: γ01.
-Qed.
-
-Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
-  τω ⊧ Γ ctx
-  → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-  → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
-Proof.
-  move=> Γctx γ01.
-  induction Γ; eauto.
-  split; simplify_eqs.
-  - apply: IHΓ.
-    + by case: Γctx.
-    + by case: γ01; eauto.
-  - suff: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
-    + move=> [R [[? 𝒟0] [? 𝒟1]]].
-      case: γ01 => [_ [S [[n ℰ] γ01]]].
-      destruct (Tower.cper_valued ℰ) as [[symm trans] _].
-      exists R; T.split.
-      * eexists; eauto.
-      * move: ℰ γ01; simplify_eqs; move=> ℰ γ01.
-        replace R with S.
-        ** apply: trans; eauto.
-        ** Tac.tower_ext; Tac.tower_mono.
-    + case: Γctx => _ 𝒟.
-      apply: ty_eq_refl_left.
-      apply: 𝒟.
-      case: γ01.
-      eauto.
-Qed.
-
-
-Section FunctionalitySquare.
-  Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : Tm.Sub.t Ψ 0}.
-
-  Lemma functionality_square :
-    τω ⊧ Γ ≫ A ∋ e0 ∼ e1
-    → τω ⊧ Γ ctx
-    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-    → τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ1)
-      ∧ τω ⊧ A ⫽ γ1 ∋ (e0 ⫽ γ1) ∼ (e1 ⫽ γ1)
-      ∧ τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ0).
+Module Later.
+  Theorem formationω {κ} {A B} :
+    ▷[κ] (τω ⊧ A ∼ B)
+    → τω ⊧ ▶[κ] A ∼ ▶[κ] B.
   Proof.
-    move=> 𝒟 ℰ γ01.
-    repeat T.split.
-    - by apply: 𝒟.
-    - apply: 𝒟.
-      apply: env_eq_refl_left; auto.
-      apply: env_eq_symm; eauto.
-    - apply: 𝒟.
-      apply: env_eq_refl_left; eauto.
+    move=> /Later.yank_existential; case; auto.
+    move=> R H0.
+    suff: ▷[κ] (∃ n, τ[n] (A, R) ∧ τ[n] (B, R)).
+    - move=> /Later.yank_existential; case; auto.
+      move=> n H1.
+      Tac.prove; Later.gather; case; Tac.prove.
+    - Later.gather.
+      move=> [[n1 H1] [n2 H2]].
+      Tac.accum_lvl n.
+      exists n.
+      split; Tac.tower_mono.
   Qed.
-End FunctionalitySquare.
 
+  Theorem intro {κ} {A e1 e2} :
+    ▷[κ] (τω ⊧ A ∋ e1 ∼ e2)
+    → τω ⊧ ▶[κ] A ∋ e1 ∼ e2.
+  Proof.
+    move=> /Later.yank_existential.
+    case; eauto.
+    move=> R 𝒟.
+    rewrite Later.cart in 𝒟.
+    case: 𝒟 => [/Later.yank_existential 𝒟0 𝒟1].
+    case: 𝒟0; eauto.
+    move=> n 𝒟0.
+    Tac.prove.
+  Qed.
 
-Theorem later_force {i A B} :
-  (τ[i] ⊧ ⋂ A ∼ ⋂ B)
-  → τ[i] ⊧ ⋂[κ] ▶[κ] A κ ∼ ⋂[κ] B κ.
-Proof.
-  move=> 𝒟.
-  apply: ty_eq_trans_at_lvl.
-  - eassumption.
-  - apply: later_force_reflexive.
-    apply: ty_eq_refl_left.
-    eassumption.
-Qed.
+  (* This proof is really horrific! And I apparently didn't use it. *)
+  Theorem mem_univ_inversion {κ i} {A0 A1} :
+    (τω ⊧ 𝕌[i] ∋ ▶[κ] A0 ∼ ▶[κ] A1)
+    → ▷[κ] (τω ⊧ 𝕌[i] ∋ A0 ∼ A1).
+  Proof.
+    move=> /Level.eq_mem_to_level [n [R [𝒟 A0A1]]].
+    Tower.destruct_tower.
+    induction n; Spine.simplify; try by [contradiction].
+    case: H => //= [j [? [? [Rspec]]]].
+    apply: Later.push_existential.
+    exists R.
+    Term.destruct_evals.
+    rewrite Later.cart.
+    split.
+    - apply: Later.next.
+      exists (S n).
+      rewrite /Tower.t -Clo.roll.
+      apply: Sig.init.
+      Spine.simplify.
+      eauto.
+    - rewrite Rspec in A0A1.
+      case: A0A1 => //= [S [H1 H2]].
+      replace (Clo.t (Spine.t j)) with (Tower.t j) in H1, H2; last by [auto].
+      Tower.destruct_tower.
+      Tower.destruct_tower.
+      suff: ▷[κ] (R = R0).
+      + move=> E; Later.gather.
+        move=> //= [H5 [H6 E]].
+        exists R; split; first by [auto].
+        by rewrite -E in H5.
+      + refine (Later.map (functional_extensionality R R0) _).
+        apply: Later.push_universal.
+        move=> e0e1.
+        rewrite -Later.commute_eq.
+        by apply: (equal_f x).
+  Qed.
 
-Theorem loeb_induction_closed κ {A e0 e1} :
-  τω ⊧ ⋄; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
-  → τω ⊧ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
-Proof.
-  move=> 𝒟.
-  apply: (@Later.loeb κ).
-  move=> /Later.yank_existential; case; auto; move=> R ℰ.
-  rewrite Later.cart in ℰ.
-  case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
-
-  T.efwd 𝒟.
-  - apply: mem_eq_conv_both.
-    + move=> v; case: (fix_unfold e0 v) => _; apply.
-    + move=> v; case: (fix_unfold e1 v) => _; apply.
-    + T.use 𝒟; f_equal; by Term.simplify_subst.
-
-  - simpl; split; auto.
-    exists (fun e0e1 => ▷[κ] (R e0e1)); split.
-    + exists n.
+  Theorem univ_eq {κ i} {A0 A1} :
+    τω ⊧ ▶[κ] 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ 𝕌[i] ∋ ▶[κ] A0 ∼ ▶[κ] A1.
+  Proof.
+    move=> /Level.eq_mem_to_level [n [R [𝒟 ℰ]]].
+    Tower.destruct_tower.
+    esplit; T.split.
+    - exists (i + 1).
       Tac.prove.
-      Later.gather.
-      move=> [? ?].
-      by rewrite Tm.subst_ret.
-    + by Later.gather; case.
-Qed.
+      replace (i + 1) with (S i); last by [omega].
+      Spine.simplify.
+      esplit; repeat T.split; eauto.
+      reflexivity.
+    - have H1 := Later.map Univ.spine_inversion H0.
+      induction n.
+      + exists (fun _ => ▷[κ0] ⊤).
+        (* any relation will do! *)
+        replace (Clo.t (Spine.t i)) with τ[i]; last by [auto].
+        split; simpl; Tac.prove;
+        Later.gather => *; T.destruct_conjs;
+        Spine.simplify; by [contradiction].
+      + move {IHn}; suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
+        * move=> /Later.yank_existential; case; eauto.
+          move=> S H2; rewrite Later.cart in H2.
+          case: H2 => [H20 H21].
+          exists (fun e0e1 => ▷[κ0] (S e0e1)).
+          simpl in *.
+          split; rewrite -Clo.roll;
+          (apply: Sig.conn; first by [eauto]);
+          by [apply: Connective.has_later].
+        * Later.gather.
+          move=> [H1 [H2 H3]].
+          Spine.simplify.
+          case: H3 => [j [? [? R0spec]]].
+          Term.destruct_evals.
+          simpl in *; by [rewrite R0spec in H1].
+  Qed.
+
+  Lemma force_reflexive {i A} :
+    (τ[i] ⊧ ⋂ A ∼ ⋂ A)
+    → τ[i] ⊧ ⋂[κ] ▶[κ] (A κ) ∼ ⋂[κ] (A κ).
+  Proof.
+    move=> [R [𝒟 _]].
+    exists R; T.split; auto.
+    Tower.destruct_tower.
+    replace (fun e0e1 => ∀ κ, S κ e0e1) with (fun e0e1 => ∀ κ, ▷[κ] (S κ e0e1)).
+    - Tac.prove.
+      T.specialize_hyps.
+      rewrite -Clo.roll.
+      by Tac.prove; apply: Later.next.
+    - T.eqcd => ?.
+      apply: Later.force.
+  Qed.
 
 
-Theorem loeb_induction_open κ {Ψ} {Γ : Prectx Ψ} {A e0 e1} :
-  τω ⊧ Γ; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
-  → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
-Proof.
-  move=> 𝒟 γ0 γ1 γ01 //=.
-  apply: (loeb_induction_closed κ).
-  move=> γ0' γ1' [_]; simplify_eqs => γ01'.
-  T.efwd 𝒟.
-  - T.use 𝒟; f_equal; rewrite ? Tm.subst_coh; eauto.
-    Term.simplify_subst.
-  - split; simplify_eqs.
-    + T.use γ01; Term.simplify_subst.
-    + T.use γ01'; Term.simplify_subst.
-Qed.
+  Theorem force {i A B} :
+    (τ[i] ⊧ ⋂ A ∼ ⋂ B)
+    → τ[i] ⊧ ⋂[κ] ▶[κ] A κ ∼ ⋂[κ] B κ.
+  Proof.
+    move=> 𝒟.
+    apply: General.ty_eq_trans_at_lvl.
+    - eassumption.
+    - apply: force_reflexive.
+      apply: General.ty_eq_refl_left.
+      eassumption.
+  Qed.
 
 
-Definition quote_bool (b : bool) : Tm.t 0 :=
-  match b with
-  | true => Tm.tt
-  | false => Tm.ff
-  end.
+  Theorem loeb_induction_closed κ {A e0 e1} :
+    τω ⊧ ⋄; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
+    → τω ⊧ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
+  Proof.
+    move=> 𝒟.
+    apply: (@Later.loeb κ).
+    move=> /Later.yank_existential; case; auto; move=> R ℰ.
+    rewrite Later.cart in ℰ.
+    case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
 
-Notation "⌊ b ⌋𝔹" := (quote_bool b).
+    T.efwd 𝒟.
+    - apply: General.mem_eq_conv_both.
+      + move=> v; case: (fix_unfold e0 v) => _; apply.
+      + move=> v; case: (fix_unfold e1 v) => _; apply.
+      + T.use 𝒟; f_equal; by Term.simplify_subst.
 
-Theorem canonicity {e} :
-  τω ⊧ 𝟚 ∋ e ∼ e
-  → ∃ b : bool, e ⇓ ⌊b⌋𝔹.
-Proof.
-  move=> /eq_mem_to_level [n [R [𝒟 ?]]].
-  Tower.destruct_tower.
-  Connective.destruct_cext.
-  dependent destruction H1.
-  - by exists true.
-  - by exists false.
-Qed.
+    - simpl; split; auto.
+      exists (fun e0e1 => ▷[κ] (R e0e1)); split.
+      + exists n.
+        Tac.prove.
+        Later.gather.
+        move=> [? ?].
+          by rewrite Tm.subst_ret.
+      + by Later.gather; case.
+  Qed.
+
+
+  Theorem loeb_induction_open κ {Ψ} {Γ : Prectx Ψ} {A e0 e1} :
+    τω ⊧ Γ; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
+    → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
+  Proof.
+    move=> 𝒟 γ0 γ1 γ01 //=.
+    apply: (loeb_induction_closed κ).
+    move=> γ0' γ1' [_]; simplify_eqs => γ01'.
+    T.efwd 𝒟.
+    - T.use 𝒟; f_equal; rewrite ? Tm.subst_coh; eauto.
+      Term.simplify_subst.
+    - split; simplify_eqs.
+      + T.use γ01; Term.simplify_subst.
+      + T.use γ01'; Term.simplify_subst.
+  Qed.
+End Later.
+
+
+Module Canonicity.
+  Definition quote_bool (b : bool) : Tm.t 0 :=
+    match b with
+    | true => Tm.tt
+    | false => Tm.ff
+    end.
+
+  Notation "⌊ b ⌋𝔹" := (quote_bool b).
+
+  Theorem canonicity {e} :
+    τω ⊧ 𝟚 ∋ e ∼ e
+    → ∃ b : bool, e ⇓ ⌊b⌋𝔹.
+  Proof.
+    move=> /Level.eq_mem_to_level [n [R [𝒟 ?]]].
+    Tower.destruct_tower.
+    Connective.destruct_cext.
+    dependent destruction H1.
+    - by exists true.
+    - by exists false.
+  Qed.
+End Canonicity.

@@ -8,6 +8,18 @@ From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent Inter
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
+Local Hint Extern 40 =>
+match goal with
+| |- context[(_.⦃_⦄)%ectx] => rewrite -interp_ctx_clk_naturality /compose; simplify_eqs
+| |- context[(_.⦃_⦄)%etm] => rewrite -interp_tm_clk_naturality /compose; simplify_eqs
+| |- context[(_.[_])%etm] => try rewrite -interp_tm_var_naturality /compose; try rewrite -interp_tm_var_ren_naturality /compose; simplify_eqs
+| |- context[(_ ⫽ _)%etm] => Term.simplify_subst
+end.
+
+Local Hint Extern 20 => IR.Univ.tac.
+Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm.
+
+
 
 Module Conversion.
   Module Structural.
@@ -51,15 +63,12 @@ Module Conversion.
 End Conversion.
 
 Module General.
-  Local Hint Resolve ty_eq_refl_left ty_eq_trans ty_eq_symm.
-
   Theorem hypothesis `{Γ : ECtx.t Λ Ψ} {A} :
     ⟦ Λ ∣ Γ ; A ≫ A.[^1] ∋ @0 ≐ @0 ⟧.
   Proof.
     move=> κs Γctx ty γ0 γ1 γ01.
     case: γ01 => [_ γ01].
-    simplify_eqs.
-    by rewrite -interp_tm_var_naturality.
+    auto.
   Qed.
 
   Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00} e01 {e1} :
@@ -68,7 +77,7 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
-    apply: IR.mem_eq_conv.
+    apply: IR.General.mem_eq_conv.
     - eauto.
     - move=> ?; edestruct 𝒟; eassumption.
     - apply: ℰ; eauto.
@@ -80,16 +89,16 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A0 ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ? ? ? ? ?.
-    apply: IR.mem_eq_conv_ty.
+    apply: IR.General.mem_eq_conv_ty.
     - eauto.
     - move=> ?; edestruct 𝒟; eauto.
     - apply: ℰ; eauto.
       move=> ? ? ?.
-      apply: IR.ty_eq_conv.
+      apply: IR.General.ty_eq_conv.
       + eauto.
       + move=> ?; edestruct 𝒟; eassumption.
-      + apply: IR.ty_eq_symm.
-        apply: IR.ty_eq_conv.
+      + apply: IR.General.ty_eq_symm.
+        apply: IR.General.ty_eq_conv.
         * eauto.
         * move=> ?; edestruct 𝒟; eassumption.
         * eauto.
@@ -100,12 +109,9 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ e1 ≐ e0 ⟧.
   Proof.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01.
-    apply: IR.mem_eq_symm.
-    apply: IR.rewrite_ty_in_mem.
-    - apply: 𝒟; eauto.
-      apply: IR.env_eq_symm; eauto.
-    - apply: IR.ty_eq_symm.
-      apply: ℰ; eauto.
+    apply: IR.General.mem_eq_symm.
+    apply: IR.General.replace_ty_in_mem_eq; eauto.
+    apply: 𝒟; eauto.
   Qed.
 
   Theorem eq_trans `{Γ : ECtx.t Λ Ψ} {A e0 e1 e2} :
@@ -114,10 +120,9 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e2 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
-    apply: IR.mem_eq_trans.
+    apply: IR.General.mem_eq_trans.
     - apply: 𝒟; eauto.
     - apply: ℰ; eauto.
-      apply: IR.env_eq_refl_left; eauto.
   Qed.
 
   Theorem eq_refl_left `{Γ : ECtx.t Λ Ψ} {A e0 e1} :
@@ -137,26 +142,22 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A1 ∋ e1 ≐ e2 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ _ ? ? ?.
-    apply: IR.rewrite_ty_in_mem.
+    apply: IR.General.replace_ty_in_mem_eq.
     - apply: ℰ; eauto.
       move=> γ0' γ1' γ01'.
-      apply: IR.eq_ty_from_level.
-      apply: (@IR.univ_mem_inversion i).
+      IR.Univ.tac.
       suff: τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ 𝕌[ i] ⟧ κs ∼ (⟦ 𝕌[ i] ⟧ κs).
       + move=> 𝒢.
-        have 𝒟10' := (𝒟 κs ℱ 𝒢 γ1' γ0' (IR.env_eq_symm ℱ γ01')).
-        have 𝒟00' := (𝒟 κs ℱ 𝒢 γ0' γ0' (IR.env_eq_refl_left ℱ γ01')).
-        apply: IR.mem_eq_trans.
-        * apply: IR.mem_eq_symm.
+        have 𝒟10' := (𝒟 κs ℱ 𝒢 γ1' γ0' (IR.General.env_eq_symm ℱ γ01')).
+        have 𝒟00' := (𝒟 κs ℱ 𝒢 γ0' γ0' (IR.General.env_eq_refl_left ℱ γ01')).
+        apply: IR.General.mem_eq_trans.
+        * apply: IR.General.mem_eq_symm.
           exact 𝒟10'.
         * exact 𝒟00'.
-      + move=> ? ? ? //=.
-        apply: IR.univ_formation.
-    - apply: IR.eq_ty_from_level.
-      apply: (@IR.univ_mem_inversion).
+      + IR.Univ.tac.
+    - IR.Univ.tac.
       apply: 𝒟; auto.
-      + move=> ? ? ? //=; apply: IR.univ_formation.
-      + apply: IR.env_eq_refl_left; eassumption.
+      apply: IR.General.env_eq_refl_left; eassumption.
   Qed.
 
   Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} A' e0' e1' {A e0 e1} :
@@ -179,8 +180,8 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ 𝕌[j] ∋ 𝕌[i] ≐ 𝕌[i] ⟧.
   Proof.
     move=> ? ? ? ? ? ? ? //=.
-    apply: IR.univ_mem_formation.
-    apply: IR.univ_formation_lvl.
+    apply: IR.Univ.intro.
+    apply: IR.Univ.formation_lvl.
     assumption.
   Qed.
 End General.
@@ -190,7 +191,7 @@ Module Unit.
     ⟦ Λ ∣ Γ ≫ 𝟙 ∋ ★ ≐ ★ ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
-    apply: IR.unit_ax_equality.
+    apply: IR.Unit.ax_equality.
   Qed.
 End Unit.
 
@@ -199,19 +200,17 @@ Module Bool.
   Theorem univ_eq `{Γ : ECtx.t Λ Ψ} i :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ 𝟚 ≐ 𝟚 ⟧.
   Proof.
-    move=> ? ? ? ? ? ? //=.
-    apply: IR.univ_mem_formation.
-    apply: IR.bool_formation_lvl.
+    move=> ? ? ? ? ? ?.
+    IR.Bool.tac.
   Qed.
 
   Theorem tt_equality `{Γ : ECtx.t Λ Ψ} :
     ⟦ Λ ∣ Γ ≫ 𝟚 ∋ ETm.tt ≐ ETm.tt ⟧.
   Proof.
-    move=> ? ? ? ? ? ? //=.
-    apply: IR.bool_tt_equality.
+    move=> ? ? ? ? ? ?.
+    IR.Bool.tac.
   Qed.
 End Bool.
-
 
 
 Module Prod.
@@ -221,7 +220,7 @@ Module Prod.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (A0 × B0) ≐ (A1 × B1) ⟧.
   Proof.
     move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01 //=.
-    apply: IR.prod_formation_univ.
+    apply: IR.Prod.univ_eq.
     - by apply: 𝒟.
     - by apply: ℰ.
   Qed.
@@ -234,36 +233,27 @@ Module Prod.
     → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨e00, e01⟩ ≐ ⟨e10, e11⟩ ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
-    apply: IR.prod_intro.
+    apply: IR.Prod.intro.
     - apply: 𝒟; eauto.
-      move=> ? ? ?.
-      apply: IR.eq_ty_from_level.
-      apply: IR.univ_mem_inversion.
+      IR.Univ.tac.
       apply: ℱ; eauto.
-      move=> ? ? ?.
-      apply: IR.univ_formation.
     - apply: ℰ; eauto.
-      move=> ? ? ?.
-      apply: IR.eq_ty_from_level.
-      apply: IR.univ_mem_inversion.
+      IR.Univ.tac.
       apply: 𝒢; eauto.
-      move=> ? ? ?.
-      apply: IR.univ_formation.
   Qed.
 End Prod.
 
 
 Module Isect.
+
   Theorem univ_eq `{Γ : ECtx.t Λ Ψ} i {A0 A1} :
     ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ⋂ A0 ≐ ⋂ A1 ⟧.
   Proof.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01 //=.
-    apply: IR.univ_mem_formation.
-    apply: IR.isect_formation => κ.
-    T.efwd 𝒟; first (apply: IR.univ_mem_inversion);
-    try rewrite -interp_ctx_clk_naturality;
-    by [simplify_eqs; eauto].
+    apply: IR.Univ.intro.
+    apply: IR.Isect.formation => κ.
+    T.efwd 𝒟; eauto.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} i {A e0 e1} :
@@ -272,20 +262,12 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ ⋂ A ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℱ κs ? ℰ ? ? ? //=.
-    apply: IR.isect_intro.
-    - apply: IR.eq_ty_from_level.
-      apply: IR.univ_mem_inversion.
+    apply: IR.Isect.intro.
+    - IR.Univ.tac.
       apply: univ_eq; eauto.
-      + move=> ? ? ?; apply: IR.univ_formation.
-      + apply: IR.env_eq_refl_left; eauto.
-    - move=> κ.
-      move: {𝒟} (𝒟 (κ ∷ κs)); rewrite -interp_ctx_clk_naturality -!interp_tm_clk_naturality /compose; simplify_eqs => 𝒟.
-      apply: 𝒟; eauto.
-      move=> ? ? ?.
-      apply: IR.eq_ty_from_level.
-      apply: IR.univ_mem_inversion.
-      apply: ℱ; rewrite -interp_ctx_clk_naturality /compose; simplify_eqs; eauto.
-      move=> ? ? ?; apply: IR.univ_formation.
+    - move=> κ; T.efwd_thru 𝒟.
+      IR.Univ.tac.
+      apply: ℱ; eauto.
   Qed.
 
   Theorem irrelevance `{Γ : ECtx.t Λ Ψ} {i A} :
@@ -294,10 +276,11 @@ Module Isect.
   Proof.
     move=> 𝒟 κs ? ? γ0 γ1 γ01; simplify_eqs.
     replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1).
-    - apply: IR.univ_mem_formation.
-      apply: IR.isect_irrelevance.
-      apply: IR.univ_mem_inversion.
+    - apply: IR.Univ.intro.
+      apply: IR.Isect.irrelevance.
+      apply: IR.Univ.inversion.
       apply: 𝒟; eauto.
+
     - T.eqcd => *.
       by rewrite -interp_tm_clk_naturality.
   Qed.
@@ -308,24 +291,18 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (⋂ (A0 × B0)) ≐ ((⋂ A0) × (⋂ B0)) ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
-    apply: IR.univ_mem_formation.
-    apply: IR.isect_preserves_products => κ;
-    apply: IR.univ_mem_inversion;
+    apply: IR.Univ.intro.
+    apply: IR.Isect.cartesian => κ;
+    apply: IR.Univ.inversion;
     [ specialize (𝒟 (κ ∷ κs));
-      have := (IR.functionality_square (𝒟 _ _))
+      have := (IR.General.functionality_square (𝒟 _ _))
     | specialize (ℰ (κ ∷ κs));
-      have := (IR.functionality_square (ℰ _ _))
+      have := (IR.General.functionality_square (ℰ _ _))
     ];
-    rewrite -interp_ctx_clk_naturality; simplify_eqs;
-    move=> ℋ; edestruct ℋ as [ℋ0 [ℋ1 ℋ2]]; eauto.
 
-    - apply: IR.mem_eq_trans.
-      + apply: IR.mem_eq_symm; eauto.
-      + eauto.
-
-    - apply: IR.mem_eq_trans.
-      + apply: IR.mem_eq_symm; eauto.
-      + eauto.
+    move=> ℋ;
+    edestruct ℋ as [? [? ?]];
+    eauto.
   Qed.
 End Isect.
 
@@ -334,13 +311,14 @@ Module Later.
     ⟦ Λ ∣ Γ ≫ ▶[k] 𝕌[i] ∋ A0 ≐ A1 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ▶[k] A0 ≐ ▶[k] A1 ⟧.
   Proof.
-    move=> 𝒟 ? ? ? ? ? ?; simpl.
-    apply: IR.later_mem_univ.
+    move=> 𝒟 ? ? ? ? ? ? //=.
+    apply: IR.Later.univ_eq.
     apply: 𝒟; eauto.
+
     move=> ? ? ? //=.
-    apply: IR.later_formation.
+    apply: Later.formationω.
     apply: Later.next.
-    apply: IR.univ_formation.
+    eauto.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} {k i A e0 e1} :
@@ -349,15 +327,12 @@ Module Later.
     → ⟦ Λ ∣ Γ ≫ ▶[k] A ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ? //=.
-    apply: IR.later_intro.
+    apply: IR.Later.intro.
     apply: Later.next.
     apply: 𝒟; auto.
-    move=> ? ? ?.
-    apply: IR.eq_ty_from_level.
-    apply: IR.univ_mem_inversion.
-    apply: ℰ; auto.
-    move=> ? ? ?.
-    apply: IR.univ_formation.
+
+    IR.Univ.tac.
+    apply: ℰ; eauto.
   Qed.
 
   Theorem force `{Γ : ECtx.t Λ Ψ} {i A B} :
@@ -365,9 +340,9 @@ Module Later.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ⋂ ▶[#0] A ≐ ⋂ B ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ? ? //=.
-    apply: IR.univ_mem_formation.
-    apply: IR.later_force.
-    apply: IR.univ_mem_inversion.
+    apply: IR.Univ.intro.
+    apply: IR.Later.force.
+    IR.Univ.tac.
     apply: 𝒟; eauto.
   Qed.
 
@@ -375,23 +350,17 @@ Module Later.
     ⟦ Λ ∣ Γ; ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ μ{ e0 } ≐ μ{ e1 } ⟧.
   Proof.
-    move=> 𝒟 κs ? ℰ; simpl.
-    apply: (@IR.loeb_induction_open (κs k)).
-    simplify_eqs.
-
-    move: {𝒟} (𝒟 κs); simplify_eqs => 𝒟.
-    rewrite interp_tm_var_ren_naturality.
-    apply: 𝒟.
+    move=> 𝒟 κs ? ℰ //=.
+    apply: (IR.Later.loeb_induction_open (κs k)).
+    move=> ? ? ?.
+    T.efwd_thru 𝒟.
+    - move=> ? ? [? ?].
+      T.efwd_thru ℰ.
     - split; auto.
-      move=> ? ? ? //=.
-      apply: IR.later_formation.
+      move=> ? ? ?.
+      apply: IR.Later.formationω.
       apply: Later.next.
       auto.
-    - move=> ? ? γ01 //=.
-      rewrite -interp_tm_var_ren_naturality.
-      Term.simplify_subst.
-      apply: ℰ.
-      by case: γ01.
   Qed.
 End Later.
 
@@ -440,7 +409,7 @@ Module Examples.
         apply: Later.intro.
         * apply: BitStream_wf.
         * apply: (General.univ_formation i).
-          eauto.
+          auto.
   Qed.
 
   Example Ones_wf_guarded `{Γ : ECtx.t Λ Ψ} {k} :
