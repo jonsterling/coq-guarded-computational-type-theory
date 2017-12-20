@@ -318,6 +318,12 @@ Proof.
     econstructor; eauto.
 Qed.
 
+(* When you need to show 'τ[n] (A, R)' but R is not of the right
+   shape.  This tactic will replace R with a unification variable,
+   which allows you to make progress in your proof; then, you have to
+   prove hat R was is the same as whatever the unification variable
+   got instantiated to. *)
+
 Local Ltac ts_flex_rel :=
   match goal with
   | |- τ[_] (_, ?R) =>
@@ -325,6 +331,8 @@ Local Ltac ts_flex_rel :=
     evar (R' : rel);
     (suff: R = R'); first T.rewrite_; rewrite /R'; clear R'
   end.
+
+
 
 Local Ltac destruct_prod_val :=
   match goal with
