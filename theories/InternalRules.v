@@ -301,9 +301,9 @@ Theorem isect_intro_ω {A e0 e1} :
   → τω ⊧ ⋂ A ∋ e0 ∼ e1.
 Abort.
 
-Theorem isect_irrelevance {A B}:
-  τω ⊧ A ∼ B
-  → τω ⊧ A ∼ ⋂[_] B.
+Theorem isect_irrelevance {i A B}:
+  τ[i] ⊧ A ∼ B
+  → τ[i] ⊧ A ∼ ⋂[_] B.
 Proof.
   Tac.prove.
 
@@ -448,12 +448,12 @@ Proof.
         simpl in *; by [rewrite R0spec in H1].
 Qed.
 
-Theorem later_force_reflexive {A} :
-  (τω ⊧ ⋂ A ∼ ⋂ A)
-  → τω ⊧ ⋂[κ] ▶[κ] (A κ) ∼ ⋂[κ] (A κ).
+Theorem later_force_reflexive {i A} :
+  (τ[i] ⊧ ⋂ A ∼ ⋂ A)
+  → τ[i] ⊧ ⋂[κ] ▶[κ] (A κ) ∼ ⋂[κ] (A κ).
 Proof.
-  move=> [R [[nH H] _]].
-  exists R; T.split; auto; exists nH.
+  move=> [R [𝒟 _]].
+  exists R; T.split; auto.
   Tower.destruct_tower.
   replace (fun e0e1 => ∀ κ, S κ e0e1) with (fun e0e1 => ∀ κ, ▷[κ] (S κ e0e1)).
   - Tac.prove.
@@ -462,7 +462,6 @@ Proof.
     by Tac.prove; apply: Later.next.
   - T.eqcd => ?.
     apply: Later.force.
-  - auto.
 Qed.
 
 
@@ -481,27 +480,16 @@ Proof.
   Tac.tower_ext; Tac.tower_mono.
 Qed.
 
-Theorem later_force_mem {A e0 e1} :
-  τω ⊧ (⋂ A) ∼ (⋂ A)
-  → τω ⊧ ⋂[κ] ▶[κ] A κ ∋ e0 ∼ e1
-  → τω ⊧ ⋂ A ∋ e0 ∼ e1.
-Proof.
-  move=> 𝒟 ℰ.
-  apply: rewrite_ty_in_mem.
-  - eauto.
-  - by apply: later_force_reflexive.
-Qed.
-
-Theorem ty_eq_refl_left {A B} :
-  τω ⊧ A ∼ B
-  → τω ⊧ A ∼ A.
+Theorem ty_eq_refl_left {τ A B} :
+  τ ⊧ A ∼ B
+  → τ ⊧ A ∼ A.
 Proof.
   Tac.prove.
 Qed.
 
-Theorem ty_eq_symm {A B} :
-  τω ⊧ A ∼ B
-  → τω ⊧ B ∼ A.
+Theorem ty_eq_symm {τ A B} :
+  τ ⊧ A ∼ B
+  → τ ⊧ B ∼ A.
 Proof.
   Tac.prove.
 Qed.
@@ -579,6 +567,47 @@ Proof.
     + symmetry; Tac.tower_ext; Tac.tower_mono.
 Qed.
 
+Theorem ty_eq_trans_at_lvl {i A B C} :
+  τ[i] ⊧ B ∼ C
+  → τ[i] ⊧ A ∼ B
+  → τ[i] ⊧ A ∼ C.
+Proof.
+  move=> [R1 [𝒟0 𝒟1]] [R2 [ℰ0 ℰ1]].
+  exists R2; T.split; auto.
+  replace R2 with R1; auto.
+  symmetry.
+  apply: Tower.extensionality; eauto.
+Qed.
+
+
+Theorem mem_eq_trans {A e0 e1 e2} :
+  τω ⊧ A ∋ e1 ∼ e2
+  → τω ⊧ A ∋ e0 ∼ e1
+  → τω ⊧ A ∋ e0 ∼ e2.
+Proof.
+  Tac.prove.
+  edestruct Tower.cper_valued.
+  - eauto.
+  - destruct per.
+    apply: transitive; eauto.
+    match goal with
+    | H : ?R1 (e1, e2) |- ?R2 (e1, e2) =>
+      replace R2 with R1; auto
+    end.
+    Tac.tower_ext; Tac.tower_mono.
+Qed.
+
+Theorem mem_eq_refl_left {A e0 e1} :
+  τω ⊧ A ∋ e0 ∼ e1
+  → τω ⊧ A ∋ e0 ∼ e0.
+Proof.
+  move=> 𝒟.
+  apply: mem_eq_trans.
+  - apply: mem_eq_symm.
+    eassumption.
+  - eassumption.
+Qed.
+
 Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
   τω ⊧ Γ ctx
   → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
@@ -634,12 +663,12 @@ Proof.
       eauto.
 Qed.
 
-Theorem later_force {A B} :
-  (τω ⊧ ⋂ A ∼ ⋂ B)
-  → τω ⊧ ⋂[κ] ▶[κ] A κ ∼ ⋂[κ] B κ.
+Theorem later_force {i A B} :
+  (τ[i] ⊧ ⋂ A ∼ ⋂ B)
+  → τ[i] ⊧ ⋂[κ] ▶[κ] A κ ∼ ⋂[κ] B κ.
 Proof.
   move=> 𝒟.
-  apply: ty_eq_trans.
+  apply: ty_eq_trans_at_lvl.
   - eassumption.
   - apply: later_force_reflexive.
     apply: ty_eq_refl_left.

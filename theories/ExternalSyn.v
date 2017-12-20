@@ -115,11 +115,9 @@ Notation "Γ .⦃ ρ ⦄" := (ECtx.map ρ%ren Γ%ectx) (at level 50) : ectx_scop
 
 Module EJdg.
   Inductive t Λ :=
-  | eq_ty : ∀ {Ψ}, ECtx.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ
   | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ
   | conv : ∀ {Ψ}, ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ.
 
-  Arguments eq_ty [Λ Ψ] Γ%ectx A%etm B%etm.
   Arguments eq_mem [Λ Ψ] Γ%ectx A%etm e1%etm e2%etm.
   Arguments conv [Λ Ψ] e1%etm e2%etm.
 End EJdg.
@@ -127,13 +125,12 @@ End EJdg.
 
 Delimit Scope ejdg_scope with ejdg.
 
-Notation "Λ ∣ Γ ≫ A ≐ B" := (@EJdg.eq_ty Λ _ Γ%ectx A%etm B%etm) (at level 10) : ejdg_scope.
 Notation "Λ ∣ Γ ≫ A ∋ e1 ≐ e2" := (@EJdg.eq_mem Λ _ Γ%ectx A%etm e1%etm e2%etm) (at level 10) : ejdg_scope.
 Notation "Λ ∣ Ψ ⊢ e1 ≃ e2" := (@EJdg.conv Λ Ψ e1%etm e2%etm) (at level 10) : ejdg_scope.
 
 Notation "⌊ 𝒥 ⌋" := 𝒥%ejdg (only parsing).
 
-Example example_judgment :=  ⌊ 1 ∣ ⋄ ≫ ▶[#0] 𝟙 ≐ ▶[#0] 𝟙 ⌋.
+Example example_judgment :=  ⌊ 1 ∣ ⋄ ≫ 𝕌[0] ∋ ▶[#0] 𝟙 ≐ ▶[#0] 𝟙 ⌋.
 
 Module Env.
   Definition t Λ := Var Λ → 𝕂.
@@ -182,11 +179,8 @@ where "⟦ Γ ⟧ κs" := (interp_ctx Γ%ectx κs) : ctx_scope.
 Arguments interp_ctx [Λ Ψ] Γ%ectx κs.
 
 Definition interp_jdg `(J : EJdg.t Λ) : Ω :=
-  ∀ (κs : Env.t Λ),
+  ∀ κs,
     match J with
-    | ⌊ _ ∣ Γ ≫ A ≐ B ⌋ =>
-      τω ⊧ ⟦ Γ ⟧ κs ctx
-      → τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ B ⟧ κs
     | ⌊ _ ∣ Γ ≫ A ∋ e1 ≐ e2 ⌋ =>
       τω ⊧ ⟦ Γ ⟧ κs ctx
       → (τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ A ⟧ κs)
