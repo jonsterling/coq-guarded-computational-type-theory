@@ -305,6 +305,7 @@ Proof.
   Tac.tower_ext; Tac.tower_mono.
 Qed.
 
+(* NOTE that the type equality premise is necessary for this rule to be true! *)
 Theorem isect_intro {A e0 e1} :
   τω ⊧ (⋂ A) ∼ (⋂ A)
   → (∀ κ, τω ⊧ (A κ) ∋ e0 ∼ e1)
@@ -407,13 +408,6 @@ Proof.
         repeat destruct_prod_val;
         eauto.
 Qed.
-
-(* The following theorem doesn't appear to be true:
-   how can we pick a universe level without indeterminate choice? *)
-Theorem isect_intro_ω {A e0 e1} :
-  (∀ κ, τω ⊧ (A κ) ∋ e0 ∼ e1)
-  → τω ⊧ ⋂ A ∋ e0 ∼ e1.
-Abort.
 
 Theorem isect_irrelevance {i A B}:
   τ[i] ⊧ A ∼ B
