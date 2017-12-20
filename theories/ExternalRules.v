@@ -412,7 +412,6 @@ Module Later.
       apply: ℰ.
       by case: γ01.
   Qed.
-
 End Later.
 
 
@@ -502,7 +501,8 @@ Module Examples.
         * apply: General.eq_symm.
           apply: Isect.irrelevance.
           apply: Bool.univ_eq.
-        * admit. (* need isect-force at level *)
+        * apply: Later.force.
+          apply: BitSeq_wf.
       + admit. (* need isect-preserves products *)
 
     - apply: Isect.univ_eq.
