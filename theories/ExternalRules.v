@@ -74,7 +74,7 @@ Module General.
     - apply: ℰ; eauto.
   Qed.
 
-  Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00 e01 e1} :
+  Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00} e01 {e1} :
     ⟦ Λ ∣ Ψ ⊢ e00 ≃ e01 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ e01 ≐ e1 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⟧.
@@ -426,20 +426,18 @@ Module Examples.
   Proof.
     apply: Isect.univ_eq.
     apply: BitStream_wf.
-  Abort.
+  Qed.
 
   Example Ones {Λ Ψ} : ETm.t Λ Ψ :=
     μ{ ⟨ETm.tt, @0⟩ }%etm.
 
 
-  Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {k} :
-    ⟦ Λ ∣ Γ ≫ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
+  Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {i k} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
   Proof.
-    Print General.
-    apply: (General.conv_ty (𝟚 × ▶[k] BitStream k)%etm).
+    apply: (General.conv_mem (𝟚 × ▶[k] BitStream k)%etm).
     - move=> ? ?; apply: fix_unfold; eauto.
-    - apply: (General.univ_reflection 0).
-      apply: Prod.univ_eq.
+    - apply: Prod.univ_eq.
       + apply: Bool.univ_eq.
       + apply: Later.univ_eq.
         apply: Later.intro.
@@ -454,6 +452,7 @@ Module Examples.
     Print General.
     apply: General.replace_ty_in_mem.
     - apply: General.ty_eq_symm.
+      apply: (General.univ_reflection 0).
       apply: BitStream_unfold.
     - apply: Prod.intro.
       + apply: Bool.tt_equality.
@@ -478,5 +477,19 @@ Module Examples.
   Example BitSeq_unfold `{Γ : ECtx.t Λ Ψ} :
     ⟦ Λ ∣ Γ ≫ BitSeq ≐ (𝟚 × BitSeq) ⟧.
   Proof.
+    rewrite /BitSeq /BitStream.
+    suff: ⟦ Λ ∣ Γ ≫ ⋂ BitStream #0 ≐ ⋂ (𝟚 × ▶[#0] BitStream #0) ⟧.
+    - move=> 𝒟; apply: General.ty_eq_trans 𝒟.
+      suff: ⟦ Λ ∣ Γ ≫ ⋂ (𝟚 × ▶[#0] BitStream #0) ≐ ((⋂ 𝟚) × (⋂ ▶[#0] BitStream #0)) ⟧.
+      + move=> ℰ; apply: General.ty_eq_trans ℰ.
+        apply: (General.univ_reflection 0).
+        apply: Prod.univ_eq.
+        * admit. (* need isect-irrelevance at level *)
+        * admit. (* need isect-force at level *)
+      + admit. (* need isect-preserves products *)
+
+    - apply: (General.univ_reflection 0).
+      apply: Isect.univ_eq.
+      apply: BitStream_unfold.
   Abort.
 End Examples.
