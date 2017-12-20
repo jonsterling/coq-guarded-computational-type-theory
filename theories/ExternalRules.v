@@ -306,7 +306,7 @@ Module Isect.
           replace R' with (S κ) in 𝒟0, 𝒟1.
           ** T.use 𝒟1.
              repeat f_equal;
-             rewrite -interp_tm_clk_naturality /compose;
+             rewrite -interp_tm_clk_naturality;
              by simplify_eqs.
           ** apply: (@Tower.extensionality (n + n2)); simpl.
              *** apply: Tower.monotonicity; last by [eauto].
@@ -314,7 +314,7 @@ Module Isect.
              *** apply: Tower.monotonicity; last by [eauto].
                  rewrite /n; omega.
         * T.use γ01; f_equal.
-          rewrite -interp_ctx_clk_naturality /compose.
+          rewrite -interp_ctx_clk_naturality.
           by simplify_eqs.
         * move=> ? ? ?.
           apply: IR.eq_ty_from_level.
@@ -324,7 +324,7 @@ Module Isect.
           apply: IR.univ_formation.
         * T.use Γctx.
           f_equal.
-          rewrite -interp_ctx_clk_naturality /compose.
+          rewrite -interp_ctx_clk_naturality.
           by simplify_eqs.
     - apply: (@Tower.extensionality (n1 + n0')); simpl.
       * apply: Tower.monotonicity; last by [eassumption].
@@ -338,7 +338,7 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ ⋂ (A.⦃^1⦄) ⟧.
   Proof.
     move=> 𝒟 κs ? ? γ0 γ1 γ01; simplify_eqs.
-    replace (λ κ : 𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1).
+    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1).
     - apply: IR.univ_mem_formation.
       apply: IR.isect_irrelevance.
       apply: IR.univ_mem_inversion.
@@ -361,7 +361,7 @@ Module Isect.
     | specialize (ℰ (κ ∷ κs));
       have := (IR.functionality_square (ℰ _ _))
     ];
-    rewrite -interp_ctx_clk_naturality /compose; simplify_eqs;
+    rewrite -interp_ctx_clk_naturality; simplify_eqs;
     move=> ℋ; edestruct ℋ as [ℋ0 [ℋ1 ℋ2]]; eauto.
 
     - apply: IR.mem_eq_trans.
