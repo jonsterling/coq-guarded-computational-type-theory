@@ -29,8 +29,8 @@ Definition atomic_eq_mem (τ : cts) (A e1 e2 : Tm.t 0) :=
 Arguments atomic_eq_ty τ A%tm B%tm.
 Arguments atomic_eq_mem τ A%tm e1%tm e2%tm.
 
-Notation "τ ⊧ A ∼ B" := (atomic_eq_ty τ A B) (at level 10).
-Notation "τ ⊧ A ∋ e1 ∼ e2" := (atomic_eq_mem τ A e1 e2) (at level 10).
+Notation "τ ⊧ A ∼ B" := (atomic_eq_ty τ A%tm B%tm) (at level 10).
+Notation "τ ⊧ A ∋ e1 ∼ e2" := (atomic_eq_mem τ A%tm e1%tm e2%tm) (at level 10).
 Reserved Notation "τ ⊧ Γ ∋⋆ γ1 ∼ γ2" (at level 10).
 
 Program Fixpoint atomic_eq_env {Ψ} τ Γ (γ1 γ2 : Tm.Sub.t Ψ 0) : Ω :=
