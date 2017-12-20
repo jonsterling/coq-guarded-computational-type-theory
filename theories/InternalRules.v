@@ -89,7 +89,7 @@ Proof.
   (apply: Tower.monotonicity; last by [eauto]); omega.
 Qed.
 
-Theorem eq_mem_from_level {n A e1 e2} :
+Theorem eq_mem_from_level n {A e1 e2} :
   τ[n] ⊧ A ∋ e1 ∼ e2
   → τω ⊧ A ∋ e1 ∼ e2.
 Proof.
@@ -193,7 +193,7 @@ Lemma univ_mem_formation {i A0 A1} :
   → τω ⊧ 𝕌[i] ∋ A0 ∼ A1.
 Proof.
   move=> 𝒟.
-  apply: (@eq_mem_from_level (S i)).
+  apply: (eq_mem_from_level (S i)).
   esplit; split.
   - rewrite /Tower.t -Clo.roll.
     apply: Sig.init.
@@ -219,7 +219,7 @@ Theorem prod_intro {A B e00 e01 e10 e11} :
   → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
 Proof.
   move=> /eq_mem_to_level [n1 𝒟] /eq_mem_to_level [n2 ℰ].
-  apply: (@eq_mem_from_level (n1 + n2)).
+  apply: (eq_mem_from_level (n1 + n2)).
   move: 𝒟 ℰ; Tac.prove.
   - apply: Tower.monotonicity; last by [eauto]; omega.
   - apply: Tower.monotonicity; last by [eauto]; omega.
@@ -278,7 +278,7 @@ Proof.
   T.destruct_conjs; eauto.
 Qed.
 
-Theorem isect_intro {n A e0 e1} :
+Theorem isect_intro_at_lvl {n A e0 e1} :
   (∀ κ, τ[n] ⊧ (A κ) ∋ e0 ∼ e1)
   → τ[n] ⊧ ⋂ A ∋ e0 ∼ e1.
 Proof.
@@ -293,6 +293,36 @@ Proof.
     case: ℰ => [_ ?].
     eauto.
 Qed.
+
+Lemma mem_eq_at_lvl_of_typehood {m n A B e0 e1} :
+  τ[n] ⊧ A ∋ e0 ∼ e1
+  → τ[m] ⊧ A ∼ B
+  → τ[m] ⊧ A ∋ e0 ∼ e1.
+Proof.
+  move=> [R [𝒟0 𝒟1]] [S [ℰ0 ℰ1]].
+  exists S; split; first by assumption.
+  replace S with R; first by assumption.
+  Tac.tower_ext; Tac.tower_mono.
+Qed.
+
+Theorem isect_intro {A e0 e1} :
+  τω ⊧ (⋂ A) ∼ (⋂ A)
+  → (∀ κ, τω ⊧ (A κ) ∋ e0 ∼ e1)
+  → τω ⊧ ⋂ A ∋ e0 ∼ e1.
+Proof.
+  move=> /eq_ty_to_level [n𝒟 𝒟] ℰ.
+  apply: (eq_mem_from_level n𝒟).
+  apply: isect_intro_at_lvl => κ.
+  T.specialize_hyps.
+
+  case: {ℰ} (eq_mem_to_level ℰ) => nℰ ℰ.
+  apply: mem_eq_at_lvl_of_typehood; first by eassumption.
+
+  case: 𝒟 => R [𝒟 _].
+  Tower.destruct_tower.
+  eexists; split; T.specialize_hyps; eauto.
+Qed.
+
 
 Definition cext_transparent (R : rel) (es : Tm.t 0 × Tm.t 0) :=
   exists v0 v1, π₁ es ⇓ v0 ∧ π₂ es ⇓ v1 ∧ R (v0, v1).

@@ -272,51 +272,22 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ ⋂ A ∋ e0 ≐ e1 ⟧.
   Proof.
     move=> 𝒟 ℱ κs Γctx ℰ γ0 γ1 γ01 //=.
-    case: (ℰ γ0 γ1 γ01) => R [[n0 ℰ0] [n1 ℰ1]].
-    case: (ℰ γ1 γ0 (IR.env_eq_symm Γctx γ01)) => R' [[n0' ℰ0'] [n1' ℰ1']].
-
-    replace R' with R in ℰ0', ℰ1'.
-
-    - clear R'.
-      IR.Tac.accum_lvl n.
-      apply: (@IR.eq_mem_from_level n).
-      repeat Tower.destruct_tower.
-      apply: IR.isect_intro => κ.
-      T.specialize_hyps.
-      exists (S κ); split.
-      + apply: Tower.monotonicity; last by [eassumption].
-        rewrite /n; omega.
-      + specialize (𝒟 (κ ∷ κs)).
-        T.efwd 𝒟.
-        * case: 𝒟 => R' [[n2 𝒟0] 𝒟1].
-          replace R' with (S κ) in 𝒟0, 𝒟1.
-          ** T.use 𝒟1.
-             repeat f_equal;
-             rewrite -interp_tm_clk_naturality;
-             by simplify_eqs.
-          ** apply: (@Tower.extensionality (n + n2)); simpl.
-             *** apply: Tower.monotonicity; last by [eauto].
-                 rewrite /n; omega.
-             *** apply: Tower.monotonicity; last by [eauto].
-                 rewrite /n; omega.
-        * T.use γ01; f_equal.
-          rewrite -interp_ctx_clk_naturality.
-          by simplify_eqs.
-        * move=> ? ? ?.
-          apply: IR.eq_ty_from_level.
-          apply: IR.univ_mem_inversion.
-          apply: ℱ; auto.
-          move=> ? ? ?.
-          apply: IR.univ_formation.
-        * T.use Γctx.
-          f_equal.
-          rewrite -interp_ctx_clk_naturality.
-          by simplify_eqs.
-    - apply: (@Tower.extensionality (n1 + n0')); simpl.
-      * apply: Tower.monotonicity; last by [eassumption].
-        omega.
-      * apply: Tower.monotonicity; last by [eassumption].
-        omega.
+    apply: IR.isect_intro.
+    - apply: IR.eq_ty_from_level.
+      apply: IR.univ_mem_inversion.
+      apply: univ_eq; eauto.
+      + move=> ? ? ?.
+        apply: IR.univ_formation.
+      + apply: IR.env_eq_refl_left; eauto.
+    - move=> κ.
+      move: {𝒟} (𝒟 (κ ∷ κs)); rewrite -interp_ctx_clk_naturality -!interp_tm_clk_naturality /compose; simplify_eqs => 𝒟.
+      apply: 𝒟; eauto.
+      move=> ? ? ?.
+      apply: IR.eq_ty_from_level.
+      apply: IR.univ_mem_inversion.
+      apply: ℱ; rewrite -interp_ctx_clk_naturality /compose; simplify_eqs; eauto.
+      move=> ? ? ?.
+      apply: IR.univ_formation.
   Qed.
 
   Theorem irrelevance `{Γ : ECtx.t Λ Ψ} {i A} :
