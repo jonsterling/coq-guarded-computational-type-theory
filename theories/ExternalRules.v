@@ -594,9 +594,15 @@ Module Examples.
           apply: Bool.univ_eq.
         * apply: Later.force.
           apply: BitSeq_wf.
-      + admit. (* need isect-preserves products *)
+
+      + apply: Isect.cartesian.
+        * apply: Bool.univ_eq.
+        * apply: Later.univ_eq.
+          apply: Later.intro.
+          ** by apply: BitStream_wf.
+          ** by apply: General.univ_formation.
 
     - apply: Isect.univ_eq.
       apply: BitStream_unfold.
-  Abort.
+  Qed.
 End Examples.
