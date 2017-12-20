@@ -146,15 +146,11 @@ Module General.
     - apply: ℰ; eauto.
       move=> γ0' γ1' γ01'.
       IR.Univ.tac.
-      suff: τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ 𝕌[ i] ⟧ κs ∼ (⟦ 𝕌[ i] ⟧ κs).
-      + move=> 𝒢.
-        have 𝒟10' := (𝒟 κs ℱ 𝒢 γ1' γ0' (IR.General.env_eq_symm ℱ γ01')).
-        have 𝒟00' := (𝒟 κs ℱ 𝒢 γ0' γ0' (IR.General.env_eq_refl_left ℱ γ01')).
-        apply: IR.General.mem_eq_trans.
-        * apply: IR.General.mem_eq_symm.
-          exact 𝒟10'.
-        * exact 𝒟00'.
-      + IR.Univ.tac.
+      have 𝒟10' := (𝒟 κs ℱ _ γ1' γ0' (IR.General.env_eq_symm ℱ γ01')).
+      have 𝒟00' := (𝒟 κs ℱ _ γ0' γ0' (IR.General.env_eq_refl_left ℱ γ01')).
+      simpl in *;
+      eauto.
+
     - IR.Univ.tac.
       apply: 𝒟; auto.
       apply: IR.General.env_eq_refl_left; eassumption.
@@ -275,14 +271,11 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ ⋂ (A.⦃^1⦄) ⟧.
   Proof.
     move=> 𝒟 κs ? ? γ0 γ1 γ01; simplify_eqs.
-    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1).
-    - apply: IR.Univ.intro.
-      apply: IR.Isect.irrelevance.
-      apply: IR.Univ.inversion.
-      apply: 𝒟; eauto.
-
-    - T.eqcd => *.
-      by rewrite -interp_tm_clk_naturality.
+    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1); last by eauto.
+    apply: IR.Univ.intro.
+    apply: IR.Isect.irrelevance.
+    apply: IR.Univ.inversion.
+    apply: 𝒟; eauto.
   Qed.
 
   Theorem cartesian `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
