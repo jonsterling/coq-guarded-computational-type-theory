@@ -19,7 +19,10 @@ end.
 Local Hint Extern 20 => IR.Univ.tac.
 Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm.
 
-
+Tactic Notation "explode" "functionality" uconstr(𝒟) :=
+  let X := fresh in
+  (have X := (IR.General.functionality_square 𝒟));
+  (edestruct X as [? [? ?]]); simpl in *; eauto.
 
 Module Conversion.
   Module Structural.
@@ -146,11 +149,7 @@ Module General.
     - apply: ℰ; eauto.
       move=> γ0' γ1' γ01'.
       IR.Univ.tac.
-      have 𝒟10' := (𝒟 κs ℱ _ γ1' γ0' (IR.General.env_eq_symm ℱ γ01')).
-      have 𝒟00' := (𝒟 κs ℱ _ γ0' γ0' (IR.General.env_eq_refl_left ℱ γ01')).
-      simpl in *;
-      eauto.
-
+      explode functionality (𝒟 _ _ _).
     - IR.Univ.tac.
       apply: 𝒟; auto.
       apply: IR.General.env_eq_refl_left; eassumption.
@@ -286,16 +285,9 @@ Module Isect.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
     apply: IR.Univ.intro.
     apply: IR.Isect.cartesian => κ;
-    apply: IR.Univ.inversion;
-    [ specialize (𝒟 (κ ∷ κs));
-      have := (IR.General.functionality_square (𝒟 _ _))
-    | specialize (ℰ (κ ∷ κs));
-      have := (IR.General.functionality_square (ℰ _ _))
-    ];
-
-    move=> ℋ;
-    edestruct ℋ as [? [? ?]];
-    eauto.
+    apply: IR.Univ.inversion.
+    - explode functionality (𝒟 (κ ∷ κs) _ _).
+    - explode functionality (ℰ (κ ∷ κs) _ _).
   Qed.
 End Isect.
 
