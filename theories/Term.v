@@ -333,8 +333,7 @@ Notation "e0 ≈₀ e1" := (closed_equiv e0%tm e1%tm) (at level 30).
 
 Theorem closed_approx_refl : ∀ e, e ≼₀ e.
 Proof.
-  compute.
-  auto.
+  by compute.
 Qed.
 
 Hint Resolve closed_approx_refl.
