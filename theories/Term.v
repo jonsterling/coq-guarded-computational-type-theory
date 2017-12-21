@@ -21,7 +21,7 @@ Module Tm.
   | ax : t Ψ
   | tt : t Ψ
   | ff : t Ψ
-  | prod : t Ψ -> t Ψ -> t Ψ
+  | prod : t Ψ -> t (S Ψ) -> t Ψ
   | arr : t Ψ -> t Ψ -> t Ψ
   | pair : t Ψ -> t Ψ -> t Ψ
   | lam : t (S Ψ) → t Ψ
@@ -70,7 +70,7 @@ Module Tm.
     | ax => ax
     | tt => tt
     | ff => ff
-    | prod A B => prod (map ρ A) (map ρ B)
+    | prod A B => prod (map ρ A) (map (Ren.cong ρ) B)
     | arr A B => arr (map ρ A) (map ρ B)
     | pair e1 e2 => pair (map ρ e1) (map ρ e2)
     | lam e => lam (map (Ren.cong ρ) e)
@@ -88,18 +88,15 @@ Module Tm.
 
   Local Ltac rewrites_aux :=
     repeat f_equal;
-    try (let x := fresh in T.eqcd => x).
+    try (let x := fresh in T.eqcd => x);
+    try (rewrite Ren.cong_id).
 
   Local Ltac rewrites :=
     T.rewrites_with rewrites_aux.
 
   Theorem map_id {Ψ} (e : t Ψ) : map id e = e.
   Proof.
-    induction e; auto; simpl; try by rewrites.
-    + f_equal.
-      by rewrite Ren.cong_id.
-    + f_equal.
-      by rewrite Ren.cong_id.
+    induction e; by rewrites.
   Qed.
 
   Module Sub.
@@ -143,7 +140,7 @@ Module Tm.
     | ax => ax
     | tt => tt
     | ff => ff
-    | prod A B => prod (subst σ A) (subst σ B)
+    | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
     | arr A B => arr (subst σ A) (subst σ B)
     | pair e1 e2 => pair (subst σ e1) (subst σ e2)
     | lam e => lam (subst (Sub.cong σ) e)
@@ -165,9 +162,8 @@ Module Tm.
     e.[ρ23 ∘ ρ12]%tm.
   Proof.
     move: Ψ2 Ψ3 ρ12 ρ23.
-    induction e; rewrites.
-    - by dependent induction H.
-    - by dependent induction H.
+    induction e; rewrites;
+    by dependent induction H.
   Qed.
 
   Theorem ren_subst_cong_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) :
