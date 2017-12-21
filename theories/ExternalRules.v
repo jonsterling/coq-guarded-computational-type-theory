@@ -205,6 +205,13 @@ Module Bool.
     move=> ? ? ? ? ? ?.
     IR.Bool.tac.
   Qed.
+
+  Theorem ff_equality `{Γ : ECtx.t Λ Ψ} :
+    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ ETm.ff ≐ ETm.ff ⟧.
+  Proof.
+    move=> ? ? ? ? ? ?.
+    IR.Bool.tac.
+  Qed.
 End Bool.
 
 
