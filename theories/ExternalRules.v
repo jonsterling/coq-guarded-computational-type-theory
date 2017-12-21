@@ -423,30 +423,25 @@ Module Examples.
     apply: (BitStream_wf 0).
   Qed.
 
-
   Example BitSeq_unfold `{Γ : ECtx.t Λ Ψ} i :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitSeq ≐ (𝟚 × BitSeq) ⟧.
   Proof.
-    rewrite /BitSeq /BitStream.
-    suff: ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ⋂ BitStream #0 ≐ ⋂ (𝟚 × ▶[#0] BitStream #0) ⟧.
-    - move=> 𝒟; apply: General.eq_trans 𝒟.
-      suff: ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ⋂ (𝟚 × ▶[#0] BitStream #0) ≐ ((⋂ 𝟚) × (⋂ ▶[#0] BitStream #0)) ⟧.
-      + move=> ℰ; apply: General.eq_trans ℰ.
-        apply: Prod.univ_eq.
+    apply: General.eq_trans.
+    - apply: General.eq_trans.
+      + apply: Prod.univ_eq.
         * apply: General.eq_symm.
           apply: Isect.irrelevance.
           apply: Bool.univ_eq.
         * apply: Later.force.
           apply: BitSeq_wf.
-
       + apply: Isect.cartesian.
         * apply: Bool.univ_eq.
         * apply: Later.univ_eq.
           apply: Later.intro.
           ** by apply: BitStream_wf.
           ** by apply: General.univ_formation.
-
     - apply: Isect.univ_eq.
       apply: BitStream_unfold.
   Qed.
+
 End Examples.
