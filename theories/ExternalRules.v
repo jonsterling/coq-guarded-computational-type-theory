@@ -405,14 +405,13 @@ Module Examples.
     - apply: General.eq_symm.
       apply: BitStream_unfold.
     - apply: Prod.intro.
-      + apply: Bool.tt_equality.
-      + apply: General.hypothesis.
-      + apply: (Bool.univ_eq 0).
+      + by apply: Bool.tt_equality.
+      + by apply: General.hypothesis.
+      + by apply: (Bool.univ_eq 0).
       + apply: (Later.univ_eq 0).
         apply: Later.intro.
-        * apply: BitStream_wf.
-        * apply: (General.univ_formation 0).
-          eauto.
+        * by apply: BitStream_wf.
+        * by apply: General.univ_formation.
   Qed.
 
   Example Ones_wf_infinite `{Γ : ECtx.t Λ Ψ} :
