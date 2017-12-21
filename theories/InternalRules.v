@@ -488,15 +488,18 @@ Module Prod.
   Theorem formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
     → τ[n] ⊧ B0 ∼ B1
-    → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
+    → τ[n] ⊧ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
   Proof.
-    Tac.prove.
+    move=> [R𝒟 [𝒟0 𝒟1]] [Rℰ [ℰ0 ℰ1]].
+    eexists; split; Tac.tower_intro; apply: Sig.conn; auto;
+    apply: (@Connective.has_prod _ _ _ R𝒟 (fun _ => Rℰ)); eauto;
+    move=> e0 e1 e01; repeat T.split; Term.simplify_subst; eauto.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
     τω ⊧ 𝕌[i] ∋ A0 ∼ A1
     → τω ⊧ 𝕌[i] ∋ B0 ∼ B1
-    → τω ⊧ 𝕌[i] ∋ (A0 × B0) ∼ (A1 × B1).
+    → τω ⊧ 𝕌[i] ∋ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
   Proof.
     move=> /Univ.inversion 𝒟 /Univ.inversion ℰ.
     apply: Univ.intro.
@@ -506,13 +509,16 @@ Module Prod.
   Theorem intro {A B e00 e01 e10 e11} :
     τω ⊧ A ∋ e00 ∼ e10
     → τω ⊧ B ∋ e01 ∼ e11
-    → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
+    → τω ⊧ (A × B.[^1]) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
   Proof.
-    move=> /Level.eq_mem_to_level [n1 𝒟] /Level.eq_mem_to_level [n2 ℰ].
+    move=> /Level.eq_mem_to_level [n1 [R𝒟 [𝒟0 𝒟1]]] /Level.eq_mem_to_level [n2 [Rℰ [ℰ0 ℰ1]]].
     apply: (Level.eq_mem_from_level (n1 + n2)).
-    move: 𝒟 ℰ; Tac.prove.
-    - apply: Tower.monotonicity; last by [eauto]; omega.
-    - apply: Tower.monotonicity; last by [eauto]; omega.
+    eexists; split.
+    - Tac.tower_intro; apply: Sig.conn; auto.
+      apply: (@Connective.has_prod _ _ _ R𝒟 (fun _ => Rℰ)).
+      + Tac.tower_mono.
+      + move=> e0 e1 e0e1; repeat split; Term.simplify_subst; auto; Tac.tower_mono.
+    - eauto.
   Qed.
 End Prod.
 
@@ -637,7 +643,7 @@ Module Isect.
   Theorem cartesian {n A0 B0 A1 B1} :
     (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
     → (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
-    → τ[n] ⊧ (⋂[κ] (A0 κ × B0 κ)) ∼ ((⋂ A1) × (⋂ B1)).
+    → τ[n] ⊧ (⋂[κ] (A0 κ × (B0 κ).[^1])) ∼ ((⋂ A1) × (⋂ B1).[^1]).
   Proof.
     move=> 𝒟 ℰ.
     case: (TowerChoice.ty_eq 𝒟) => S𝒟 𝒟'.
@@ -646,11 +652,21 @@ Module Isect.
 
     - Tac.prove; T.specialize_hyps; T.destruct_conjs.
       rewrite /Tower.t -Clo.roll.
-      Tac.prove.
+      apply: Sig.conn; auto.
+      apply: (@Connective.has_prod _ _ _ _ (fun _ => _)).
+      + eauto.
+      + move=> ? ? ?; repeat T.split; Term.simplify_subst; eauto.
 
     - Tac.ts_flex_rel.
-      + Tac.prove; rewrite /Tower.t -Clo.roll; Tac.prove;
+      + Tac.tower_intro.
+        apply: Sig.conn; auto.
+        evar (R : rel).
+        apply: (@Connective.has_prod _ _ _ _ (fun _ => R)); rewrite /R; clear R.
+        * Tac.tower_intro.
+          apply: Sig.conn; auto.
+          apply: Connective.has_isect => κ.
           T.specialize_hyps; T.destruct_conjs; Tac.prove.
+        * move=> e0 e1 //= e0e1; repeat T.split; auto; Tac.tower_intro; Term.simplify_subst; Tac.prove; T.specialize_hyps; T.destruct_conjs; Term.simplify_subst; eauto.
 
       + T.eqcd; case => e0 e1.
         apply: propositional_extensionality; split => H.
