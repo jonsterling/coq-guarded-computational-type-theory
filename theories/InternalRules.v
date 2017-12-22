@@ -199,15 +199,16 @@ Module General.
     apply: H; eauto.
   Qed.
 
-  Theorem mem_eq_symm {A e0 e1} :
-    τω ⊧ A ∋ e0 ∼ e1
-    → τω ⊧ A ∋ e1 ∼ e0.
+  Theorem mem_eq_symm {τ A e0 e1} :
+    TS.cper_valued τ
+    → τ ⊧ A ∋ e0 ∼ e1
+    → τ ⊧ A ∋ e1 ∼ e0.
   Proof.
-    move=> [R [𝒟 ℰ]].
+    move=> cper [R [𝒟 ℰ]].
     exists R; split; auto.
-    edestruct τω_cper_valued; eauto.
+    edestruct cper; eauto.
     destruct per.
-      by apply: symmetric.
+    by apply: symmetric.
   Qed.
 
   Theorem mem_eq_conv {τ A e00 e01 e1} :
@@ -230,9 +231,9 @@ Module General.
   Proof.
     move=> ? ? ?.
     apply: mem_eq_conv; eauto.
-    apply: mem_eq_symm.
+    apply: mem_eq_symm; eauto.
     apply: mem_eq_conv; eauto.
-      by apply: mem_eq_symm.
+    by apply: mem_eq_symm.
   Qed.
 
   Theorem ty_eq_trans {A B C} :
@@ -261,13 +262,16 @@ Module General.
   Qed.
 
 
-  Theorem mem_eq_trans {A e0 e1 e2} :
-    τω ⊧ A ∋ e1 ∼ e2
-    → τω ⊧ A ∋ e0 ∼ e1
-    → τω ⊧ A ∋ e0 ∼ e2.
+  Theorem mem_eq_trans {τ A e0 e1 e2} :
+    TS.cper_valued τ
+    → TS.extensional τ
+    → τ ⊧ A ∋ e1 ∼ e2
+    → τ ⊧ A ∋ e0 ∼ e1
+    → τ ⊧ A ∋ e0 ∼ e2.
   Proof.
+    move=> cper ext.
     Tac.prove.
-    edestruct Tower.cper_valued.
+    edestruct cper.
     - eauto.
     - destruct per.
       apply: transitive; eauto.
@@ -275,18 +279,18 @@ Module General.
       | H : ?R1 (e1, e2) |- ?R2 (e1, e2) =>
         replace R2 with R1; auto
       end.
-      Tac.tower_ext; Tac.tower_mono.
+      apply: ext; eauto.
   Qed.
 
-  Theorem mem_eq_refl_left {A e0 e1} :
-    τω ⊧ A ∋ e0 ∼ e1
-    → τω ⊧ A ∋ e0 ∼ e0.
+  Theorem mem_eq_refl_left {τ A e0 e1} :
+    TS.cper_valued τ
+    → TS.extensional τ
+    → τ ⊧ A ∋ e0 ∼ e1
+    → τ ⊧ A ∋ e0 ∼ e0.
   Proof.
-    move=> 𝒟.
-    apply: mem_eq_trans.
-    - apply: mem_eq_symm.
-      eassumption.
-    - eassumption.
+    move=> ? ? 𝒟.
+    apply: mem_eq_trans; eauto.
+    apply: mem_eq_symm; eauto.
   Qed.
 
   Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
@@ -485,7 +489,123 @@ End Bool.
 
 Module Prod.
 
+
+  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
+
+  Theorem family_choice {τ A0 A1 B0 B1} :
+    τ ⊧ A0 ∼ A1
+    → τ ⊧ ⋄; A0 ≫ B0 ∼ B1
+    → TS.cper_valued τ
+    → TS.extensional τ
+    → ∃ (R : Tm.t 0 → rel),
+      ∀ e0 e1,
+        τ ⊧ A0 ∋ e0 ∼ e1
+        → R e0 = R e1
+          ∧ τ (B0 ⫽ Tm.Sub.inst0 e0, R e0)
+          ∧ τ (B1 ⫽ Tm.Sub.inst0 e1, R e1)
+          ∧ τ (B0 ⫽ Tm.Sub.inst0 e1, R e0)
+          ∧ τ (B1 ⫽ Tm.Sub.inst0 e0, R e0).
+  Proof.
+    move=> 𝒟 ℰ cper ext.
+    exists (fun e =>
+         fun es =>
+           τ ⊧ A0 ∋ e ∼ e
+           → τ ⊧ B0 ⫽ Tm.Sub.inst0 e ∋ (π₁ es) ∼ (π₂ es)).
+
+    move=> e0 e1 ℱ.
+    destruct (ℰ (Tm.Sub.inst0 e1) (Tm.Sub.inst0 e0)) as [Rℰ [ℰ0 ℰ1]]; eauto.
+    destruct (ℰ (Tm.Sub.inst0 e0) (Tm.Sub.inst0 e0)) as [Rℰ' [ℰ0' ℰ1']]; eauto.
+
+    repeat split.
+    - T.eqcd; case => e'0 e'1 //=.
+      apply: propositional_extensionality; split => 𝒢 ℋ.
+      + case: 𝒢 => [|R [𝒢1 𝒢2]]; eauto.
+        eexists; split; eauto.
+        replace Rℰ with R; eauto.
+        eapply ext; eauto; simpl.
+        replace Rℰ with Rℰ'; eauto.
+        eapply ext; eauto.
+      + case: 𝒢 => [|R [𝒢1 𝒢2]]; eauto.
+        eexists; split; eauto.
+        replace Rℰ' with R; eauto.
+        eapply ext; eauto; simpl.
+        replace Rℰ' with Rℰ; eauto.
+        eapply ext; eauto.
+    - T.use ℰ0'; repeat f_equal.
+      T.eqcd; case => e'0 e'1 //=.
+      apply: propositional_extensionality; split.
+      * move=> e'0e'1 e0e0 //=.
+        eexists; split; eauto.
+      * move=> //= 𝒢.
+        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+        replace Rℰ' with R𝒢; eauto.
+        apply: ext; eauto.
+    - destruct (ℰ (Tm.Sub.inst0 e1) (Tm.Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+      T.use ℰ1''; repeat f_equal.
+      T.eqcd; case => e'0 e'1 //=.
+      apply: propositional_extensionality; split.
+      + move=> e'0e'1 e1e1 //=.
+        eexists; split; eauto.
+      + move=> //= 𝒢.
+        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+        replace Rℰ'' with R𝒢; eauto.
+        apply: ext; eauto.
+    - destruct (ℰ (Tm.Sub.inst0 e1) (Tm.Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+      T.use ℰ0''; repeat f_equal.
+      T.eqcd; case => e'0 e'1 //=.
+      apply: propositional_extensionality; split.
+      + move=> e'0e'1 e1e1 //=.
+        exists Rℰ''; split; auto.
+        replace Rℰ'' with Rℰ'; auto.
+        replace Rℰ' with Rℰ.
+        * eapply ext; first by [exact ℰ0]; eauto.
+        * eapply ext; eauto.
+      + move=> //= 𝒢.
+        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+        replace Rℰ'' with R𝒢; eauto.
+        replace R𝒢 with Rℰ'.
+        * replace Rℰ' with Rℰ.
+          ** eapply ext; first by [exact ℰ0]; eauto.
+          ** eapply ext; eauto.
+        * eapply ext; first by [exact ℰ0']; eauto.
+
+    - T.use ℰ1'; repeat f_equal.
+      T.eqcd; case => e'0 e'1 //=.
+      apply: propositional_extensionality; split.
+      + move=> e'0e'1 e1e1 //=.
+        eexists; split; eauto.
+      + move=> //= 𝒢.
+        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+        replace Rℰ' with R𝒢; eauto.
+        apply: ext; eauto.
+  Qed.
+
+
   Theorem formation {n A0 A1 B0 B1} :
+    τ[n] ⊧ A0 ∼ A1
+    → τ[n] ⊧ (⋄; A0) ≫ B0 ∼ B1
+    → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
+  Proof.
+    move=> 𝒟 ℰ.
+    case: (family_choice 𝒟 ℰ); eauto.
+    move=> Rℰ Rℰspec; case 𝒟 => R𝒟 [𝒟0 𝒟1].
+
+    eexists; split; Tac.tower_intro; apply: Sig.conn; eauto.
+    - apply: (@Connective.has_prod _ _ _ R𝒟 Rℰ); eauto.
+      move=> e0 e1 e01.
+      case: (Rℰspec e0 e1).
+      + exists R𝒟; auto.
+      + move=> Q [? [? [? ?]]]; repeat split; eauto.
+        by rewrite -Q.
+    - apply: (@Connective.has_prod _ _ _ R𝒟 Rℰ); eauto.
+      move=> e0 e1 e01.
+      case: (Rℰspec e0 e1).
+      + exists R𝒟; auto.
+      + move=> Q [? [? [? ?]]]; repeat split; eauto.
+  Qed.
+
+  Theorem ind_formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
     → τ[n] ⊧ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
@@ -503,7 +623,7 @@ Module Prod.
   Proof.
     move=> /Univ.inversion 𝒟 /Univ.inversion ℰ.
     apply: Univ.intro.
-    by apply: formation.
+    by apply: ind_formation.
   Qed.
 
   Theorem intro {A B e00 e01 e10 e11} :
