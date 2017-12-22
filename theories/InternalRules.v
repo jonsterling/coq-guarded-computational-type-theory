@@ -637,15 +637,14 @@ Module Prod.
     → τω ⊧ ⋄;A0 ≫ 𝕌[i] ∋ B0 ∼ B1
     → τω ⊧ 𝕌[i] ∋ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    move=> /Univ.inversion 𝒟 ℰ.
+    move=> /Univ.inversion 𝒟 /Univ.open_inversion ℰ.
     apply: Univ.intro.
     apply: formation.
     - assumption.
-    - apply: Univ.open_inversion.
-      * by assumption.
-      * split; auto.
-        move=> ? ? ?; Term.simplify_subst.
-        apply: General.ty_eq_refl_left; eauto.
+    - apply: ℰ.
+      split; auto.
+      move=> ? ? ?; Term.simplify_subst.
+      apply: General.ty_eq_refl_left; eauto.
   Qed.
 
   Theorem ind_formation {n A0 A1 B0 B1} :
