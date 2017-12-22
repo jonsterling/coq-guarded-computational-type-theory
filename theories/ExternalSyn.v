@@ -20,7 +20,7 @@ Module ETm.
   | ax : t Λ Ψ
   | tt : t Λ Ψ
   | ff : t Λ Ψ
-  | prod : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
+  | prod : t Λ Ψ -> t Λ (S Ψ) -> t Λ Ψ
   | arr : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
   | pair : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
   | ltr : Var Λ → t Λ Ψ -> t Λ Ψ
@@ -45,7 +45,7 @@ Module ETm.
     | ax => ax
     | tt => tt
     | ff => ff
-    | prod A B => prod (map ρΛ ρΨ A) (map ρΛ ρΨ B)
+    | prod A B => prod (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
     | arr A B => arr (map ρΛ ρΨ A) (map ρΛ ρΨ B)
     | pair e1 e2 => pair (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
     | ltr k A => ltr (ρΛ k) (map ρΛ ρΨ A)
@@ -206,6 +206,10 @@ Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1
 Proof.
   move: Λ2 ρ κs.
   elim e => *; eauto; simpl; try by [rewrite_all_hyps].
+  - f_equal.
+    + by rewrite_all_hyps.
+    + rewrite Ren.cong_id.
+      by rewrite_all_hyps.
   - f_equal; T.eqcd => ?.
     rewrite_all_hyps.
     f_equal; T.eqcd => i.
@@ -228,6 +232,10 @@ Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Tm.Su
 Proof.
   move: Ψ1 Ψ2 γ ρ κs.
   induction e; eauto; simpl; try by [T.rewrites].
+  - move=> *; f_equal.
+    * by rewrite_all_hyps.
+    * rewrite_all_hyps.
+      by rewrite Tm.Sub.cong_coh.
   - move=> *; f_equal; T.eqcd => ?.
     rewrite IHe.
     by rewrite Ren.cong_id.
