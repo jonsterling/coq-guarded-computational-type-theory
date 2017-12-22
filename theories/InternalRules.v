@@ -614,9 +614,8 @@ Module Prod.
     → τ[n] ⊧ (⋄; A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    move=> 𝒟 ℰ.
-    case: (family_choice 𝒟 ℰ); eauto.
-    move=> Rℰ Rℰspec; case 𝒟 => R𝒟 [𝒟0 𝒟1].
+    move=> 𝒟 /(family_choice 𝒟) [||Rℰ Rℰspec]; eauto.
+    case 𝒟 => R𝒟 [𝒟0 𝒟1].
 
     eexists; split; Tac.tower_intro; apply: Sig.conn; eauto.
     - apply: (@Connective.has_prod _ _ _ R𝒟 Rℰ); eauto.
@@ -647,6 +646,52 @@ Module Prod.
       apply: General.ty_eq_refl_left; eauto.
   Qed.
 
+
+  Theorem intro i {A B e00 e01 e10 e11} :
+    τω ⊧ A ∋ e00 ∼ e10
+    → τω ⊧ B ⫽ Tm.Sub.inst0 e00 ∋ e01 ∼ e11
+    → τ[i] ⊧ A ∼ A
+    → τ[i] ⊧ ⋄;A ≫ B ∼ B
+    → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
+  Proof.
+    move=>
+     /Level.eq_mem_to_level [n1 𝒟]
+     /Level.eq_mem_to_level [n2 ℰ]
+     ℱ
+     /(family_choice ℱ) => 𝒢.
+
+    apply: (Level.eq_mem_from_level (i + n1 + n2)).
+    case: 𝒟 => [R𝒟 [𝒟0 𝒟1]].
+    case: 𝒢; eauto.
+    - move=> R𝒢 𝒢.
+      eexists; split.
+      + Tac.tower_intro; apply: Sig.conn; auto.
+        apply: (@Connective.has_prod _ _ _ R𝒟 R𝒢); eauto.
+        * Tac.tower_mono.
+        * move=> e0 e1 p.
+          specialize (𝒢 e0 e1).
+          suff ℋ: τ[i] ⊧ A ∋ e0 ∼ e1.
+          ** case: (𝒢 ℋ) => ? [? [? [? ?]]].
+             repeat split; auto;
+             by Tac.tower_mono.
+          ** apply: Level.mem_eq_at_lvl_of_typehood.
+             *** exists R𝒟; split; eauto.
+             *** eauto.
+      + econstructor; eauto.
+        constructor; eauto.
+        case: ℰ => Rℰ [ℰ0 ℰ1].
+        replace (R𝒢 e00) with Rℰ; auto.
+
+        specialize (𝒢 e00 e10).
+        suff ℋ: τ[i] ⊧ A ∋ e00 ∼ e10.
+        * case: (𝒢 ℋ) => ? [? [? [? ?]]].
+          Tac.tower_ext; Tac.tower_mono.
+        * apply: Level.mem_eq_at_lvl_of_typehood.
+          ** exists R𝒟; split; eauto.
+          ** eauto.
+  Qed.
+
+
   Theorem ind_formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
     → τ[n] ⊧ B0 ∼ B1
@@ -668,7 +713,7 @@ Module Prod.
     by apply: ind_formation.
   Qed.
 
-  Theorem intro {A B e00 e01 e10 e11} :
+  Theorem ind_intro {A B e00 e01 e10 e11} :
     τω ⊧ A ∋ e00 ∼ e10
     → τω ⊧ B ∋ e01 ∼ e11
     → τω ⊧ (A × B.[^1]) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
