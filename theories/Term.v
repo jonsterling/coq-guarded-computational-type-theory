@@ -103,13 +103,6 @@ Module Tm.
     induction e; by rewrites.
   Qed.
 
-  Theorem cong_coh {Ψ1 Ψ2 Ψ3} (ρ : Ren.t Ψ1 Ψ2) (σ : Sub.t Ψ2 Ψ3) :
-    Sub.cong (σ ∘ ρ) = Sub.cong σ ∘ Ren.cong ρ.
-  Proof.
-    T.eqcd => x.
-    rewrite /compose //=.
-    dependent destruction x; auto.
-  Qed.
 
   Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
     match e with
@@ -138,6 +131,7 @@ Module Tm.
 
   Import SubstNotation.
 
+  (* TODO: make this part of the syntax-structure type class *)
   Theorem ren_coh {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) (e : t _) :
     e.[ρ12].[ρ23]%tm
     =
@@ -148,6 +142,7 @@ Module Tm.
     by dependent induction H.
   Qed.
 
+  (* TODO: derive this generally for any syntax *)
   Theorem ren_subst_cong_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) :
     map (Ren.cong ρ23) ∘ Sub.cong σ12
     =

@@ -235,14 +235,14 @@ Proof.
   - move=> *; f_equal.
     * by rewrite_all_hyps.
     * rewrite_all_hyps.
-      by rewrite Tm.cong_coh.
+      by rewrite Sub.cong_coh.
   - move=> *; f_equal; T.eqcd => ?.
     rewrite IHe.
     by rewrite Ren.cong_id.
   - move=> *; f_equal.
     rewrite -IHe.
     f_equal.
-    by rewrite Tm.cong_coh.
+    by rewrite Sub.cong_coh.
 Qed.
 
 Theorem interp_tm_var_ren_naturality {Λ Ψ0 Ψ1} (e : ETm.t Λ Ψ0) (ρ : Ren.t Ψ0 Ψ1) κs :

@@ -1,4 +1,4 @@
-Require Import Unicode.Utf8 Vectors.Fin Program.Equality.
+Require Import Unicode.Utf8 Vectors.Fin Program.Equality Program.Basics.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -33,6 +33,8 @@ Module Ren.
 End Ren.
 
 Module Sub.
+  Local Open Scope program_scope.
+
   Class syn_struct (𝒯 : Ctx → Type) : Type :=
     { var : ∀ {Ψ}, Var Ψ → 𝒯 Ψ;
       map : ∀ {Ψ1 Ψ2}, Ren.t Ψ1 Ψ2 → 𝒯 Ψ1 → 𝒯 Ψ2
@@ -61,6 +63,13 @@ Module Sub.
         | Fin.F1 _ => e
         | Fin.FS _ y => @var _ 𝔐 _ y
         end.
+
+    Theorem cong_coh {Ψ1 Ψ2 Ψ3} (ρ : Ren.t Ψ1 Ψ2) (σ : Sub.t Ψ2 Ψ3) :
+      Sub.cong (σ ∘ ρ) = Sub.cong σ ∘ Ren.cong ρ.
+    Proof.
+      T.eqcd => x.
+      dependent destruction x; auto.
+    Qed.
   End Sub.
 End Sub.
 
