@@ -80,6 +80,10 @@ Module Tm.
     | fix_ e => fix_ (map (Ren.cong ρ) e)
     end.
 
+  Program Instance syn_struct_term : Sub.syn_struct t :=
+    {| Sub.var := var;
+       Sub.map := @map |}.
+
   Module RenNotation.
     Notation "e .[ ρ ]" := (Tm.map ρ%ren e) (at level 50) : tm_scope.
   End RenNotation.
@@ -99,35 +103,13 @@ Module Tm.
     induction e; by rewrites.
   Qed.
 
-  Module Sub.
-    Definition t (Ψ1 Ψ2 : Ctx) := Var Ψ1 → t Ψ2.
-
-    Definition ren {Ψ1 Ψ2} (ρ : Ren.t Ψ1 Ψ2) : t Ψ1 Ψ2 :=
-      fun x =>
-        var (ρ x).
-
-    Program Definition cong {Ψ1 Ψ2} (σ : t Ψ1 Ψ2) : t (S Ψ1) (S Ψ2) :=
-      fun x =>
-        match x with
-        | Fin.F1 _ => var Fin.F1
-        | Fin.FS _ y => map Fin.FS (σ y)
-        end.
-
-    Program Definition inst0 {Ψ} (e : Tm.t Ψ) : t (S Ψ) Ψ :=
-      fun x =>
-        match x with
-        | Fin.F1 _ => e
-        | Fin.FS _ y => var y
-        end.
-
-    Theorem cong_coh {Ψ1 Ψ2 Ψ3} (ρ : Ren.t Ψ1 Ψ2) (σ : Sub.t Ψ2 Ψ3) :
-      cong (σ ∘ ρ) = cong σ ∘ Ren.cong ρ.
-    Proof.
-      T.eqcd => x.
-      rewrite /compose //=.
-      dependent destruction x; auto.
-    Qed.
-  End Sub.
+  Theorem cong_coh {Ψ1 Ψ2 Ψ3} (ρ : Ren.t Ψ1 Ψ2) (σ : Sub.t Ψ2 Ψ3) :
+    Sub.cong (σ ∘ ρ) = Sub.cong σ ∘ Ren.cong ρ.
+  Proof.
+    T.eqcd => x.
+    rewrite /compose //=.
+    dependent destruction x; auto.
+  Qed.
 
   Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
     match e with
@@ -273,8 +255,8 @@ Inductive step : Tm.t 0 → Tm.t 0 → Ω :=
 
 | step_fst_pair : ∀ {e1 e2}, ⟨e1,e2⟩.1 ↦ e1
 | step_snd_pair : ∀ {e1 e2}, ⟨e1,e2⟩.2 ↦ e2
-| step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ Tm.Sub.inst0 e2)
-| step_fix : ∀ e, Tm.fix_ e ↦ (e ⫽ Tm.Sub.inst0 (Tm.fix_ e))
+| step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ Sub.inst0 e2)
+| step_fix : ∀ e, Tm.fix_ e ↦ (e ⫽ Sub.inst0 (Tm.fix_ e))
 where "e ↦ e'" := (step e%tm e'%tm).
 
 Hint Constructors is_val.
@@ -351,7 +333,7 @@ Proof.
 Qed.
 
 Theorem fix_unfold :
-  ∀ f, (Tm.fix_ f) ≈₀ (f ⫽ Tm.Sub.inst0 (Tm.fix_ f)).
+  ∀ f, (Tm.fix_ f) ≈₀ (f ⫽ Sub.inst0 (Tm.fix_ f)).
 Proof.
   move=> f v.
   split.

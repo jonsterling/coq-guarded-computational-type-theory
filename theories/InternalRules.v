@@ -350,7 +350,7 @@ Module General.
 
 
   Section FunctionalitySquare.
-    Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : Tm.Sub.t Ψ 0}.
+    Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : @Sub.t Tm.t Ψ 0}.
 
     Lemma functionality_square :
       τω ⊧ Γ ≫ A ∋ e0 ∼ e1
@@ -529,20 +529,20 @@ Module Prod.
       ∀ e0 e1,
         τ ⊧ A0 ∋ e0 ∼ e1
         → R e0 = R e1
-          ∧ τ (B0 ⫽ Tm.Sub.inst0 e0, R e0)
-          ∧ τ (B1 ⫽ Tm.Sub.inst0 e1, R e1)
-          ∧ τ (B0 ⫽ Tm.Sub.inst0 e1, R e0)
-          ∧ τ (B1 ⫽ Tm.Sub.inst0 e0, R e0).
+          ∧ τ (B0 ⫽ Sub.inst0 e0, R e0)
+          ∧ τ (B1 ⫽ Sub.inst0 e1, R e1)
+          ∧ τ (B0 ⫽ Sub.inst0 e1, R e0)
+          ∧ τ (B1 ⫽ Sub.inst0 e0, R e0).
   Proof.
     move=> 𝒟 ℰ cper ext.
     exists (fun e =>
          fun es =>
            τ ⊧ A0 ∋ e ∼ e
-           → τ ⊧ B0 ⫽ Tm.Sub.inst0 e ∋ (π₁ es) ∼ (π₂ es)).
+           → τ ⊧ B0 ⫽ Sub.inst0 e ∋ (π₁ es) ∼ (π₂ es)).
 
     move=> e0 e1 ℱ.
-    destruct (ℰ (Tm.Sub.inst0 e1) (Tm.Sub.inst0 e0)) as [Rℰ [ℰ0 ℰ1]]; eauto.
-    destruct (ℰ (Tm.Sub.inst0 e0) (Tm.Sub.inst0 e0)) as [Rℰ' [ℰ0' ℰ1']]; eauto.
+    destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e0)) as [Rℰ [ℰ0 ℰ1]]; eauto.
+    destruct (ℰ (Sub.inst0 e0) (Sub.inst0 e0)) as [Rℰ' [ℰ0' ℰ1']]; eauto.
 
     repeat split.
     - T.eqcd; case => e'0 e'1 //=.
@@ -568,7 +568,7 @@ Module Prod.
         destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
         replace Rℰ' with R𝒢; eauto.
         apply: ext; eauto.
-    - destruct (ℰ (Tm.Sub.inst0 e1) (Tm.Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+    - destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
       T.use ℰ1''; repeat f_equal.
       T.eqcd; case => e'0 e'1 //=.
       apply: propositional_extensionality; split.
@@ -578,7 +578,7 @@ Module Prod.
         destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
         replace Rℰ'' with R𝒢; eauto.
         apply: ext; eauto.
-    - destruct (ℰ (Tm.Sub.inst0 e1) (Tm.Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+    - destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
       T.use ℰ0''; repeat f_equal.
       T.eqcd; case => e'0 e'1 //=.
       apply: propositional_extensionality; split.
@@ -649,7 +649,7 @@ Module Prod.
 
   Theorem intro i {A B e00 e01 e10 e11} :
     τω ⊧ A ∋ e00 ∼ e10
-    → τω ⊧ B ⫽ Tm.Sub.inst0 e00 ∋ e01 ∼ e11
+    → τω ⊧ B ⫽ Sub.inst0 e00 ∋ e01 ∼ e11
     → τ[i] ⊧ A ∼ A
     → τ[i] ⊧ ⋄;A ≫ B ∼ B
     → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.

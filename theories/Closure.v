@@ -1,5 +1,5 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import Notation OrderTheory Axioms Term TypeSystem.
+From gctt Require Import Notation OrderTheory Axioms Var Term TypeSystem.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -41,8 +41,8 @@ Module Connective.
         → (∀ e0 e1,
               R0 (e0, e1)
               → R1 e0 = R1 e1
-                ∧ τ (A1 ⫽ Tm.Sub.inst0 e0, R1 e0)
-                ∧ τ (A1 ⫽ Tm.Sub.inst0 e1, R1 e1))
+                ∧ τ (A1 ⫽ Sub.inst0 e0, R1 e0)
+                ∧ τ (A1 ⫽ Sub.inst0 e1, R1 e1))
         → has τ prod (Tm.prod A0 A1, cext (prod_val R0 R1))
   | has_later :
       ∀ κ B R,
