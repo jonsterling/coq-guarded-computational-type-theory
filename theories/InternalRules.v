@@ -425,6 +425,32 @@ Module Univ.
       by exists S.
   Qed.
 
+  Lemma open_inversion {Ψ} {Γ : Prectx Ψ} {i A0 A1} :
+    τω ⊧ Γ ≫ 𝕌[i] ∋ A0 ∼ A1
+    → τ[i] ⊧ Γ ctx
+    → τ[i] ⊧ Γ ≫ A0 ∼ A1.
+  Proof.
+    move=> 𝒟 ℰ γ0 γ1 γ01.
+    specialize (𝒟 γ0 γ1).
+    suff: τω ⊧ Γ ∋⋆ γ0 ∼ γ1.
+    - move=> /𝒟 ℱ.
+      by apply: inversion.
+    - induction Γ; simpl; auto; split.
+      + apply: (IHΓ t t).
+        * move=> ?.
+          Term.simplify_subst.
+          apply: intro.
+          case: ℰ => 𝒢 ℋ.
+          case: γ01 => ? ?.
+          by apply: ℋ.
+        * by case: ℰ.
+        * by case: γ01.
+
+      + apply: Level.eq_mem_from_level.
+        case: γ01 => ? ?.
+        eauto.
+  Qed.
+
   Theorem spine_inversion {n i R} :
     τ[n] (Tm.univ i, R)
     → Spine.t n (Tm.univ i, R).
@@ -493,6 +519,7 @@ Module Prod.
   Local Hint Extern 40 => Term.simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
 
+  (* This is a very bad proof, sorry. *)
   Theorem family_choice {τ A0 A1 B0 B1} :
     τ ⊧ A0 ∼ A1
     → τ ⊧ ⋄; A0 ≫ B0 ∼ B1
@@ -605,6 +632,22 @@ Module Prod.
       + move=> Q [? [? [? ?]]]; repeat split; eauto.
   Qed.
 
+  Theorem univ_eq {i A0 A1 B0 B1} :
+    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ ⋄;A0 ≫ 𝕌[i] ∋ B0 ∼ B1
+    → τω ⊧ 𝕌[i] ∋ (A0 × B0) ∼ (A1 × B1).
+  Proof.
+    move=> /Univ.inversion 𝒟 ℰ.
+    apply: Univ.intro.
+    apply: formation.
+    - assumption.
+    - apply: Univ.open_inversion.
+      * by assumption.
+      * split; auto.
+        move=> ? ? ?; Term.simplify_subst.
+        apply: General.ty_eq_refl_left; eauto.
+  Qed.
+
   Theorem ind_formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
     → τ[n] ⊧ B0 ∼ B1
@@ -616,7 +659,7 @@ Module Prod.
     move=> e0 e1 e01; repeat T.split; Term.simplify_subst; eauto.
   Qed.
 
-  Theorem univ_eq {i A0 A1 B0 B1} :
+  Theorem ind_univ_eq {i A0 A1 B0 B1} :
     τω ⊧ 𝕌[i] ∋ A0 ∼ A1
     → τω ⊧ 𝕌[i] ∋ B0 ∼ B1
     → τω ⊧ 𝕌[i] ∋ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
