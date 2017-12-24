@@ -130,7 +130,7 @@ Module Tm.
     end.
 
   Module SubstNotation.
-    Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity).
+    Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity) : tm_scope.
   End SubstNotation.
 
   Import SubstNotation.
@@ -157,10 +157,11 @@ Module Tm.
     T.rewrites_with ltac:(try rewrite ren_coh).
   Qed.
 
+  Local Open Scope tm_scope.
   Theorem ren_subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) e :
     (e ⫽ σ12).[ρ23]%tm
     =
-    e ⫽ (map ρ23 ∘ σ12).
+    (e ⫽ (map ρ23 ∘ σ12))%tm.
   Proof.
     move: Ψ2 Ψ3 σ12 ρ23.
     induction e; rewrites;

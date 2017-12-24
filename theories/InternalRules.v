@@ -529,10 +529,10 @@ Module Prod.
       ∀ e0 e1,
         τ ⊧ A0 ∋ e0 ∼ e1
         → R e0 = R e1
-          ∧ τ (B0 ⫽ Sub.inst0 e0, R e0)
-          ∧ τ (B1 ⫽ Sub.inst0 e1, R e1)
-          ∧ τ (B0 ⫽ Sub.inst0 e1, R e0)
-          ∧ τ (B1 ⫽ Sub.inst0 e0, R e0).
+          ∧ τ ((B0 ⫽ Sub.inst0 e0)%tm, R e0)
+          ∧ τ ((B1 ⫽ Sub.inst0 e1)%tm, R e1)
+          ∧ τ ((B0 ⫽ Sub.inst0 e1)%tm, R e0)
+          ∧ τ ((B1 ⫽ Sub.inst0 e0)%tm, R e0).
   Proof.
     move=> 𝒟 ℰ cper ext.
     exists (fun e =>

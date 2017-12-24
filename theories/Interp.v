@@ -109,6 +109,7 @@ Proof.
           try rewrite Ren.cong_id).
 Qed.
 
+
 Theorem interp_tm_var_ren_naturality {Λ Ψ0 Ψ1} (e : ETm.t Λ Ψ0) (ρ : Ren.t Ψ0 Ψ1) κs :
   (⟦ e ⟧ κs).[ ρ ] = (⟦ e.[ρ] ⟧ κs).
 Proof.
@@ -117,6 +118,31 @@ Proof.
      -(Tm.subst_ret (⟦ e ⟧ κs .[ρ]))
      Tm.subst_ren_coh
      interp_tm_var_naturality.
+Qed.
+
+Lemma interp_subst_cong_coh {Λ Ψ0 Ψ1 Ψ2} (σ01 : Sub.t Ψ0 Ψ1) (σ12 : Sub.t Ψ1 Ψ2) (κs : Env.t Λ) :
+  Tm.subst (Sub.cong σ12) ∘ (λ x, ⟦ Sub.cong σ01 x ⟧ κs) =
+  Sub.cong (Tm.subst σ12 ∘ (λ x, ⟦ σ01 x ⟧ κs)).
+Proof.
+  T.eqcd => x.
+  dependent induction x.
+  - eauto.
+  - Term.simplify_subst.
+    by rewrite -interp_tm_var_naturality.
+Qed.
+
+Theorem interp_tm_subst_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (σ12 : Sub.t Ψ1 Ψ2) (σ01 : Sub.t Ψ0 Ψ1) κs :
+  (⟦ e ⟧ κs) ⫽ (Tm.subst σ12 ∘ (fun x => ⟦ σ01 x ⟧ κs)) = (⟦ e ⫽ σ01 ⟧ κs) ⫽ σ12.
+Proof.
+  symmetry.
+  move: Ψ1 Ψ2 σ01 σ12 κs.
+  induction e; eauto; simpl;
+  T.rewrites_with
+    ltac:(repeat f_equal; try (T.eqcd; intros);
+          try rewrite /ETm.wk_sub;
+          try rewrite interp_subst_cong_coh;
+          Term.simplify_subst;
+          try rewrite -interp_tm_clk_naturality).
 Qed.
 
 Local Close Scope tm_scope.
