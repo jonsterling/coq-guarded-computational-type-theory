@@ -59,6 +59,11 @@ Module ETm.
 
   Definition mapk {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) : t Λ1 Ψ → t Λ2 Ψ :=
     map ρ (λ x, x).
+
+  Program Instance syn_struct_term {Λ} : Sub.syn_struct (t Λ) :=
+    {| Sub.var := @var Λ;
+       Sub.map := @map Λ Λ id
+    |}.
 End ETm.
 
 Delimit Scope eclk_scope with eclk.
