@@ -218,20 +218,29 @@ End Bool.
 Module Prod.
   Theorem univ_eq `{Γ : ECtx.t Λ Ψ} i {A0 A1 B0 B1} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
-    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
+    → ⟦ Λ ∣ Γ ∙ A0 ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (A0 × B0) ≐ (A1 × B1) ⟧.
   Proof.
     move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01 //=.
     apply: IR.Prod.univ_eq.
     - by apply: 𝒟.
-    - by apply: ℰ.
+    - move=> ? ? γ01' //=.
+      Term.simplify_subst.
+      T.efwd_thru ℰ; eauto.
+      + split; Term.simplify_subst.
+        * T.use γ01; f_equal; T.eqcd; Term.simplify_subst.
+        * case: γ01' => _ 𝒢.
+          T.use 𝒢; Term.simplify_subst.
+      + split; eauto.
+        move=> ? ? ?.
+        explode functionality (𝒟 _ _ _).
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} {i j A B e00 e01 e10 e11} :
     ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e10 ⟧
-    → ⟦ Λ ∣ Γ ≫ B ∋ e01 ≐ e11 ⟧
+    → ⟦ Λ ∣ Γ ≫ B ⫽ Sub.inst0 e00 ∋ e01 ≐ e11 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ≫ 𝕌[j] ∋ B ≐ B ⟧
+    → ⟦ Λ ∣ Γ ∙ A ≫ 𝕌[j] ∋ B ≐ B ⟧
     → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨e00, e01⟩ ≐ ⟨e10, e11⟩ ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
@@ -239,10 +248,11 @@ Module Prod.
     - apply: 𝒟; eauto.
       IR.Univ.tac.
       apply: ℱ; eauto.
-    - apply: ℰ; eauto.
-      IR.Univ.tac.
-      apply: 𝒢; eauto.
-  Qed.
+    - Term.simplify_subst.
+      T.efwd_thru ℰ.
+      + admit. (* TODO: needs internal-external-substitution-naturality *)
+      + admit. (* TODO: needs internal-external-substitution-naturality *)
+  Abort.
 End Prod.
 
 
