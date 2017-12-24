@@ -64,6 +64,29 @@ Module ETm.
     {| Sub.var := @var Λ;
        Sub.map := @map Λ Λ id
     |}.
+
+  Local Open Scope program_scope.
+  Program Definition wk_sub `(ρ : @Sub.t (t Λ) Ψ1 Ψ2) : @Sub.t (t (S Λ)) Ψ1 Ψ2 :=
+    mapk (^1)%ren ∘ ρ.
+
+  Fixpoint subst {Λ} `(ρ : Sub.t Ψ1 Ψ2) (e : t Λ Ψ1) : t Λ Ψ2 :=
+    match e with
+    | var i => ρ i
+    | fst e => fst (subst ρ e)
+    | snd e => snd (subst ρ e)
+    | unit => unit
+    | bool => bool
+    | ax => ax
+    | tt => tt
+    | ff => ff
+    | prod A B => prod (subst ρ A) (subst (Sub.cong ρ) B)
+    | arr A B => arr (subst ρ A) (subst ρ B)
+    | pair e1 e2 => pair (subst ρ e1) (subst ρ e2)
+    | ltr k A => ltr k (subst ρ A)
+    | isect A => isect (subst (wk_sub ρ) A)
+    | univ i => univ i
+    | fix_ e => fix_ (subst (Sub.cong ρ) e)
+    end.
 End ETm.
 
 Delimit Scope eclk_scope with eclk.
