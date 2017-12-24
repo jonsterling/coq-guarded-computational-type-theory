@@ -522,7 +522,7 @@ Module Examples.
     apply: (BitStream_wf 0).
   Qed.
 
-(*
+
   Example BitSeq_unfold `{Γ : ECtx.t Λ Ψ} i :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitSeq ≐ (𝟚 × BitSeq) ⟧.
   Proof.
@@ -534,7 +534,8 @@ Module Examples.
           apply: Bool.univ_eq.
         * apply: Later.force.
           apply: BitSeq_wf.
-      + apply: Isect.cartesian.
+      + replace _ with (((⋂ ▶[#0] BitStream #0).[^1])%etm : ETm.t Λ (S Ψ)); auto.
+        apply: Isect.cartesian.
         * apply: Bool.univ_eq.
         * apply: Later.univ_eq.
           apply: Later.intro.
@@ -543,7 +544,4 @@ Module Examples.
     - apply: Isect.univ_eq.
       apply: BitStream_unfold.
   Qed.
-*)
-
-
 End Examples.
