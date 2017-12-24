@@ -17,7 +17,7 @@ Delimit Scope ctx_scope with ictx.
 Arguments snoc [Ψ] Γ%ictx A%tm.
 
 Notation "⋄" := nil : ctx_scope.
-Infix ";" := (snoc) (at level 50, left associativity) : ctx_scope.
+Infix "∙" := (snoc) (at level 50, left associativity) : ctx_scope.
 
 
 Definition atomic_eq_ty (τ : cts) (A B : Tm.t 0) :=
@@ -36,7 +36,7 @@ Reserved Notation "τ ⊧ Γ ∋⋆ γ1 ∼ γ2" (at level 10).
 Program Fixpoint atomic_eq_env {Ψ} τ Γ (γ1 γ2 : Var.Sub.t Ψ 0) : Ω :=
   match Γ with
   | ⋄%ictx => ⊤
-  | (Γ ; A)%ictx =>
+  | (Γ ∙ A)%ictx =>
     τ ⊧ Γ ∋⋆ (γ1 ∘ Fin.FS) ∼ (γ2 ∘ Fin.FS)
     ∧ τ ⊧ (A ⫽ (γ1 ∘ Fin.FS)) ∋ (γ1 Fin.F1) ∼ (γ2 Fin.F1)
   end
@@ -64,7 +64,7 @@ Notation "τ ⊧ Γ ≫ A ∋ e1 ∼ e2" := (seq_eq_mem τ Γ%ictx A%tm e1%tm e2
 Program Fixpoint is_ctx {Ψ} (τ : cts) (Γ : Prectx Ψ) : Ω :=
   match Γ with
   | ⋄%ictx => ⊤
-  | (Γ; A)%ictx => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A
+  | (Γ∙A)%ictx => τ ⊧ Γ ctx ∧ τ ⊧ Γ ≫ A ∼ A
   end
 where "τ ⊧ Γ 'ctx'" := (is_ctx τ Γ%ictx).
 

@@ -97,7 +97,7 @@ Module ECtx.
 
   Module Notation.
     Notation "⋄" := nil : ectx_scope.
-    Notation "Γ ; A" := (@snoc _ _ Γ%ectx A%etm) (at level 50, left associativity) : ectx_scope.
+    Notation "Γ ∙ A" := (@snoc _ _ Γ%ectx A%etm) (at level 50, left associativity) : ectx_scope.
   End Notation.
 
   Import Notation.
@@ -105,7 +105,7 @@ Module ECtx.
   Fixpoint map {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) (Γ : t Λ1 Ψ) : t Λ2 Ψ :=
     match Γ with
     | ⋄%ectx => nil
-    | (Γ;A)%ectx => (map ρ Γ ; (A.⦃ρ⦄))%ectx
+    | (Γ∙A)%ectx => (map ρ Γ ∙ (A.⦃ρ⦄))%ectx
     end.
 End ECtx.
 
@@ -172,7 +172,7 @@ Arguments interp_tm [Λ Ψ] e%etm κs.
 Program Fixpoint interp_ctx `(Γ : ECtx.t Λ Ψ) (κs : Env.t Λ) : Prectx Ψ :=
   match Γ with
   | ⋄%ectx => ⋄%ictx
-  | (Γ ; A)%ectx => (⟦ Γ ⟧ κs ; ⟦ A ⟧ κs)%ictx
+  | (Γ ∙ A)%ectx => (⟦ Γ ⟧ κs ∙ ⟦ A ⟧ κs)%ictx
   end
 where "⟦ Γ ⟧ κs" := (interp_ctx Γ%ectx κs) : ctx_scope.
 
