@@ -115,6 +115,7 @@ VFILES:=theories/Notation.v\
   theories/Sequent.v\
   theories/InternalRules.v\
   theories/ExternalSyn.v\
+  theories/Interp.v\
   theories/ExternalRules.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)

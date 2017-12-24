@@ -4,7 +4,7 @@ Set Bullet Behavior "Strict Subproofs".
 Generalizable All Variables.
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega.
-From gctt Require Import Axioms Var Term ExternalSyn Tower Closure Sequent InternalRules.
+From gctt Require Import Axioms Var Term ExternalSyn Interp Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
@@ -54,20 +54,20 @@ Module Conversion.
     split; move=> [𝒟1 𝒟2].
     - split; auto.
       dependent destruction 𝒟1.
-      + Term.destruct_evals.
+      + OpSem.destruct_evals.
       + dependent destruction H.
-        * Term.destruct_evals.
+        * OpSem.destruct_evals.
         * eauto.
     - split; auto; simpl.
       econstructor.
-      + apply: step_fst_pair.
+      + apply: OpSem.step_fst_pair.
       + auto.
   Qed.
 End Conversion.
 
 Module General.
   Theorem hypothesis `{Γ : ECtx.t Λ Ψ} {A} :
-    ⟦ Λ ∣ Γ ; A ≫ A.[^1] ∋ @0 ≐ @0 ⟧.
+    ⟦ Λ ∣ Γ ∙ A ≫ A.[^1] ∋ @0 ≐ @0 ⟧.
   Proof.
     move=> κs Γctx ty γ0 γ1 γ01.
     case: γ01 => [_ γ01].
@@ -112,7 +112,7 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ e1 ≐ e0 ⟧.
   Proof.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01.
-    apply: IR.General.mem_eq_symm.
+    apply: IR.General.mem_eq_symm; first by eauto.
     apply: IR.General.replace_ty_in_mem_eq; eauto.
     apply: 𝒟; eauto.
   Qed.
@@ -123,7 +123,7 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e2 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
-    apply: IR.General.mem_eq_trans.
+    apply: IR.General.mem_eq_trans; eauto.
     - apply: 𝒟; eauto.
     - apply: ℰ; eauto.
   Qed.
