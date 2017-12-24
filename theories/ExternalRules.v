@@ -236,11 +236,12 @@ Module Prod.
         explode functionality (𝒟 _ _ _).
   Qed.
 
-  Theorem intro `{Γ : ECtx.t Λ Ψ} {i j A B e00 e01 e10 e11} :
+  (* ugly proof ! *)
+  Theorem intro `{Γ : ECtx.t Λ Ψ} {i A B e00 e01 e10 e11} :
     ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e10 ⟧
     → ⟦ Λ ∣ Γ ≫ B ⫽ Sub.inst0 e00 ∋ e01 ≐ e11 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ∙ A ≫ 𝕌[j] ∋ B ≐ B ⟧
+    → ⟦ Λ ∣ Γ ∙ A ≫ 𝕌[i] ∋ B ≐ B ⟧
     → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨e00, e01⟩ ≐ ⟨e10, e11⟩ ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
@@ -250,9 +251,47 @@ Module Prod.
       apply: ℱ; eauto.
     - Term.simplify_subst.
       T.efwd_thru ℰ.
-      + admit. (* TODO: needs internal-external-substitution-naturality *)
-      + admit. (* TODO: needs internal-external-substitution-naturality *)
-  Abort.
+      + rewrite -interp_tm_subst_naturality.
+        f_equal; eauto.
+        Term.simplify_subst.
+        dependent induction x; Term.simplify_subst.
+      + move=> γ0' γ1' γ01'.
+        IR.Univ.tac.
+        repeat rewrite -interp_tm_subst_naturality.
+        apply: 𝒢; eauto.
+        * split; eauto.
+          IR.Univ.tac.
+          apply: ℱ; auto.
+        * split; eauto.
+          Term.simplify_subst.
+          apply: (@IR.General.replace_ty_in_mem_eq ((⟦ A ⟧ κs) ⫽ γ1')%tm).
+          ** explode functionality (𝒟 _ _ _).
+             *** IR.Univ.tac.
+                 apply: ℱ; auto.
+             *** apply: IR.General.mem_eq_trans; auto.
+                 **** eauto.
+                 **** apply: (@IR.General.replace_ty_in_mem_eq ((⟦ A ⟧ κs) ⫽ γ0')%tm).
+                      ***** eauto.
+                      ***** explode functionality (ℱ _ _ _).
+          ** explode functionality (ℱ _ _ _).
+    - IR.Univ.tac.
+      apply: ℱ; eauto.
+    - move=> γ0' γ1' γ01'.
+      Term.simplify_subst.
+      IR.Univ.tac.
+      apply: 𝒢; auto.
+      + split; eauto.
+        move=> ? ? ?.
+        IR.Univ.tac.
+        apply: ℱ; auto.
+      + split; Term.simplify_subst.
+        * suff 𝒥 : τω ⊧ ⟦ Γ ⟧ κs ∋⋆ γ0 ∼ γ0; eauto.
+          T.use 𝒥; Term.simplify_subst.
+        * case: γ01' => _; simplify_eqs => 𝒥.
+          apply: IR.Level.eq_mem_from_level.
+          T.use 𝒥.
+          Term.simplify_subst.
+  Qed.
 End Prod.
 
 
