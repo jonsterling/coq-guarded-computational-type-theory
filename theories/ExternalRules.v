@@ -74,6 +74,23 @@ Module General.
     auto.
   Qed.
 
+  (* TODO: fix notation ? *)
+  Theorem weakening `{Γ : ECtx.t Λ Ψ} i {A B e0 e1} :
+    ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ∙ B ≫ (A.[^1]) ∋ (e0.[^1]) ≐ (e1.[^1]) ⟧.
+  Proof.
+    move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01.
+    repeat rewrite -interp_tm_var_ren_naturality.
+    Term.simplify_subst.
+    apply: 𝒟.
+    - by case: ℱ.
+    - IR.Univ.tac.
+      apply: ℰ; eauto.
+      by case: ℱ.
+    - by case: γ01.
+  Qed.
+
   Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00} e01 {e1} :
     ⟦ Λ ∣ Ψ ⊢ e00 ≃ e01 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ e01 ≐ e1 ⟧
@@ -326,24 +343,43 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ ⋂ (A.⦃^1⦄) ⟧.
   Proof.
     move=> 𝒟 κs ? ? γ0 γ1 γ01; simplify_eqs.
-    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _) with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1); last by eauto.
-    apply: IR.Univ.intro.
-    apply: IR.Isect.irrelevance.
-    apply: IR.Univ.inversion.
-    apply: 𝒟; eauto.
+    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _)%tm with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1)%tm.
+    - apply: IR.Univ.intro.
+      apply: IR.Isect.irrelevance.
+      apply: IR.Univ.inversion.
+      apply: 𝒟; eauto.
+    - Term.simplify_subst; eauto.
   Qed.
 
   Theorem cartesian `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
     ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
     → ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
-    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (⋂ (A0 × B0)) ≐ ((⋂ A0) × (⋂ B0)) ⟧.
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (⋂ (A0 × B0.[^1])) ≐ ((⋂ A1) × (⋂ B1.[^1])) ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
     apply: IR.Univ.intro.
-    apply: IR.Isect.cartesian => κ;
-    apply: IR.Univ.inversion.
-    - explode functionality (𝒟 (κ ∷ κs) _ _).
-    - explode functionality (ℰ (κ ∷ κs) _ _).
+    Term.simplify_subst.
+    have R :=
+      @IR.Isect.cartesian
+        i
+        (fun κ => (⟦ A0 ⟧ κ ∷ κs) ⫽ γ0)%tm
+        (fun κ => (⟦ B0 ⟧ κ ∷ κs) ⫽ γ0)%tm
+        (fun κ => (⟦ A1 ⟧ κ ∷ κs) ⫽ γ1)%tm
+        (fun κ => (⟦ B1 ⟧ κ ∷ κs) ⫽ γ1)%tm.
+    T.efwd_thru R.
+    - T.eqcd => κ; f_equal; Term.simplify_subst.
+      rewrite -interp_tm_var_ren_naturality.
+      Term.simplify_subst.
+    - Term.simplify_subst.
+      rewrite -interp_tm_ren_naturality;
+      Term.simplify_subst.
+      by dependent induction x0.
+    - move=> κ.
+      IR.Univ.tac.
+      apply: ℰ; auto.
+    - move=> κ.
+      IR.Univ.tac.
+      apply: 𝒟; auto.
   Qed.
 End Isect.
 
@@ -388,7 +424,7 @@ Module Later.
   Qed.
 
   Theorem induction `{Γ : ECtx.t Λ Ψ} k {A e0 e1} :
-    ⟦ Λ ∣ Γ; ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
+    ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ μ{ e0 } ≐ μ{ e1 } ⟧.
   Proof.
     move=> 𝒟 κs ? ℰ //=.
@@ -410,7 +446,7 @@ Module Examples.
 
   (* Guarded stream of bits. *)
   Example BitStream {Λ Ψ} (k : Var Λ) : ETm.t Λ Ψ :=
-    μ{ 𝟚 × ▶[k] @0 }%etm.
+    μ{ 𝟚 × ▶[k] @1 }%etm.
 
   Arguments BitStream [Λ Ψ] k%eclk.
 
@@ -425,7 +461,15 @@ Module Examples.
     apply: Prod.univ_eq.
     - apply: Bool.univ_eq.
     - apply: Later.univ_eq.
-      apply: General.hypothesis.
+      move=> κs 𝒟 ℰ γ0 γ1 γ01.
+      (* annoying !*)
+      have R := @General.weakening Λ (S Ψ) (Γ∙_)%ectx (S i) (▶[k] 𝕌[i])%etm 𝟚%etm @0%etm @0%etm _ _ _ _ _ γ0 γ1 γ01.
+      T.efwd_thru R; eauto.
+      + apply: Later.univ_eq.
+        apply: Later.intro.
+        * apply: General.univ_formation; auto.
+        * apply: General.univ_formation; auto.
+      + apply: General.hypothesis.
   Qed.
 
   Example BitSeq_wf `{Γ : ECtx.t Λ Ψ} {i} :
@@ -438,7 +482,7 @@ Module Examples.
   Example Ones {Λ Ψ} : ETm.t Λ Ψ :=
     μ{ ⟨ETm.tt, @0⟩ }%etm.
 
-
+(*
   Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {i k} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
   Proof.
@@ -498,5 +542,8 @@ Module Examples.
     - apply: Isect.univ_eq.
       apply: BitStream_unfold.
   Qed.
+
+*)
+
 
 End Examples.

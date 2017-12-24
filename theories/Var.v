@@ -1,3 +1,7 @@
+From mathcomp Require Import ssreflect.
+Set Bullet Behavior "Strict Subproofs".
+
+
 Require Import Unicode.Utf8 Vectors.Fin Program.Equality Program.Basics.
 From gctt Require Tactic.
 Module T := Tactic.
@@ -69,6 +73,14 @@ Module Sub.
       Sub.cong (σ ∘ ρ) = Sub.cong σ ∘ Ren.cong ρ.
     Proof.
       T.eqcd => x.
+      dependent destruction x; auto.
+    Qed.
+
+    Theorem cong_coh_ptwise {Ψ1 Ψ2 Ψ3} (ρ : Ren.t Ψ1 Ψ2) (σ : Sub.t Ψ2 Ψ3) :
+      ∀ x,
+        Sub.cong (σ ∘ ρ) x = Sub.cong σ (Ren.cong ρ x).
+    Proof.
+      move=> x.
       dependent destruction x; auto.
     Qed.
   End Sub.

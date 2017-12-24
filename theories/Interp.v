@@ -145,4 +145,22 @@ Proof.
           try rewrite -interp_tm_clk_naturality).
 Qed.
 
+Theorem interp_tm_ren_naturality {Λ0 Λ1 Ψ0 Ψ1 Ψ2} (e : ETm.t Λ0 Ψ0) (ρΛ : Ren.t Λ0 Λ1) (ρΨ : Ren.t Ψ0 Ψ1) (σ : Sub.t Ψ1 Ψ2) κs :
+  (⟦ e ⟧ κs ∘ ρΛ) ⫽ (σ ∘ ρΨ) = (⟦ ETm.map ρΛ ρΨ e ⟧ κs) ⫽ σ.
+Proof.
+  symmetry.
+  move: Ψ1 Ψ2 σ Λ1 ρΨ ρΛ κs.
+  induction e; eauto; simpl;
+
+  T.rewrites_with
+    ltac:(repeat f_equal; try (T.eqcd; intros);
+          try rewrite /ETm.wk_sub;
+          try rewrite interp_subst_cong_coh;
+          Term.simplify_subst;
+          try rewrite -interp_tm_clk_naturality;
+          try rewrite -Sub.cong_coh_ptwise).
+
+  by dependent induction x0.
+Qed.
+
 Local Close Scope tm_scope.
