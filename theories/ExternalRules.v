@@ -482,12 +482,12 @@ Module Examples.
   Example Ones {Λ Ψ} : ETm.t Λ Ψ :=
     μ{ ⟨ETm.tt, @0⟩ }%etm.
 
-(*
+
   Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {i k} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
   Proof.
     apply: (General.conv_mem (𝟚 × ▶[k] BitStream k)%etm).
-    - move=> ? ?; apply: fix_unfold; eauto.
+    - move=> ? ?; apply: OpSem.fix_unfold.
     - apply: Prod.univ_eq.
       + apply: Bool.univ_eq.
       + apply: Later.univ_eq.
@@ -522,6 +522,7 @@ Module Examples.
     apply: (BitStream_wf 0).
   Qed.
 
+(*
   Example BitSeq_unfold `{Γ : ECtx.t Λ Ψ} i :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitSeq ≐ (𝟚 × BitSeq) ⟧.
   Proof.
@@ -542,7 +543,6 @@ Module Examples.
     - apply: Isect.univ_eq.
       apply: BitStream_unfold.
   Qed.
-
 *)
 
 
