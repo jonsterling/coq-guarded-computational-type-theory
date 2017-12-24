@@ -3,7 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics.
 
-From gctt Require Import Notation TypeSystem Term Axioms.
+From gctt Require Import Notation TypeSystem Term OpSem Axioms.
 From gctt Require Var.
 
 (*Set Implicit Arguments. *)

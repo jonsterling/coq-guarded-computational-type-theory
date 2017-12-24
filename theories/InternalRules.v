@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logi
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Var OrderTheory Axioms Term Closure Tower Sequent TypeSystem.
+From gctt Require Import Notation Var OrderTheory Axioms Term OpSem Closure Tower Sequent TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -419,7 +419,7 @@ Module Univ.
     destruct n; Spine.simplify.
     - contradiction.
     - case: H => //= [j [p [ev spec]]].
-      Term.destruct_evals.
+      OpSem.destruct_evals.
       rewrite spec in ℰ.
       case: ℰ => //= [S [ℰ1 ℰ2]].
       by exists S.
@@ -522,7 +522,7 @@ Module Prod.
   (* This is a very bad proof, sorry. *)
   Theorem family_choice {τ A0 A1 B0 B1} :
     τ ⊧ A0 ∼ A1
-    → τ ⊧ ⋄; A0 ≫ B0 ∼ B1
+    → τ ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1
     → TS.cper_valued τ
     → TS.extensional τ
     → ∃ (R : Tm.t 0 → rel),
@@ -611,7 +611,7 @@ Module Prod.
 
   Theorem formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
-    → τ[n] ⊧ (⋄; A0) ≫ B0 ∼ B1
+    → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
     move=> 𝒟 /(family_choice 𝒟) [||Rℰ Rℰspec]; eauto.
@@ -633,7 +633,7 @@ Module Prod.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
     τω ⊧ 𝕌[i] ∋ A0 ∼ A1
-    → τω ⊧ ⋄;A0 ≫ 𝕌[i] ∋ B0 ∼ B1
+    → τω ⊧ ⋄∙A0 ≫ 𝕌[i] ∋ B0 ∼ B1
     → τω ⊧ 𝕌[i] ∋ (A0 × B0) ∼ (A1 × B1).
   Proof.
     move=> /Univ.inversion 𝒟 /Univ.open_inversion ℰ.
@@ -651,7 +651,7 @@ Module Prod.
     τω ⊧ A ∋ e00 ∼ e10
     → τω ⊧ B ⫽ Sub.inst0 e00 ∋ e01 ∼ e11
     → τ[i] ⊧ A ∼ A
-    → τ[i] ⊧ ⋄;A ≫ B ∼ B
+    → τ[i] ⊧ ⋄∙A ≫ B ∼ B
     → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
   Proof.
     move=>
@@ -887,7 +887,7 @@ Module Isect.
           constructor => κ;
           case: (H κ) => //= [v0' [v1' [? [? ?]]]];
           Tac.destruct_prod_val;
-          Term.evals_to_eq;
+          OpSem.evals_to_eq;
           by T.destruct_eqs.
 
         * Connective.destruct_cext.
@@ -970,7 +970,7 @@ Module Later.
     case: H => //= [j [? [? [Rspec]]]].
     apply: Later.push_existential.
     exists R.
-    Term.destruct_evals.
+    OpSem.destruct_evals.
     rewrite Later.cart.
     split.
     - apply: Later.next.
@@ -1030,7 +1030,7 @@ Module Later.
           move=> [H1 [H2 H3]].
           Spine.simplify.
           case: H3 => [j [? [? R0spec]]].
-          Term.destruct_evals.
+          OpSem.destruct_evals.
           simpl in *; by [rewrite R0spec in H1].
   Qed.
 
@@ -1065,7 +1065,7 @@ Module Later.
 
 
   Theorem loeb_induction_closed κ {A e0 e1} :
-    τω ⊧ ⋄; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
+    τω ⊧ ⋄ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
     → τω ⊧ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
   Proof.
     move=> 𝒟.
@@ -1092,7 +1092,7 @@ Module Later.
 
 
   Theorem loeb_induction_open κ {Ψ} {Γ : Prectx Ψ} {A e0 e1} :
-    τω ⊧ Γ; ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
+    τω ⊧ Γ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
     → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
   Proof.
     move=> 𝒟 γ0 γ1 γ01 //=.

@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8.
 
-From gctt Require Import Notation Term Axioms.
+From gctt Require Import Notation Term OpSem Axioms.
 
 (* candidate relation *)
 Definition rel := Tm.t 0 × Tm.t 0 → Ω.

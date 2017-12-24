@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Setoids.Setoid omeg
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory Axioms Term Closure TypeSystem.
+From gctt Require Import OrderTheory Axioms Term OpSem Closure TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -69,7 +69,7 @@ Module Spine.
     + move=> ? ? ? ? ? ?.
       simplify.
       T.destruct_conjs; simpl in *.
-      Term.evals_to_eq; T.destruct_eqs.
+      OpSem.evals_to_eq; T.destruct_eqs.
       auto.
   Qed.
 
@@ -141,7 +141,7 @@ Module Spine.
     | H : Spine.t _ (Tm.univ _, _) |- _ => fail "This is a universe!"
     | H : Spine.t ?n (_, _) |- _ =>
       induction n; Spine.simplify;
-      [contradiction | T.destruct_conjs; Term.destruct_evals]
+      [contradiction | T.destruct_conjs; OpSem.destruct_evals]
     end.
 
   Hint Resolve universe_system extensionality monotonicity type_computational cper_valued.
@@ -171,7 +171,7 @@ Module Tower.
     lazymatch goal with
     | H : t ?n _ |- _ =>
       rewrite /t in H; Clo.destruct_clo; try by [Spine.spine_contradiction];
-      try (Clo.destruct_has; Term.destruct_evals)
+      try (Clo.destruct_has; OpSem.destruct_evals)
     end.
 
 

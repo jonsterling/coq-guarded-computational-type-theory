@@ -109,6 +109,7 @@ VFILES:=theories/Notation.v\
   theories/OrderTheory.v\
   theories/Axioms.v\
   theories/Term.v\
+  theories/OpSem.v\
   theories/Closure.v\
   theories/Tower.v\
   theories/Sequent.v\

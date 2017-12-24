@@ -1,5 +1,5 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import Notation OrderTheory Axioms Var Term TypeSystem.
+From gctt Require Import Notation OrderTheory Axioms Var Term OpSem TypeSystem.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -196,14 +196,14 @@ Module Clo.
   Proof.
     move=> has eval1 eval2.
     dependent destruction has;
-    by Term.evals_to_eq.
+    by OpSem.evals_to_eq.
   Qed.
 
 
   Local Ltac cleanup :=
     simpl in *;
     try use_universe_system;
-    Term.evals_to_eq;
+    OpSem.evals_to_eq;
     T.destruct_eqs;
     auto.
 
@@ -217,7 +217,7 @@ Module Clo.
       destruct_clo.
       + by apply: ext.
       + use_universe_system.
-        destruct_has; by Term.evals_to_eq.
+        destruct_has; by OpSem.evals_to_eq.
 
     - move=> ? ? ? ? ? ?.
       destruct_has => ? ?;
@@ -270,7 +270,7 @@ Module Clo.
     - move=> e0 e1 e2 H1 H2.
       dependent destruction H1.
       dependent destruction H2.
-      Term.evals_to_eq.
+      OpSem.evals_to_eq.
       T.destruct_eqs.
       econstructor; eauto.
   Qed.
