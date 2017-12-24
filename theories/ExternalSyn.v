@@ -92,6 +92,8 @@ Module ETm.
     Notation "e .⦃ ρ ⦄" := (mapk ρ%ren e) (at level 50) : etm_scope.
   End RenNotation.
 
+  Import RenNotation.
+
   Lemma map_id `(e : t Λ Ψ) : map id id e = e.
   Proof.
     induction e; T.rewrites_with ltac:(try rewrite Ren.cong_id).
@@ -106,31 +108,36 @@ Module ETm.
   Qed.
 
   Local Open Scope program_scope.
-  Program Definition wk_sub `(ρ : @Sub.t (t Λ) Ψ1 Ψ2) : @Sub.t (t (S Λ)) Ψ1 Ψ2 :=
-    mapk (^1)%ren ∘ ρ.
+  Program Definition wk_sub `(σ : @Sub.t (t Λ) Ψ1 Ψ2) : @Sub.t (t (S Λ)) Ψ1 Ψ2 :=
+    mapk (^1)%ren ∘ σ.
 
-  Fixpoint subst {Λ} `(ρ : Sub.t Ψ1 Ψ2) (e : t Λ Ψ1) : t Λ Ψ2 :=
+  Fixpoint subst {Λ} `(σ : Sub.t Ψ1 Ψ2) (e : t Λ Ψ1) : t Λ Ψ2 :=
     match e with
-    | var i => ρ i
-    | fst e => fst (subst ρ e)
-    | snd e => snd (subst ρ e)
+    | var i => σ i
+    | fst e => fst (subst σ e)
+    | snd e => snd (subst σ e)
     | unit => unit
     | bool => bool
     | ax => ax
     | tt => tt
     | ff => ff
-    | prod A B => prod (subst ρ A) (subst (Sub.cong ρ) B)
-    | arr A B => arr (subst ρ A) (subst ρ B)
-    | pair e1 e2 => pair (subst ρ e1) (subst ρ e2)
-    | ltr k A => ltr k (subst ρ A)
-    | isect A => isect (subst (wk_sub ρ) A)
+    | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
+    | arr A B => arr (subst σ A) (subst σ B)
+    | pair e1 e2 => pair (subst σ e1) (subst σ e2)
+    | ltr k A => ltr k (subst σ A)
+    | isect A => isect (subst (wk_sub σ) A)
     | univ i => univ i
-    | fix_ e => fix_ (subst (Sub.cong ρ) e)
+    | fix_ e => fix_ (subst (Sub.cong σ) e)
     end.
+
+  Module SubstNotation.
+    Notation "e ⫽ σ" := (subst σ e%etm) (at level 20, left associativity).
+  End SubstNotation.
+
+  Import SubstNotation.
 End ETm.
 
-Export ETm.Notation.
-Export ETm.RenNotation.
+Export ETm.Notation ETm.RenNotation ETm.SubstNotation.
 
 Delimit Scope ectx_scope with ectx.
 
@@ -239,31 +246,23 @@ Definition interp_jdg `(J : EJdg.t Λ) : Ω :=
 Arguments interp_jdg [Λ] J%ejdg.
 Notation "⟦ J ⟧" := (interp_jdg J%ejdg) (at level 50) : type_scope.
 
-Ltac rewrite_all_hyps :=
-  repeat
-    match goal with
-    | x : _ |- _ => rewrite -x
-    end.
-
 Local Open Scope program_scope.
 Local Open Scope tm_scope.
 
 Theorem interp_tm_clk_naturality {Λ1 Λ2 Ψ} (e : ETm.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2) :
   ⟦ e ⟧ κs ∘ ρ = ⟦ e.⦃ρ⦄ ⟧ κs.
 Proof.
-  move: Λ2 ρ κs.
-  elim e => *; eauto; simpl; try by [rewrite_all_hyps].
-  - f_equal.
-    + by rewrite_all_hyps.
-    + rewrite Ren.cong_id.
-      by rewrite_all_hyps.
-  - f_equal; T.eqcd => ?.
-    rewrite_all_hyps.
-    f_equal; T.eqcd => i.
-    by dependent induction i.
-  - f_equal.
-    rewrite Ren.cong_id.
-    by rewrite_all_hyps.
+  move: Λ2 ρ κs; elim e => *;
+  T.rewrites_with ltac:(try rewrite Ren.cong_id).
+
+  repeat f_equal; T.eqcd => *.
+  match goal with
+  | x : _ |- _ => rewrite -x
+  end.
+
+  f_equal.
+  T.eqcd => x.
+  by dependent induction x.
 Qed.
 
 Theorem interp_ctx_clk_naturality {Λ1 Λ2 Ψ} (Γ : ECtx.t Λ1 Ψ) (ρ : Ren.t Λ1 Λ2) (κs : Env.t Λ2) :
@@ -278,18 +277,12 @@ Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Sub.t
   (⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (⟦ e.[ρ] ⟧ κs) ⫽ γ.
 Proof.
   move: Ψ1 Ψ2 γ ρ κs.
-  induction e; eauto; simpl; try by [T.rewrites].
-  - move=> *; f_equal.
-    * by rewrite_all_hyps.
-    * rewrite_all_hyps.
-      by rewrite Sub.cong_coh.
-  - move=> *; f_equal; T.eqcd => ?.
-    rewrite IHe.
-    by rewrite Ren.cong_id.
-  - move=> *; f_equal.
-    rewrite -IHe.
-    f_equal.
-    by rewrite Sub.cong_coh.
+  induction e; eauto; simpl;
+  T.rewrites_with
+    ltac:(repeat f_equal;
+          try (T.eqcd; intros);
+          try rewrite Sub.cong_coh;
+          try rewrite Ren.cong_id).
 Qed.
 
 Theorem interp_tm_var_ren_naturality {Λ Ψ0 Ψ1} (e : ETm.t Λ Ψ0) (ρ : Ren.t Ψ0 Ψ1) κs :
