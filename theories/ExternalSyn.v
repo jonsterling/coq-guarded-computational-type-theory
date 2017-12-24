@@ -10,6 +10,11 @@ Module T := Tactic.
 Generalizable All Variables.
 Set Implicit Arguments.
 
+
+Delimit Scope eclk_scope with eclk.
+Delimit Scope etm_scope with etm.
+
+
 Module ETm.
   Inductive t (Λ Ψ : nat) :=
   | var : Var Ψ -> t Λ Ψ
@@ -35,6 +40,28 @@ Module ETm.
   Arguments ff [Λ Ψ].
   Arguments univ [Λ Ψ] i.
 
+  Module Notation.
+    Notation "#0" := Fin.F1 : eclk_scope.
+    Notation "#1" := (Fin.FS Fin.F1) : eclk_scope.
+
+    Notation "@0" := (ETm.var _ Fin.F1) : etm_scope.
+    Notation "@1" := (ETm.var _ (Fin.FS Fin.F1)) : etm_scope.
+
+    Notation "▶[ k ] A" := (ETm.ltr k%eclk A%etm) (at level 50) : etm_scope.
+    Notation "𝟙" := ETm.unit : etm_scope.
+    Notation "𝟚" := ETm.bool : etm_scope.
+    Notation "★" := ETm.ax : etm_scope.
+    Notation "e .1" := (ETm.fst e%etm) (at level 50) : etm_scope.
+    Notation "e .2" := (ETm.snd e%etm) (at level 50) : etm_scope.
+    Infix "×" := ETm.prod : etm_scope.
+    Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
+    Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
+    Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
+    Notation "μ{ e }" := (ETm.fix_ e%etm) (at level 50) : etm_scope.
+  End Notation.
+
+  Import Notation.
+
   Program Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
     match e with
     | var i => var _ (ρΨ i)
@@ -59,6 +86,11 @@ Module ETm.
 
   Definition mapk {Λ1 Λ2 Ψ} (ρ : Ren.t Λ1 Λ2) : t Λ1 Ψ → t Λ2 Ψ :=
     map ρ (λ x, x).
+
+  Module RenNotation.
+    Notation "e .[ ρ ]" := (mapv ρ%ren e) (at level 50) : etm_scope.
+    Notation "e .⦃ ρ ⦄" := (mapk ρ%ren e) (at level 50) : etm_scope.
+  End RenNotation.
 
   Program Instance syn_struct_term {Λ} : Sub.syn_struct (t Λ) :=
     {| Sub.var := @var Λ;
@@ -89,29 +121,8 @@ Module ETm.
     end.
 End ETm.
 
-Delimit Scope eclk_scope with eclk.
-Delimit Scope etm_scope with etm.
-
-Notation "e .[ ρ ]" := (ETm.mapv ρ%ren e) (at level 50) : etm_scope.
-Notation "e .⦃ ρ ⦄" := (ETm.mapk ρ%ren e) (at level 50) : etm_scope.
-
-Notation "#0" := Fin.F1 : eclk_scope.
-Notation "#1" := (Fin.FS Fin.F1) : eclk_scope.
-
-Notation "@0" := (ETm.var _ Fin.F1) : etm_scope.
-Notation "@1" := (ETm.var _ (Fin.FS Fin.F1)) : etm_scope.
-
-Notation "▶[ k ] A" := (ETm.ltr k%eclk A%etm) (at level 50) : etm_scope.
-Notation "𝟙" := ETm.unit : etm_scope.
-Notation "𝟚" := ETm.bool : etm_scope.
-Notation "★" := ETm.ax : etm_scope.
-Notation "e .1" := (ETm.fst e%etm) (at level 50) : etm_scope.
-Notation "e .2" := (ETm.snd e%etm) (at level 50) : etm_scope.
-Infix "×" := ETm.prod : etm_scope.
-Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
-Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
-Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
-Notation "μ{ e }" := (ETm.fix_ e%etm) (at level 50) : etm_scope.
+Export ETm.Notation.
+Export ETm.RenNotation.
 
 Delimit Scope ectx_scope with ectx.
 
