@@ -37,7 +37,8 @@ Module Sub.
 
   Class syn_struct (𝒯 : Ctx → Type) : Type :=
     { var : ∀ {Ψ}, Var Ψ → 𝒯 Ψ;
-      map : ∀ {Ψ1 Ψ2}, Ren.t Ψ1 Ψ2 → 𝒯 Ψ1 → 𝒯 Ψ2
+      map : ∀ {Ψ1 Ψ2}, Ren.t Ψ1 Ψ2 → 𝒯 Ψ1 → 𝒯 Ψ2;
+      map_id : ∀ {Ψ} (e : 𝒯 Ψ), map id e = e
     }.
 
   Section Sub.

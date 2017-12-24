@@ -80,15 +80,6 @@ Module Tm.
     | fix_ e => fix_ (map (Ren.cong ρ) e)
     end.
 
-  Program Instance syn_struct_term : Sub.syn_struct t :=
-    {| Sub.var := var;
-       Sub.map := @map |}.
-
-  Module RenNotation.
-    Notation "e .[ ρ ]" := (Tm.map ρ%ren e) (at level 50) : tm_scope.
-  End RenNotation.
-
-  Import RenNotation.
 
   Local Ltac rewrites_aux :=
     repeat f_equal;
@@ -98,11 +89,24 @@ Module Tm.
   Local Ltac rewrites :=
     T.rewrites_with rewrites_aux.
 
+
   Theorem map_id {Ψ} (e : t Ψ) : map id e = e.
   Proof.
     induction e; by rewrites.
   Qed.
 
+  Program Instance syn_struct_term : Sub.syn_struct t :=
+    {| Sub.var := var;
+       Sub.map := @map |}.
+  Next Obligation.
+    apply: map_id.
+  Qed.
+
+  Module RenNotation.
+    Notation "e .[ ρ ]" := (Tm.map ρ%ren e) (at level 50) : tm_scope.
+  End RenNotation.
+
+  Import RenNotation.
 
   Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
     match e with

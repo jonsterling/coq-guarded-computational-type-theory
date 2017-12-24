@@ -92,10 +92,18 @@ Module ETm.
     Notation "e .⦃ ρ ⦄" := (mapk ρ%ren e) (at level 50) : etm_scope.
   End RenNotation.
 
+  Lemma map_id `(e : t Λ Ψ) : map id id e = e.
+  Proof.
+    induction e; T.rewrites_with ltac:(try rewrite Ren.cong_id).
+  Qed.
+
   Program Instance syn_struct_term {Λ} : Sub.syn_struct (t Λ) :=
     {| Sub.var := @var Λ;
        Sub.map := @map Λ Λ id
     |}.
+  Next Obligation.
+    apply: map_id.
+  Qed.
 
   Local Open Scope program_scope.
   Program Definition wk_sub `(ρ : @Sub.t (t Λ) Ψ1 Ψ2) : @Sub.t (t (S Λ)) Ψ1 Ψ2 :=
