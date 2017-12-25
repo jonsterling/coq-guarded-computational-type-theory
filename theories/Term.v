@@ -23,7 +23,7 @@ Module Tm.
   | tt : t Ψ
   | ff : t Ψ
   | prod : t Ψ -> t (S Ψ) -> t Ψ
-  | arr : t Ψ -> t Ψ -> t Ψ
+  | arr : t Ψ -> t (S Ψ) -> t Ψ
   | pair : t Ψ -> t Ψ -> t Ψ
   | lam : t (S Ψ) → t Ψ
   | ltr : 𝕂 -> t Ψ -> t Ψ
@@ -72,7 +72,7 @@ Module Tm.
     | tt => tt
     | ff => ff
     | prod A B => prod (map ρ A) (map (Ren.cong ρ) B)
-    | arr A B => arr (map ρ A) (map ρ B)
+    | arr A B => arr (map ρ A) (map (Ren.cong ρ) B)
     | pair e1 e2 => pair (map ρ e1) (map ρ e2)
     | lam e => lam (map (Ren.cong ρ) e)
     | ltr κ A => ltr κ (map ρ A)
@@ -121,7 +121,7 @@ Module Tm.
     | tt => tt
     | ff => ff
     | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
-    | arr A B => arr (subst σ A) (subst σ B)
+    | arr A B => arr (subst σ A) (subst (Sub.cong σ) B)
     | pair e1 e2 => pair (subst σ e1) (subst σ e2)
     | lam e => lam (subst (Sub.cong σ) e)
     | ltr κ A => ltr κ (subst σ A)
@@ -226,13 +226,6 @@ Hint Unfold compose : syn_db.
 
 Ltac simplify_subst_step :=
   simpl; autorewrite with syn_db; autounfold with syn_db.
-(*
-  try rewrite Tm.subst_ren_coh;
-  try rewrite Tm.ren_subst_coh;
-  try rewrite Tm.subst_coh;
-  try rewrite Tm.subst_closed;
-  try rewrite /compose.
-*)
 
 Ltac simplify_subst :=
   repeat (simplify_eqs; f_equal; try T.eqcd; intros; simplify_subst_step).
