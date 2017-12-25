@@ -698,6 +698,55 @@ Module Arr.
   Proof.
     by Fam.quantifier_formation_tac.
   Qed.
+
+  Theorem univ_eq {i A0 A1 B0 B1} :
+    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ ⋄ ∙ A0 ≫ 𝕌[i] ∋ B0 ∼ B1
+    → τω ⊧ 𝕌[i] ∋ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
+  Proof.
+    move=> /Univ.inversion 𝒟 /Univ.open_inversion ℰ.
+    apply: Univ.intro.
+    apply: formation.
+    - assumption.
+    - apply: ℰ.
+      split; auto.
+      move=> ? ? ?; Term.simplify_subst.
+      apply: General.ty_eq_refl_left; eauto.
+  Qed.
+
+  Theorem intro {i A B f0 f1} :
+    τω ⊧ ⋄ ∙ A ≫ B ∋ f0 ∼ f1
+    → τ[i] ⊧ A ∼ A
+    → τ[i] ⊧ ⋄ ∙ A ≫ B ∼ B
+    → τω ⊧ (A ⇒ B) ∋ 𝛌{f0} ∼ 𝛌{f1}.
+  Proof.
+    move=> 𝒟 ℰ /(Fam.family_choice ℰ) ℱ.
+    apply: (Level.eq_mem_from_level i).
+    case: ℰ => Rℰ [ℰ0 _].
+    case: ℱ => Rℱ ℱsp.
+    eexists; split.
+    - Tac.tower_intro.
+      apply: Sig.conn; first by auto.
+      econstructor; eauto.
+      move=> e0 e1 e0e1.
+      case: (ℱsp e0 e1); auto.
+      + eexists; eauto.
+      + move=> Q [? [? ?]].
+        repeat T.split; eauto.
+    - econstructor; eauto.
+      constructor => e0 e1 e0e1.
+      case: (ℱsp e0 e1); auto.
+      + eexists; eauto.
+      + move=> ? [? [? [? ?]]].
+        edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [𝒟0 𝒟1]]; simpl.
+        * split; first by auto.
+          Term.simplify_subst.
+          eexists; split; eauto.
+          eexists; eauto.
+        * replace (Rℱ e0) with R𝒟; auto.
+          apply: TS.is_extensional; eauto; simpl.
+          eexists; eauto.
+  Qed.
 End Arr.
 
 Module Prod.
