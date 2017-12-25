@@ -27,7 +27,7 @@ Module ETm.
   | tt : t Λ Ψ
   | ff : t Λ Ψ
   | prod : t Λ Ψ -> t Λ (S Ψ) -> t Λ Ψ
-  | arr : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
+  | arr : t Λ Ψ -> t Λ (S Ψ) -> t Λ Ψ
   | pair : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
   | ltr : Var Λ → t Λ Ψ -> t Λ Ψ
   | isect : t (S Λ) Ψ -> t Λ Ψ
@@ -63,7 +63,7 @@ Module ETm.
 
   Import Notation.
 
-  Program Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
+  Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
     match e with
     | var i => var _ (ρΨ i)
     | fst e => fst (map ρΛ ρΨ e)
@@ -74,7 +74,7 @@ Module ETm.
     | tt => tt
     | ff => ff
     | prod A B => prod (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
-    | arr A B => arr (map ρΛ ρΨ A) (map ρΛ ρΨ B)
+    | arr A B => arr (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
     | pair e1 e2 => pair (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
     | ltr k A => ltr (ρΛ k) (map ρΛ ρΨ A)
     | isect A => isect (map (Ren.cong ρΛ) ρΨ A)
@@ -124,7 +124,7 @@ Module ETm.
     | tt => tt
     | ff => ff
     | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
-    | arr A B => arr (subst σ A) (subst σ B)
+    | arr A B => arr (subst σ A) (subst (Sub.cong σ) B)
     | pair e1 e2 => pair (subst σ e1) (subst σ e2)
     | ltr k A => ltr k (subst σ A)
     | isect A => isect (subst (wk_sub σ) A)
