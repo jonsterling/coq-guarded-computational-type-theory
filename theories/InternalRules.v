@@ -293,6 +293,7 @@ Module General.
     apply: mem_eq_symm; eauto.
   Qed.
 
+
   Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
     τω ⊧ Γ ctx
     → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
@@ -370,6 +371,44 @@ Module General.
         apply: env_eq_refl_left; eauto.
     Qed.
   End FunctionalitySquare.
+
+
+  Theorem open_ty_eq_refl_left {Ψ} {Γ : Prectx Ψ} {A A'} :
+    τω ⊧ Γ ctx
+    → τω ⊧ Γ ≫ A ∼ A'
+    → τω ⊧ Γ ≫ A ∼ A.
+  Proof.
+    move=> 𝒟 ℰ γ0 γ1 γ01.
+    apply: ty_eq_trans.
+    - apply: ty_eq_symm.
+      apply: ℰ.
+      apply: env_eq_symm; eauto.
+    - apply: ℰ.
+      apply: env_eq_refl_left; eauto.
+  Qed.
+
+
+  Theorem open_mem_eq_refl_left {Ψ} {Γ : Prectx Ψ} {A A' e0 e1} :
+    τω ⊧ Γ ctx
+    → τω ⊧ Γ ≫ A ∼ A'
+    → τω ⊧ Γ ≫ A ∋ e0 ∼ e1
+    → τω ⊧ Γ ≫ A ∋ e0 ∼ e0.
+  Proof.
+    move=> 𝒟 ℰ ℱ γ0 γ1 γ01.
+    apply: mem_eq_trans; auto.
+    - apply: mem_eq_symm; auto.
+      apply: replace_ty_in_mem_eq.
+      + apply: ℱ.
+        apply: env_eq_refl_left; eauto.
+        apply: env_eq_symm; eauto.
+      + apply: ty_eq_trans.
+        * apply: ty_eq_symm.
+          apply: ℰ; eauto.
+        * apply: ℰ.
+          apply: env_eq_refl_left; eauto.
+          apply: env_eq_symm; eauto.
+    - eauto.
+  Qed.
 End General.
 
 Module Univ.
@@ -425,6 +464,31 @@ Module Univ.
       by exists S.
   Qed.
 
+  Lemma inversionω {i A0 A1} :
+    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ A0 ∼ A1.
+  Proof.
+    move=> 𝒟.
+    apply: Level.eq_ty_from_level.
+    apply: inversion.
+    eassumption.
+  Qed.
+
+
+  Lemma open_inversionω {Ψ} {Γ : Prectx Ψ} {i A0 A1} :
+    τω ⊧ Γ ≫ 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ Γ ≫ A0 ∼ A1.
+  Proof.
+    move=> 𝒟 γ0 γ1 γ01.
+    specialize (𝒟 γ0 γ1).
+    suff: τω ⊧ Γ ∋⋆ γ0 ∼ γ1.
+    - move=> /𝒟 ℱ.
+      apply: Level.eq_ty_from_level.
+      apply: inversion.
+      eassumption.
+    - induction Γ; simpl; auto; split.
+  Qed.
+
   Lemma open_inversion {Ψ} {Γ : Prectx Ψ} {i A0 A1} :
     τω ⊧ Γ ≫ 𝕌[i] ∋ A0 ∼ A1
     → τ[i] ⊧ Γ ctx
@@ -440,6 +504,7 @@ Module Univ.
         * move=> ?.
           Term.simplify_subst.
           apply: intro.
+          simpl in *.
           case: ℰ => 𝒢 ℋ.
           case: γ01 => ? ?.
           by apply: ℋ.
@@ -450,6 +515,8 @@ Module Univ.
         case: γ01 => ? ?.
         eauto.
   Qed.
+
+
 
   Theorem spine_inversion {n i R} :
     τ[n] (Tm.univ i, R)

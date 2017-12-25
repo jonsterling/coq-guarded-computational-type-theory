@@ -18,14 +18,13 @@ Qed.
 
 
 Hint Rewrite @cons_weak_simple : syn_db.
-Hint Rewrite <- @interp_ctx_clk_naturality @interp_tm_clk_naturality @interp_tm_var_naturality @interp_tm_var_ren_naturality @interp_tm_ren_naturality : syn_db.
+Hint Rewrite <- @interp_ctx_clk_naturality @interp_tm_clk_naturality @interp_tm_var_naturality @interp_tm_var_ren_naturality @interp_tm_ren_naturality @interp_tm_subst_naturality : syn_db.
 Hint Unfold compose : syn_db.
 
 Local Hint Extern 40 => autorewrite with syn_db; Term.simplify_subst.
-
 Local Hint Extern 20 => IR.Univ.tac.
 
-Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm.
+Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm IR.General.open_mem_eq_refl_left IR.General.open_ty_eq_refl_left.
 
 Tactic Notation "explode" "functionality" uconstr(𝒟) :=
   let X := fresh in
@@ -171,14 +170,12 @@ Module General.
   Proof.
     move=> 𝒟 ℰ κs ℱ _ ? ? ?.
     apply: IR.General.replace_ty_in_mem_eq.
-    - apply: ℰ; eauto.
-      move=> γ0' γ1' γ01'.
-      IR.Univ.tac.
-      explode functionality (𝒟 _ _ _).
-      by eauto.
-    - IR.Univ.tac.
-      apply: 𝒟; auto.
-      apply: IR.General.env_eq_refl_left; eassumption.
+    - apply: ℰ; [eauto | | eauto].
+      apply: IR.General.open_ty_eq_refl_left.
+      + assumption.
+      + apply: IR.Univ.open_inversionω; eauto.
+    - apply: IR.Univ.inversionω.
+      apply: 𝒟; eauto.
   Qed.
 
   Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} A' e0' e1' {A e0 e1} :
@@ -250,21 +247,30 @@ Module Prod.
     move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01 //=.
     apply: IR.Prod.univ_eq.
     - by apply: 𝒟.
-    - move=> ? ? γ01' //=.
+    - move=> ? ? [_ 𝒢] //=.
       Term.simplify_subst.
-      T.efwd_thru ℰ.
+      T.efwd ℰ.
+      + T.use ℰ; eauto.
+      + split; [T.use γ01 | T.use 𝒢]; eauto.
       + eauto.
-      + split; Term.simplify_subst.
-        * T.use γ01; f_equal; T.eqcd; Term.simplify_subst.
-        * case: γ01' => _ 𝒢.
-          T.use 𝒢; Term.simplify_subst.
-      + split; first by eassumption.
-        move=> ? ? ?.
-        explode functionality (𝒟 _ _ _).
-        eauto.
+      + split; first by assumption.
+        apply: IR.General.open_ty_eq_refl_left.
+        * assumption.
+        * apply: IR.Univ.open_inversionω.
+          eauto.
   Qed.
 
-  (* ugly proof ! *)
+  Lemma subst `{Γ : Prectx Ψ} {A B0 B1 e0 e1} :
+    τω ⊧ Γ ∙ A ≫ B0 ∼ B1
+    → τω ⊧ Γ ≫ A ∋ e0 ∼ e1
+    → τω ⊧ Γ ≫ (B0 ⫽ Sub.inst0 e0) ∼ (B1 ⫽ Sub.inst0 e1).
+  Proof.
+    move=> 𝒟 ℰ γ0 γ1 γ01.
+    Term.simplify_subst.
+    apply: 𝒟.
+    split; eauto.
+  Qed.
+
   Theorem intro `{Γ : ECtx.t Λ Ψ} {i A B e00 e01 e10 e11} :
     ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e10 ⟧
     → ⟦ Λ ∣ Γ ≫ B ⫽ Sub.inst0 e00 ∋ e01 ≐ e11 ⟧
@@ -273,49 +279,41 @@ Module Prod.
     → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨e00, e01⟩ ≐ ⟨e10, e11⟩ ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
-    apply: IR.Prod.intro.
-    - apply: 𝒟; eauto.
-      IR.Univ.tac.
-      apply: ℱ; eauto.
-    - Term.simplify_subst.
-      T.efwd_thru ℰ.
-      + rewrite -interp_tm_subst_naturality.
-        f_equal; eauto.
-        Term.simplify_subst.
-        dependent induction x; Term.simplify_subst.
-      + move=> γ0' γ1' γ01'.
-        IR.Univ.tac.
-        repeat rewrite -interp_tm_subst_naturality.
-        apply: 𝒢; eauto.
-        * split; first by eauto.
-          IR.Univ.tac.
-          apply: ℱ; auto.
-        * split; first by eassumption.
+    suff 𝒥 : τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ A ⟧ κs.
+    - apply: IR.Prod.intro.
+      + apply: 𝒟; eauto.
+      + T.efwd ℰ.
+        * T.use ℰ.
           Term.simplify_subst.
-          apply: (@IR.General.replace_ty_in_mem_eq ((⟦ A ⟧ κs) ⫽ γ1')%tm).
-          ** explode functionality (𝒟 _ _ _).
-             *** IR.Univ.tac; apply: ℱ; auto.
-             *** apply: IR.General.mem_eq_trans; [eauto..|idtac].
-                 apply: (@IR.General.replace_ty_in_mem_eq ((⟦ A ⟧ κs) ⫽ γ0')%tm); first by eauto.
-                 explode functionality (ℱ _ _ _); eauto.
-          ** explode functionality (ℱ _ _ _); eauto.
-    - IR.Univ.tac.
-      apply: ℱ; eauto.
-    - move=> γ0' γ1' γ01'.
-      Term.simplify_subst.
-      IR.Univ.tac.
-      apply: 𝒢; auto.
-      + split; eauto.
-        move=> ? ? ?.
-        IR.Univ.tac.
-        apply: ℱ; auto.
-      + split; Term.simplify_subst.
-        * suff 𝒥 : τω ⊧ ⟦ Γ ⟧ κs ∋⋆ γ0 ∼ γ0; eauto.
-          T.use 𝒥; Term.simplify_subst.
-        * case: γ01' => _; simplify_eqs => 𝒥.
-          apply: IR.Level.eq_mem_from_level.
-          T.use 𝒥.
+          dependent induction x; auto.
+        * auto.
+        * apply: IR.General.open_ty_eq_refl_left; auto.
+          replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%tm with ((⟦ B ⟧ κs) ⫽ Sub.inst0 (⟦ e00 ⟧ κs)%tm)%tm.
+          ** apply: subst; auto.
+             apply: IR.Univ.open_inversionω.
+             apply: 𝒢; auto.
+          ** replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%tm with ((⟦ B ⫽ Sub.inst0 e00 ⟧ κs) ⫽ @Tm.var _)%tm.
+             *** rewrite -interp_tm_subst_naturality /interp_subst //=.
+                 simplify_subst.
+                 rewrite Tm.subst_ret.
+                 by dependent induction x.
+             *** by rewrite Tm.subst_ret.
+        * auto.
+      + apply: IR.General.ty_eq_refl_left.
+        apply: IR.Univ.inversion.
+        apply: ℱ; eauto.
+      + move=> //= ? ? [_ /IR.Level.eq_mem_from_level ℐ].
+        apply: IR.Univ.inversion.
+        repeat rewrite Tm.subst_coh.
+        apply: 𝒢; auto.
+        split; simpl.
+        * T.use (IR.General.env_eq_refl_left Γctx γ01).
           Term.simplify_subst.
+        * T.use ℐ.
+          Term.simplify_subst.
+    - apply: IR.General.open_ty_eq_refl_left; auto.
+      apply: IR.Univ.open_inversionω.
+      apply: ℱ; auto.
   Qed.
 End Prod.
 
