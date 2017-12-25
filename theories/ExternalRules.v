@@ -105,7 +105,6 @@ Module General.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
     apply: IR.General.mem_eq_conv.
-    - eauto.
     - move=> ?; edestruct 𝒟; eassumption.
     - apply: ℰ; eauto.
   Qed.
@@ -117,16 +116,13 @@ Module General.
   Proof.
     move=> 𝒟 ℰ κs ? ? ? ? ?.
     apply: IR.General.mem_eq_conv_ty.
-    - eauto.
     - move=> ?; edestruct 𝒟; eauto.
     - apply: ℰ; eauto.
       move=> ? ? ?.
       apply: IR.General.ty_eq_conv.
-      + eauto.
       + move=> ?; edestruct 𝒟; eassumption.
       + apply: IR.General.ty_eq_symm.
         apply: IR.General.ty_eq_conv.
-        * eauto.
         * move=> ?; edestruct 𝒟; eassumption.
         * eauto.
   Qed.
@@ -136,9 +132,10 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ e1 ≐ e0 ⟧.
   Proof.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01.
-    apply: IR.General.mem_eq_symm; first by eauto.
+    apply: IR.General.mem_eq_symm.
     apply: IR.General.replace_ty_in_mem_eq; eauto.
     apply: 𝒟; eauto.
+    by apply: IR.General.env_eq_symm.
   Qed.
 
   Theorem eq_trans `{Γ : ECtx.t Λ Ψ} {A e0 e1 e2} :
@@ -150,6 +147,7 @@ Module General.
     apply: IR.General.mem_eq_trans; auto.
     - apply: 𝒟; eauto.
     - apply: ℰ; eauto.
+      apply: IR.General.env_eq_refl_left; eauto.
   Qed.
 
   Theorem eq_refl_left `{Γ : ECtx.t Λ Ψ} {A e0 e1} :
@@ -176,6 +174,7 @@ Module General.
       + apply: IR.Univ.open_inversionω; eauto.
     - apply: IR.Univ.inversionω.
       apply: 𝒟; eauto.
+      apply: IR.General.env_eq_refl_left; eauto.
   Qed.
 
   Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} A' e0' e1' {A e0 e1} :
@@ -341,6 +340,7 @@ Module Isect.
     apply: IR.Isect.intro.
     - IR.Univ.tac.
       apply: univ_eq; eauto.
+      apply: IR.General.env_eq_refl_left; eauto.
     - move=> κ.
       T.efwd 𝒟.
       + T.use 𝒟; eauto.

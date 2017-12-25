@@ -152,7 +152,7 @@ Module Clo.
   Ltac use_universe_system :=
     match goal with
     | H : TS.universe_system ?σ, H' : ?σ ?X |- _ =>
-      destruct (H X H')
+      destruct H as [H]; destruct (H X H')
     end.
 
 
@@ -207,12 +207,13 @@ Module Clo.
     T.destruct_eqs;
     auto.
 
-  Theorem extensionality {σ} :
+  Instance extensionality {σ} :
     TS.universe_system σ
     → TS.extensional σ
     → TS.extensional (t σ).
   Proof.
-    move=> ? ext ? ?; elim_clo; clear H.
+    move=> ? [ext]; constructor => ? ?; elim_clo; clear H.
+
     - move=> [? ?] ? ? ?.
       destruct_clo.
       + by apply: ext.
@@ -324,7 +325,7 @@ Module Clo.
     econstructor; eauto.
   Qed.
 
-  Hint Resolve cext_per cext_computational unit_val_per bool_val_per (*prod_val_per*) cext_per.
+  Hint Resolve cext_per cext_computational unit_val_per bool_val_per prod_val_per cext_per.
   Hint Constructors is_cper.
 
   Ltac destruct_cper :=
@@ -340,11 +341,11 @@ Module Clo.
       end.
 
 
-  Theorem cper_valued {σ} :
+  Instance cper_valued {σ} :
     TS.cper_valued σ
     → TS.cper_valued (t σ).
   Proof.
-    move=> IH A R 𝒟.
+    move=> [IH]; constructor=> A R 𝒟.
     apply: (@ind (A, R) σ (fun X => is_cper (snd X))); auto.
     - move=> [A' R']; eauto.
     - move=> ι A' A'0 R' 𝒟' ℰ //=.
@@ -392,11 +393,11 @@ Module Clo.
           eauto.
   Qed.
 
-  Theorem type_computational {σ} :
+  Instance type_computational {σ} :
     TS.type_computational σ
     → TS.type_computational (t σ).
   Proof.
-    move=> ih ? ?; elim_clo.
+    move=> [ih]; constructor => ? ?; elim_clo.
     - move=> [A0 R] 𝒟 A1 //= A01.
       rewrite -roll.
       apply: Sig.init.
@@ -416,6 +417,4 @@ Module Clo.
         T.specialize_hyps.
         eauto.
   Qed.
-
-  Hint Resolve monotonicity extensionality cper_valued type_computational.
 End Clo.

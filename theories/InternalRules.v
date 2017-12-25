@@ -27,11 +27,6 @@ Module Tac.
   Ltac accum_lvl x :=
     accum_lvl_aux x 0.
 
-  Ltac tower_ext :=
-    let n := fresh in
-    accum_lvl n;
-    apply: (@Tower.extensionality n).
-
   Ltac tower_mono :=
     apply: Tower.monotonicity; last by [eassumption];
     cbn; omega.
@@ -139,17 +134,18 @@ Module Level.
     move=> [R [𝒟0 𝒟1]] [S [ℰ0 ℰ1]].
     exists S; split; first by assumption.
     replace S with R; first by assumption.
-    Tac.tower_ext; Tac.tower_mono.
+    apply: TS.is_extensional;
+    eexists; eassumption.
   Qed.
 End Level.
 
 
 
 Module General.
-  Theorem replace_ty_in_mem_eq {A0 A1 e1 e2} :
-    τω ⊧ A0 ∋ e1 ∼ e2
-    → τω ⊧ A0 ∼ A1
-    → τω ⊧ A1 ∋ e1 ∼ e2.
+  Theorem replace_ty_in_mem_eq {τ A0 A1 e1 e2} `{TS.extensional τ} :
+    τ ⊧ A0 ∋ e1 ∼ e2
+    → τ ⊧ A0 ∼ A1
+    → τ ⊧ A1 ∋ e1 ∼ e2.
   Proof.
     Tac.prove.
 
@@ -158,7 +154,7 @@ Module General.
       replace R1 with R0; auto
     end.
 
-    Tac.tower_ext; Tac.tower_mono.
+    apply: TS.is_extensional; eauto.
   Qed.
 
   Theorem ty_eq_refl_left {τ A B} :
@@ -175,59 +171,57 @@ Module General.
     Tac.prove.
   Qed.
 
-  Theorem ty_eq_conv {τ A0 A1 B} :
-    TS.type_computational τ
-    → A0 ≼₀ A1
+  Theorem ty_eq_conv {τ A0 A1 B} `{TS.type_computational τ} :
+    A0 ≼₀ A1
     → τ ⊧ A0 ∼ B
     → τ ⊧ A1 ∼ B.
   Proof.
-    move=> H A01 [R [𝒟A0 𝒟B]].
+    move=> A01 [R [𝒟A0 𝒟B]].
     exists R; split; auto.
-    apply: H.
+    apply: TS.is_type_computational.
     - exact 𝒟A0.
     - auto.
   Qed.
 
-  Theorem mem_eq_conv_ty {τ A0 A1 e0 e1} :
-    TS.type_computational τ
-    → A0 ≼₀ A1
+  Theorem mem_eq_conv_ty {τ A0 A1 e0 e1} `{TS.type_computational τ} :
+    A0 ≼₀ A1
     → τ ⊧ A0 ∋ e0 ∼ e1
     → τ ⊧ A1 ∋ e0 ∼ e1.
   Proof.
-    move=> H A01 [R [𝒟 e01]].
+    move=> A01 [R [𝒟 e01]].
     exists R; split; auto.
-    apply: H; eauto.
+    apply: TS.is_type_computational; eauto.
   Qed.
 
-  Theorem mem_eq_symm {τ A e0 e1} :
-    TS.cper_valued τ
-    → τ ⊧ A ∋ e0 ∼ e1
+  Theorem mem_eq_symm {τ A e0 e1} `{TS.cper_valued τ} :
+    τ ⊧ A ∋ e0 ∼ e1
     → τ ⊧ A ∋ e1 ∼ e0.
   Proof.
-    move=> cper [R [𝒟 ℰ]].
+    move=> [R [𝒟 ℰ]].
     exists R; split; auto.
-    edestruct cper; eauto.
-    destruct per.
-    by apply: symmetric.
+    apply: symmetric; auto.
+    apply: per.
+    apply: TS.is_cper_valued.
+    eauto.
   Qed.
 
-  Theorem mem_eq_conv {τ A e00 e01 e1} :
-    TS.cper_valued τ
-    → e00 ≼₀ e01
+  Theorem mem_eq_conv {τ A e00 e01 e1} `{TS.cper_valued τ} :
+    e00 ≼₀ e01
     → τ ⊧ A ∋ e00 ∼ e1
     → τ ⊧ A ∋ e01 ∼ e1.
   Proof.
-    move=> H e00e01 [R [ℰ e00e1]].
+    move=> e00e01 [R [ℰ e00e1]].
     exists R; split; auto.
-    case: (H A R); eauto.
+    apply: crel; eauto.
+    apply: TS.is_cper_valued; eauto.
   Qed.
 
 
-  Theorem mem_eq_conv_both {A e00 e01 e10 e11} :
+  Theorem mem_eq_conv_both {τ A e00 e01 e10 e11} `{TS.cper_valued τ} :
     e00 ≼₀ e01
     → e10 ≼₀ e11
-    → τω ⊧ A ∋ e00 ∼ e10
-    → τω ⊧ A ∋ e01 ∼ e11.
+    → τ ⊧ A ∋ e00 ∼ e10
+    → τ ⊧ A ∋ e01 ∼ e11.
   Proof.
     move=> ? ? ?.
     apply: mem_eq_conv; eauto.
@@ -236,68 +230,48 @@ Module General.
     by apply: mem_eq_symm.
   Qed.
 
-  Theorem ty_eq_trans {A B C} :
-    τω ⊧ B ∼ C
-    → τω ⊧ A ∼ B
-    → τω ⊧ A ∼ C.
+  Theorem ty_eq_trans {τ A B C} `{TS.cper_valued τ} `{TS.extensional τ}:
+    τ ⊧ B ∼ C
+    → τ ⊧ A ∼ B
+    → τ ⊧ A ∼ C.
   Proof.
-    move=> [R1 [[? 𝒟0] [? 𝒟1]]] [R2 [[? ℰ0] [? ℰ1]]].
+    move=> [R1 [? ?]] [R2 [? ?]].
     exists R2; T.split.
-    - eexists; eauto.
-    - replace R2 with R1.
-      + eexists; eauto.
-      + symmetry; Tac.tower_ext; Tac.tower_mono.
+    - eauto.
+    - replace R2 with R1; auto.
+      symmetry; apply: TS.is_extensional; eauto.
   Qed.
 
-  Theorem ty_eq_trans_at_lvl {i A B C} :
-    τ[i] ⊧ B ∼ C
-    → τ[i] ⊧ A ∼ B
-    → τ[i] ⊧ A ∼ C.
-  Proof.
-    move=> [R1 [𝒟0 𝒟1]] [R2 [ℰ0 ℰ1]].
-    exists R2; T.split; auto.
-    replace R2 with R1; auto.
-    symmetry.
-    apply: Tower.extensionality; eauto.
-  Qed.
-
-
-  Theorem mem_eq_trans {τ A e0 e1 e2} :
-    TS.cper_valued τ
-    → TS.extensional τ
-    → τ ⊧ A ∋ e1 ∼ e2
+  Theorem mem_eq_trans {τ A e0 e1 e2} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ A ∋ e1 ∼ e2
     → τ ⊧ A ∋ e0 ∼ e1
     → τ ⊧ A ∋ e0 ∼ e2.
   Proof.
-    move=> cper ext.
     Tac.prove.
-    edestruct cper.
-    - eauto.
-    - destruct per.
-      apply: transitive; eauto.
-      match goal with
+    apply: transitive; eauto.
+    - apply: per.
+      apply: TS.is_cper_valued; eauto.
+    - match goal with
       | H : ?R1 (e1, e2) |- ?R2 (e1, e2) =>
         replace R2 with R1; auto
       end.
-      apply: ext; eauto.
+      apply: TS.is_extensional; eauto.
   Qed.
 
-  Theorem mem_eq_refl_left {τ A e0 e1} :
-    TS.cper_valued τ
-    → TS.extensional τ
-    → τ ⊧ A ∋ e0 ∼ e1
+  Theorem mem_eq_refl_left {τ A e0 e1} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ A ∋ e0 ∼ e1
     → τ ⊧ A ∋ e0 ∼ e0.
   Proof.
-    move=> ? ? 𝒟.
+    move=> 𝒟.
     apply: mem_eq_trans; eauto.
     apply: mem_eq_symm; eauto.
   Qed.
 
 
-  Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
-    τω ⊧ Γ ctx
-    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-    → τω ⊧ Γ ∋⋆ γ1 ∼ γ0.
+  Theorem env_eq_symm {Ψ} {Γ : Prectx Ψ} {τ γ0 γ1} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ Γ ctx
+    → τ ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τ ⊧ Γ ∋⋆ γ1 ∼ γ0.
   Proof.
     move=> Γctx γ01.
     induction Γ; eauto.
@@ -305,61 +279,81 @@ Module General.
     - apply: IHΓ; eauto.
       + by case: Γctx.
       + by case: γ01.
-    - suff: τω ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
-      + move=> [R [[? 𝒟0] [? 𝒟1]]].
-        case: γ01 => [_ [S [[n ℰ] γ01]]].
-        destruct (Tower.cper_valued ℰ) as [[symm _] _].
-        exists R; T.split.
-        * eexists; eauto.
-        * replace R with S.
-          ** by apply: symm.
-          ** Tac.tower_ext; Tac.tower_mono.
-
+    - suff: τ ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
+      + move=> [R [𝒟0 𝒟1]].
+        case: γ01 => //= [_ [S [ℰ γ01]]].
+        eexists; T.split; eauto.
+        apply: symmetric.
+        * apply: per.
+          apply: TS.is_cper_valued.
+          eassumption.
+        * replace R with S; auto.
+          apply: TS.is_extensional; eauto.
       + case: Γctx => _ 𝒟.
         apply: ty_eq_symm.
         apply: 𝒟.
-          by case: γ01.
+        by case: γ01.
   Qed.
 
-  Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {γ0 γ1} :
-    τω ⊧ Γ ctx
-    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-    → τω ⊧ Γ ∋⋆ γ0 ∼ γ0.
+  Theorem env_eq_trans {Ψ} {Γ : Prectx Ψ} {τ γ0 γ1 γ2} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ Γ ctx
+    → τ ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τ ⊧ Γ ∋⋆ γ1 ∼ γ2
+    → τ ⊧ Γ ∋⋆ γ0 ∼ γ2.
   Proof.
-    move=> Γctx γ01.
+    move=> Γctx γ01 γ12.
     induction Γ; eauto.
     split; simplify_eqs.
-    - apply: IHΓ.
+    - apply: IHΓ; eauto.
       + by case: Γctx.
-      + by case: γ01; eauto.
-    - suff: τω ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ0 ∘ Fin.FS)).
-      + move=> [R [[? 𝒟0] [? 𝒟1]]].
-        case: γ01 => [_ [S [[n ℰ] γ01]]].
-        destruct (Tower.cper_valued ℰ) as [[symm trans] _].
-        exists R; T.split.
-        * eexists; eauto.
-        * move: ℰ γ01; simplify_eqs; move=> ℰ γ01.
-          replace R with S.
-          ** apply: trans; eauto.
-          ** Tac.tower_ext; Tac.tower_mono.
-      + case: Γctx => _ 𝒟.
-        apply: ty_eq_refl_left.
-        apply: 𝒟.
-        case: γ01.
-        eauto.
+      + case: γ01 => X _.
+        exact X.
+      + case: γ12 => X _.
+        exact X.
+    - suff: τ ⊧ t ⫽ (γ0 ∘ Fin.FS) ∼ (t ⫽ (γ1 ∘ Fin.FS)) ∧ τ ⊧ t ⫽ (γ1 ∘ Fin.FS) ∼ (t ⫽ (γ2 ∘ Fin.FS)).
+      + move=> [[R [𝒟0 𝒟1]] [R' [𝒟'0 𝒟'1]]].
+        case: γ01 => //= [_ [S [ℰ γ01]]].
+        case: γ12 => //= [_ [S' [ℱ γ01']]].
+        eexists; T.split; eauto.
+        apply: transitive; eauto.
+        * apply: per.
+          apply: TS.is_cper_valued.
+          eassumption.
+        * suff: S = R ∧ R = S'.
+          ** move=> [Q1 Q2].
+             by rewrite Q1 Q2.
+          ** split; apply: TS.is_extensional; eauto.
+      + split.
+        * case: Γctx => _ 𝒟.
+          apply: 𝒟.
+          by case: γ01.
+        * case: Γctx => _ 𝒟.
+          apply: 𝒟.
+          by case: γ12.
+  Qed.
+
+
+  Theorem env_eq_refl_left {Ψ} {Γ : Prectx Ψ} {τ γ0 γ1} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ Γ ctx
+    → τ ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τ ⊧ Γ ∋⋆ γ0 ∼ γ0.
+  Proof.
+    move=> *.
+    apply: env_eq_trans; eauto.
+    apply: env_eq_symm; eauto.
   Qed.
 
 
   Section FunctionalitySquare.
-    Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : @Sub.t Tm.t Ψ 0}.
+    Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : @Sub.t Tm.t Ψ 0} {τ} `{TS.cper_valued τ} `{TS.extensional τ}.
 
     Lemma functionality_square :
-      τω ⊧ Γ ≫ A ∋ e0 ∼ e1
-      → τω ⊧ Γ ctx
-      → τω ⊧ Γ ∋⋆ γ0 ∼ γ1
-      → τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ1)
-        ∧ τω ⊧ A ⫽ γ1 ∋ (e0 ⫽ γ1) ∼ (e1 ⫽ γ1)
-        ∧ τω ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ0).
+      τ ⊧ Γ ≫ A ∋ e0 ∼ e1
+      → τ ⊧ Γ ctx
+      → τ ⊧ Γ ∋⋆ γ0 ∼ γ1
+      → τ ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ1)
+        ∧ τ ⊧ A ⫽ γ1 ∋ (e0 ⫽ γ1) ∼ (e1 ⫽ γ1)
+        ∧ τ ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ0).
     Proof.
       move=> 𝒟 ℰ γ01.
       repeat T.split.
@@ -373,10 +367,10 @@ Module General.
   End FunctionalitySquare.
 
 
-  Theorem open_ty_eq_refl_left {Ψ} {Γ : Prectx Ψ} {A A'} :
-    τω ⊧ Γ ctx
-    → τω ⊧ Γ ≫ A ∼ A'
-    → τω ⊧ Γ ≫ A ∼ A.
+  Theorem open_ty_eq_refl_left {Ψ} {Γ : Prectx Ψ} {τ A A'} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ Γ ctx
+    → τ ⊧ Γ ≫ A ∼ A'
+    → τ ⊧ Γ ≫ A ∼ A.
   Proof.
     move=> 𝒟 ℰ γ0 γ1 γ01.
     apply: ty_eq_trans.
@@ -388,11 +382,11 @@ Module General.
   Qed.
 
 
-  Theorem open_mem_eq_refl_left {Ψ} {Γ : Prectx Ψ} {A A' e0 e1} :
-    τω ⊧ Γ ctx
-    → τω ⊧ Γ ≫ A ∼ A'
-    → τω ⊧ Γ ≫ A ∋ e0 ∼ e1
-    → τω ⊧ Γ ≫ A ∋ e0 ∼ e0.
+  Theorem open_mem_eq_refl_left {Ψ} {Γ : Prectx Ψ} {τ A A' e0 e1} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ Γ ctx
+    → τ ⊧ Γ ≫ A ∼ A'
+    → τ ⊧ Γ ≫ A ∋ e0 ∼ e1
+    → τ ⊧ Γ ≫ A ∋ e0 ∼ e0.
   Proof.
     move=> 𝒟 ℰ ℱ γ0 γ1 γ01.
     apply: mem_eq_trans; auto.
@@ -587,11 +581,9 @@ Module Prod.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
 
   (* This is a very bad proof, sorry. *)
-  Theorem family_choice {τ A0 A1 B0 B1} :
+  Theorem family_choice {τ A0 A1 B0 B1} `{TS.cper_valued τ} `{TS.extensional τ} :
     τ ⊧ A0 ∼ A1
     → τ ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1
-    → TS.cper_valued τ
-    → TS.extensional τ
     → ∃ (R : Tm.t 0 → rel),
       ∀ e0 e1,
         τ ⊧ A0 ∋ e0 ∼ e1
@@ -601,7 +593,7 @@ Module Prod.
           ∧ τ ((B0 ⫽ Sub.inst0 e1)%tm, R e0)
           ∧ τ ((B1 ⫽ Sub.inst0 e0)%tm, R e0).
   Proof.
-    move=> 𝒟 ℰ cper ext.
+    move=> 𝒟 ℰ.
     exists (fun e =>
          fun es =>
            τ ⊧ A0 ∋ e ∼ e
@@ -617,15 +609,15 @@ Module Prod.
       + case: 𝒢 => [|R [𝒢1 𝒢2]]; eauto.
         eexists; split; eauto.
         replace Rℰ with R; eauto.
-        eapply ext; eauto; simpl.
+        apply: TS.is_extensional; eauto; simpl.
         replace Rℰ with Rℰ'; eauto.
-        eapply ext; eauto.
+        apply: TS.is_extensional; eauto.
       + case: 𝒢 => [|R [𝒢1 𝒢2]]; eauto.
         eexists; split; eauto.
         replace Rℰ' with R; eauto.
-        eapply ext; eauto; simpl.
+        apply: TS.is_extensional; eauto; simpl.
         replace Rℰ' with Rℰ; eauto.
-        eapply ext; eauto.
+        apply: TS.is_extensional; eauto.
     - T.use ℰ0'; repeat f_equal.
       T.eqcd; case => e'0 e'1 //=.
       apply: propositional_extensionality; split.
@@ -634,7 +626,7 @@ Module Prod.
       * move=> //= 𝒢.
         destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
         replace Rℰ' with R𝒢; eauto.
-        apply: ext; eauto.
+        apply: TS.is_extensional; eauto.
     - destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
       T.use ℰ1''; repeat f_equal.
       T.eqcd; case => e'0 e'1 //=.
@@ -644,7 +636,7 @@ Module Prod.
       + move=> //= 𝒢.
         destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
         replace Rℰ'' with R𝒢; eauto.
-        apply: ext; eauto.
+        apply: TS.is_extensional; eauto.
     - destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
       T.use ℰ0''; repeat f_equal.
       T.eqcd; case => e'0 e'1 //=.
@@ -653,16 +645,16 @@ Module Prod.
         exists Rℰ''; split; auto.
         replace Rℰ'' with Rℰ'; auto.
         replace Rℰ' with Rℰ.
-        * eapply ext; first by [exact ℰ0]; eauto.
-        * eapply ext; eauto.
+        * apply: TS.is_extensional; first by [exact ℰ0]; eauto.
+        * apply: TS.is_extensional; eauto.
       + move=> //= 𝒢.
         destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
         replace Rℰ'' with R𝒢; eauto.
         replace R𝒢 with Rℰ'.
         * replace Rℰ' with Rℰ.
-          ** eapply ext; first by [exact ℰ0]; eauto.
-          ** eapply ext; eauto.
-        * eapply ext; first by [exact ℰ0']; eauto.
+          ** apply: TS.is_extensional; first by [exact ℰ0]; eauto.
+          ** apply: TS.is_extensional; eauto.
+        * apply: TS.is_extensional; first by [exact ℰ0']; eauto.
 
     - T.use ℰ1'; repeat f_equal.
       T.eqcd; case => e'0 e'1 //=.
@@ -672,7 +664,7 @@ Module Prod.
       + move=> //= 𝒢.
         destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
         replace Rℰ' with R𝒢; eauto.
-        apply: ext; eauto.
+        apply: TS.is_extensional; eauto.
   Qed.
 
 
@@ -681,7 +673,7 @@ Module Prod.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    move=> 𝒟 /(family_choice 𝒟) [||Rℰ Rℰspec]; eauto.
+    move=> 𝒟 /(family_choice 𝒟) [Rℰ Rℰspec].
     case 𝒟 => R𝒟 [𝒟0 𝒟1].
 
     eexists; split; Tac.tower_intro; apply: Sig.conn; eauto.
@@ -752,7 +744,7 @@ Module Prod.
         specialize (𝒢 e00 e10).
         suff ℋ: τ[i] ⊧ A ∋ e00 ∼ e10.
         * case: (𝒢 ℋ) => ? [? [? [? ?]]].
-          Tac.tower_ext; Tac.tower_mono.
+          apply: TS.is_extensional; eexists; eauto.
         * apply: Level.mem_eq_at_lvl_of_typehood.
           ** exists R𝒟; split; eauto.
           ** eauto.
@@ -805,7 +797,7 @@ Module TowerChoice.
     apply (@unique_choice _ _ (fun κ R => τ[n] (A1 κ, R) ∧ τ[n] (A2 κ, R))) => κ.
     case: (X κ) => S T.
     eexists; split; eauto => S' T';
-    apply: Tower.extensionality; eauto;
+    apply: TS.is_extensional; eexists;
     T.destruct_conjs; eauto.
   Qed.
 
@@ -817,27 +809,9 @@ Module TowerChoice.
     apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (e0, e1))) => κ.
     case: (X κ) => S T.
     eexists; split; eauto => S' T';
-    apply: Tower.extensionality; eauto;
+    apply: TS.is_extensional; eexists;
     T.destruct_conjs; eauto.
   Qed.
-(*
-  Lemma TowerChoiceMemEqω {A : 𝕂 → Tm.t 0} {e0 e1} :
-    (∀ κ, ∃ Rκ, τω (A κ, Rκ) ∧ Rκ (e0, e1))
-    → ∃ S, ∀ κ, τω (A κ, S κ) ∧ S κ (e0, e1).
-  Proof.
-    move=> X.
-    apply (@unique_choice _ _ (fun κ R => τω (A κ, R) ∧ R (e0, e1))) => κ.
-    case: (X κ) => S [T0 T1].
-    eexists; split; eauto => S' [T'0 T'1].
-    case: T0 => [n T0].
-    case: T'0 => [n' T'0].
-    apply: (@Tower.extensionality (n + n')).
-    - apply: Tower.monotonicity; last by [eauto].
-      omega.
-    - apply: Tower.monotonicity; last by [eauto].
-      omega.
-  Qed.
-*)
 End TowerChoice.
 
 Module Isect.
@@ -848,9 +822,9 @@ Module Isect.
     move=> 𝒟.
     case: (TowerChoice.ty_eq 𝒟) => S ℰ.
     Tac.prove;
-      T.specialize_hyps;
-      rewrite /Tower.t in ℰ;
-      T.destruct_conjs; eauto.
+    T.specialize_hyps;
+    rewrite /Tower.t in ℰ;
+    T.destruct_conjs; eauto.
   Qed.
 
   Theorem intro_at_lvl {n A e0 e1} :
@@ -1123,7 +1097,7 @@ Module Later.
     → τ[i] ⊧ ⋂[κ] ▶[κ] A κ ∼ ⋂[κ] B κ.
   Proof.
     move=> 𝒟.
-    apply: General.ty_eq_trans_at_lvl.
+    apply: General.ty_eq_trans.
     - eassumption.
     - apply: force_reflexive.
       apply: General.ty_eq_refl_left.
