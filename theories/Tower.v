@@ -218,13 +218,11 @@ Proof.
   move=> [nH H].
   constructor.
 
-  - constructor => *.
-    + apply: symmetric; auto.
-      apply: per.
-      apply: TS.is_cper_valued; eauto.
-    + apply: transitive; eauto.
-      apply: per.
-      apply: TS.is_cper_valued; eauto.
+  - split => *;
+    [apply: symmetric | apply: transitive]; eauto;
+    apply: per;
+    apply: TS.is_cper_valued;
+    eauto.
   - move=> *.
     apply: crel; eauto.
     apply: TS.is_cper_valued; eauto.
