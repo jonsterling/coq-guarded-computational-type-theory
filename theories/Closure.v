@@ -1,5 +1,5 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import Notation OrderTheory Axioms Term TypeSystem.
+From gctt Require Import Notation OrderTheory Axioms Var Term OpSem TypeSystem.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -17,11 +17,11 @@ Module Connective.
   | tt : bool_val (Tm.tt, Tm.tt)
   | ff : bool_val (Tm.ff, Tm.ff).
 
-  Inductive prod_val (R0 R1 : rel) : rel :=
+  Inductive prod_val (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
   | pair :
       ∀ e00 e01 e10 e11,
         R0 (e00, e10)
-        → R1 (e01, e11)
+        → R1 e00 (e01, e11)
         → prod_val R0 R1 (Tm.pair e00 e01, Tm.pair e10 e11).
 
   Inductive cext (R : rel) : rel :=
@@ -38,7 +38,11 @@ Module Connective.
   | has_prod :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
-        → τ (A1, R1)
+        → (∀ e0 e1,
+              R0 (e0, e1)
+              → R1 e0 = R1 e1
+                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1))
         → has τ prod (Tm.prod A0 A1, cext (prod_val R0 R1))
   | has_later :
       ∀ κ B R,
@@ -56,7 +60,13 @@ Module Connective.
   Proof.
     move=> ι τ0 τ1 τ01 [A R] H.
     dependent destruction H;
-    eauto.
+    try by [eauto].
+
+    constructor.
+    + auto.
+    + move=> e0 e1 e0e1.
+      edestruct H0; eauto.
+      repeat split; T.destruct_conjs; eauto.
   Qed.
 
   Hint Resolve monotone.
@@ -142,7 +152,7 @@ Module Clo.
   Ltac use_universe_system :=
     match goal with
     | H : TS.universe_system ?σ, H' : ?σ ?X |- _ =>
-      destruct (H X H')
+      destruct H as [H]; destruct (H X H')
     end.
 
 
@@ -186,34 +196,61 @@ Module Clo.
   Proof.
     move=> has eval1 eval2.
     dependent destruction has;
-    by Term.evals_to_eq.
+    by OpSem.evals_to_eq.
   Qed.
 
 
   Local Ltac cleanup :=
     simpl in *;
     try use_universe_system;
-    Term.evals_to_eq;
+    OpSem.evals_to_eq;
     T.destruct_eqs;
     auto.
 
-  Theorem extensionality {σ} :
+  Instance extensionality {σ} :
     TS.universe_system σ
     → TS.extensional σ
     → TS.extensional (t σ).
   Proof.
-    move=> ? ext ? ?; elim_clo; clear H.
+    move=> ? [ext]; constructor => ? ?; elim_clo; clear H.
+
     - move=> [? ?] ? ? ?.
       destruct_clo.
       + by apply: ext.
       + use_universe_system.
-        destruct_has; by Term.evals_to_eq.
+        destruct_has; by OpSem.evals_to_eq.
 
     - move=> ? ? ? ? ? ?.
       destruct_has => ? ?;
       destruct_clo; try by [cleanup];
       destruct_has; cleanup.
-      + rewrite_functionality_ih; eauto.
+      + f_equal.
+        T.eqcd; case => e0 e1.
+        apply: propositional_extensionality; split => Q.
+        * dependent destruction Q.
+          constructor.
+          ** replace R2 with R0; auto.
+          ** replace (R3 e00) with (R1 e00); auto.
+             destruct (H0 e00 e10); auto.
+             destruct (H3 e00 e10); auto.
+             replace R2 with R0; auto.
+             destruct H6.
+             apply: H6.
+             T.destruct_conjs.
+             auto.
+
+        * dependent destruction Q.
+          constructor.
+          ** rewrite_functionality_ih; eauto.
+          ** replace (R1 e00) with (R3 e00); auto.
+             destruct (H0 e00 e10); auto.
+             *** rewrite_functionality_ih; eauto.
+             *** destruct (H3 e00 e10); auto.
+                 rewrite_functionality_ih; eauto.
+                 destruct H6, H8.
+                 symmetry.
+                 apply: H6; eauto.
+
       + do ? (T.eqcd; moves).
         Later.gather => *; T.destruct_conjs.
         rewrite_functionality_ih; eauto.
@@ -234,7 +271,7 @@ Module Clo.
     - move=> e0 e1 e2 H1 H2.
       dependent destruction H1.
       dependent destruction H2.
-      Term.evals_to_eq.
+      OpSem.evals_to_eq.
       T.destruct_eqs.
       econstructor; eauto.
   Qed.
@@ -261,20 +298,24 @@ Module Clo.
 
   Theorem prod_val_per {R0 R1} :
     is_per R0
-    → is_per R1
+    → (∀ e0 e1, R0 (e0, e1) → R1 e0 = R1 e1 ∧ is_per (R1 e1))
     → is_per (Connective.prod_val R0 R1).
   Proof.
-    move=> [ihSm0 ihTr0] [ihSm1 ihTr1].
+    move=> [ihSm0 ihTr0] ihper1.
     constructor.
     - move=> e0 e1 H1.
       dependent destruction H1.
       constructor; eauto.
+      destruct (ihper1 e10 e00); eauto.
+      apply: symmetric; eauto; by rewrite H1.
     - move=> ? ? ? H1 H2.
       dependent destruction H1.
       dependent destruction H2.
       constructor; eauto.
+      destruct (ihper1 e10 e00); eauto.
+      apply: transitive; rewrite -H3; eauto;
+      rewrite H3; auto.
   Qed.
-
 
   Theorem cext_computational {R} :
     rel_computational (Connective.cext R).
@@ -300,16 +341,24 @@ Module Clo.
       end.
 
 
-  Theorem cper_valued {σ} :
+  Instance cper_valued {σ} :
     TS.cper_valued σ
     → TS.cper_valued (t σ).
   Proof.
-    move=> IH A R 𝒟.
-    apply: (@ind (A, R) σ (fun X => is_cper (snd X))); auto; move {𝒟 A R}.
-    - move=> [A R].
-      apply: IH.
-    - move=> ι A A0 R 𝒟 ℰ.
+    move=> [IH]; constructor=> A R 𝒟.
+    apply: (@ind (A, R) σ (fun X => is_cper (snd X))); auto.
+    - move=> [A' R']; eauto.
+    - move=> ι A' A'0 R' 𝒟' ℰ //=.
       destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto].
+      + constructor.
+        ** apply: cext_per.
+           apply: prod_val_per; auto.
+           move=> e0 e1 e01.
+           destruct (H0 e0 e1); eauto.
+           destruct H1.
+           destruct H2.
+           split; eauto.
+        ** eauto.
       + constructor.
         * constructor.
           ** move=> e0 e1 H1.
@@ -344,11 +393,11 @@ Module Clo.
           eauto.
   Qed.
 
-  Theorem type_computational {σ} :
+  Instance type_computational {σ} :
     TS.type_computational σ
     → TS.type_computational (t σ).
   Proof.
-    move=> ih ? ?; elim_clo.
+    move=> [ih]; constructor => ? ?; elim_clo.
     - move=> [A0 R] 𝒟 A1 //= A01.
       rewrite -roll.
       apply: Sig.init.
@@ -356,6 +405,10 @@ Module Clo.
     - move=> ι A0 A0v R 𝒟 ℰ.
       destruct_has => ? //= ?;
       rewrite -roll; apply: Sig.conn; eauto.
+      + constructor; eauto.
+        move=> e0 e1 e01; destruct (H1 e0 e1); eauto.
+        T.destruct_conjs.
+        repeat split; eauto.
       + constructor.
         Later.gather.
         eauto.
@@ -364,6 +417,4 @@ Module Clo.
         T.specialize_hyps.
         eauto.
   Qed.
-
-  Hint Resolve monotonicity extensionality cper_valued type_computational.
 End Clo.

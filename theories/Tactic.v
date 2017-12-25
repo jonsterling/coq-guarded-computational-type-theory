@@ -153,4 +153,4 @@ Ltac efwd H :=
 
 Ltac efwd_thru H :=
   efwd H;
-  [use H; repeat f_equal; eauto | eauto..].
+  [use H | eauto..].

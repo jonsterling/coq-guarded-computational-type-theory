@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8.
 
-From gctt Require Import Notation Term Axioms.
+From gctt Require Import Notation Term OpSem Axioms.
 
 (* candidate relation *)
 Definition rel := Tm.t 0 × Tm.t 0 → Ω.
@@ -40,34 +40,38 @@ Module TS.
   Section Law.
     Variable σ : cts.
 
-    Definition universe_system :=
-      ∀ X,
-        σ X
-        → ∃ i, π₁ X ⇓ Tm.univ i.
+    Class universe_system :=
+      { is_universe_system :
+          ∀ X,
+            σ X
+            → ∃ i, π₁ X ⇓ Tm.univ i }.
 
     Definition extensional_at X :=
       ∀ R',
         σ (π₁ X, R')
         → π₂ X = R'.
 
-    Definition extensional :=
-      ∀ A R,
-        σ (A, R)
-        → extensional_at (A, R).
+    Class extensional :=
+      { is_extensional :
+          ∀ A R,
+            σ (A, R)
+            → extensional_at (A, R) }.
 
-    Definition cper_valued :=
-      ∀ A R,
-        σ (A, R)
-        → is_cper R.
+    Class cper_valued :=
+      { is_cper_valued :
+          ∀ A R,
+            σ (A, R)
+            → is_cper R }.
 
     Definition type_computational_at (X : Tm.t 0 × rel) :=
       ∀ A,
         π₁ X ≼₀ A
         → σ (A, π₂ X).
 
-    Definition type_computational :=
-      ∀ A R,
-        σ (A, R)
-        → type_computational_at (A, R).
+    Class type_computational :=
+      { is_type_computational :
+          ∀ A R,
+            σ (A, R)
+            → type_computational_at (A, R) }.
   End Law.
 End TS.

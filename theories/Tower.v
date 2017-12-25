@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Setoids.Setoid omeg
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory Axioms Term Closure TypeSystem.
+From gctt Require Import OrderTheory Axioms Term OpSem Closure TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -52,24 +52,24 @@ Module Spine.
     | _ => rewrite unfold_S || rewrite unfold_0
     end.
 
-  Theorem universe_system : ∀ i, TS.universe_system (t i).
+  Instance universe_system : ∀ i, TS.universe_system (t i).
   Proof.
     case.
     + simplify; by [firstorder].
-    + move=> ? ? ?.
+    + move=> ?; constructor=> ? ?.
       simplify.
       T.destruct_conjs.
       eauto.
   Qed.
 
-  Theorem extensionality : ∀ i, TS.extensional (t i).
+  Instance extensionality : ∀ i, TS.extensional (t i).
   Proof.
     case.
     + simplify; by [firstorder].
-    + move=> ? ? ? ? ? ?.
+    + move=> ?; constructor=> ? ? ? ? ?.
       simplify.
       T.destruct_conjs; simpl in *.
-      Term.evals_to_eq; T.destruct_eqs.
+      OpSem.evals_to_eq; T.destruct_eqs.
       auto.
   Qed.
 
@@ -83,9 +83,9 @@ Module Spine.
       esplit; [omega | eauto].
   Qed.
 
-  Theorem type_computational : ∀ i, TS.type_computational (t i).
+  Instance type_computational : ∀ i, TS.type_computational (t i).
     move=> i.
-    induction i.
+    induction i; constructor.
     - move=> ? ? ?.
       contradiction.
     - Spine.simplify.
@@ -98,10 +98,10 @@ Module Spine.
       * eauto.
   Qed.
 
-  Theorem cper_valued : ∀ i, TS.cper_valued (t i).
+  Instance cper_valued : ∀ i, TS.cper_valued (t i).
   Proof.
     move=> i.
-    induction i.
+    induction i; constructor.
     - constructor; contradiction.
     - constructor; Spine.simplify.
       + constructor.
@@ -119,11 +119,8 @@ Module Spine.
           case: e1e2 => //= [S' [H1' H2']].
           exists S; T.split; first by [eauto].
           replace S with S'; auto.
-          apply: Clo.extensionality.
-          ** apply: universe_system j.
-          ** apply: extensionality.
-          ** exact H1'.
-          ** exact H2.
+          apply: (TS.is_extensional _ _ _ H1' _ H2).
+
       + move=> ? ? ? ? H'.
         case: H => //= [j [? [? Rspec]]].
         rewrite Rspec.
@@ -132,7 +129,8 @@ Module Spine.
         T.destruct_conjs.
         eauto.
         esplit; split; eauto.
-        apply: Clo.type_computational; [apply: type_computational | idtac | eauto].
+
+        apply: TS.is_type_computational; last by [eauto].
         eauto.
   Qed.
 
@@ -141,10 +139,10 @@ Module Spine.
     | H : Spine.t _ (Tm.univ _, _) |- _ => fail "This is a universe!"
     | H : Spine.t ?n (_, _) |- _ =>
       induction n; Spine.simplify;
-      [contradiction | T.destruct_conjs; Term.destruct_evals]
+      [contradiction | T.destruct_conjs; OpSem.destruct_evals]
     end.
 
-  Hint Resolve universe_system extensionality monotonicity type_computational cper_valued.
+  Hint Resolve monotonicity.
 End Spine.
 
 Module Tower.
@@ -152,11 +150,11 @@ Module Tower.
   Definition t (i : nat) : cts :=
     Clo.t (Spine.t i).
 
-  Theorem extensionality : ∀ i, TS.extensional (t i).
+  Instance extensionality {i} : TS.extensional (t i).
   Proof.
-    rewrite /t => *.
-    eauto.
+    typeclasses eauto.
   Qed.
+
 
   Local Hint Constructors Sig.t.
 
@@ -171,25 +169,21 @@ Module Tower.
     lazymatch goal with
     | H : t ?n _ |- _ =>
       rewrite /t in H; Clo.destruct_clo; try by [Spine.spine_contradiction];
-      try (Clo.destruct_has; Term.destruct_evals)
+      try (Clo.destruct_has; OpSem.destruct_evals)
     end.
 
 
-  Theorem cper_valued : ∀ i, TS.cper_valued (t i).
+  Instance cper_valued {i} : TS.cper_valued (t i).
   Proof.
-    move=> i.
-    apply: Clo.cper_valued.
-    apply: Spine.cper_valued.
+    typeclasses eauto.
   Qed.
 
-  Theorem type_computational : ∀ i, TS.type_computational (t i).
+  Instance type_computational {i} : TS.type_computational (t i).
   Proof.
-    move=> i.
-    apply: Clo.type_computational.
-    apply: Spine.type_computational.
+    typeclasses eauto.
   Qed.
 
-  Hint Resolve extensionality monotonicity cper_valued type_computational.
+  Hint Resolve monotonicity.
 End Tower.
 
 
@@ -199,45 +193,37 @@ Definition τω : cts :=
 
 Notation "'τ[' n ']'" := (Tower.t n).
 
-Theorem τω_extensionality : TS.extensional τω.
+Instance τω_extensionality : TS.extensional τω.
 Proof.
-  move=> A R.
+  constructor=> A R.
   rewrite /τω.
   move=> [n1 AR] R' //= [n2 AR'].
-  apply: Tower.extensionality.
+  apply: TS.is_extensional.
   + apply: (@Tower.monotonicity _ (n1 + n2)); last eauto.
     omega.
   + apply: (@Tower.monotonicity _ (n1 + n2)); last eauto.
     omega.
 Qed.
 
-Theorem τω_type_computational : TS.type_computational τω.
+Instance τω_type_computational : TS.type_computational τω.
 Proof.
-  move=> A0 R [nH H] A1 //= A01.
-  exists nH.
-  apply: Tower.type_computational; eauto.
+  constructor=> A0 R [nH H] A1 //= A01.
+  eexists; apply: TS.is_type_computational; eauto.
 Qed.
 
-Theorem τω_cper_valued : TS.cper_valued τω.
+Instance τω_cper_valued : TS.cper_valued τω.
 Proof.
-  move=> A R.
+  constructor=> A R.
   rewrite /τω.
   move=> [nH H].
   constructor.
 
-  - constructor.
-    + move=> e0 e1 e0e1.
-      edestruct (@Tower.cper_valued nH); eauto.
-      destruct per.
-      eauto.
-
-    + move=> e0 e1 e2 e0e1 e1e2.
-      edestruct (@Tower.cper_valued nH); eauto.
-      destruct per.
-      eauto.
-
-  - move=> ? ? ? ? ?.
-    edestruct (@Tower.cper_valued nH); eauto.
+  - split => *;
+    [apply: symmetric | apply: transitive]; eauto;
+    apply: per;
+    apply: TS.is_cper_valued;
+    eauto.
+  - move=> *.
+    apply: crel; eauto.
+    apply: TS.is_cper_valued; eauto.
 Qed.
-
-Hint Resolve τω_type_computational τω_extensionality τω_cper_valued.
