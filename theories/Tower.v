@@ -119,9 +119,7 @@ Module Spine.
           case: e1e2 => //= [S' [H1' H2']].
           exists S; T.split; first by [eauto].
           replace S with S'; auto.
-          apply: (@TS.is_extensional (Clo.t _)).
-          ** exact H1'.
-          ** exact H2.
+          apply: (TS.is_extensional _ _ _ H1' _ H2).
 
       + move=> ? ? ? ? H'.
         case: H => //= [j [? [? Rspec]]].
@@ -210,8 +208,7 @@ Qed.
 Instance τω_type_computational : TS.type_computational τω.
 Proof.
   constructor=> A0 R [nH H] A1 //= A01.
-  exists nH.
-  apply: TS.is_type_computational; eauto.
+  eexists; apply: TS.is_type_computational; eauto.
 Qed.
 
 Instance τω_cper_valued : TS.cper_valued τω.
@@ -221,20 +218,14 @@ Proof.
   move=> [nH H].
   constructor.
 
-  - constructor.
-    + move=> e0 e1 e0e1.
-      edestruct (@Tower.cper_valued nH); eauto.
-      edestruct is_cper_valued; eauto.
-      edestruct per.
-      eauto.
-
-    + move=> e0 e1 e2 e0e1 e1e2.
-      edestruct (@Tower.cper_valued nH); eauto.
-      edestruct is_cper_valued; eauto.
-      destruct per.
-      eauto.
-
-  - move=> ? ? ? ? ?.
-    edestruct (@Tower.cper_valued nH); eauto.
-    edestruct is_cper_valued; eauto.
+  - constructor => *.
+    + apply: symmetric; auto.
+      apply: per.
+      apply: TS.is_cper_valued; eauto.
+    + apply: transitive; eauto.
+      apply: per.
+      apply: TS.is_cper_valued; eauto.
+  - move=> *.
+    apply: crel; eauto.
+    apply: TS.is_cper_valued; eauto.
 Qed.
