@@ -13,6 +13,7 @@ Set Implicit Arguments.
 
 Delimit Scope eclk_scope with eclk.
 Delimit Scope etm_scope with etm.
+Delimit Scope esubst_scope with esubst.
 
 
 Module ETm.
@@ -90,6 +91,7 @@ Module ETm.
   Module RenNotation.
     Notation "e .[ ρ ]" := (mapv ρ%ren e) (at level 50) : etm_scope.
     Notation "e .⦃ ρ ⦄" := (mapk ρ%ren e) (at level 50) : etm_scope.
+    Notation "e .⦃ ρΛ ⦄[ ρΨ ]" := (map ρΛ%ren ρΨ e) (at level 50) : etm_scope.
   End RenNotation.
 
   Import RenNotation.
@@ -131,7 +133,7 @@ Module ETm.
     end.
 
   Module SubstNotation.
-    Notation "e ⫽ σ" := (subst σ e%etm) (at level 20, left associativity) : etm_scope.
+    Notation "e ⫽ σ" := (subst σ%subst e%etm) (at level 20, left associativity) : etm_scope.
   End SubstNotation.
 
   Import SubstNotation.

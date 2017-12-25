@@ -8,21 +8,29 @@ From gctt Require Import Axioms Var Term ExternalSyn Interp Tower Closure Sequen
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
-Local Hint Extern 40 =>
-match goal with
-| |- context[(_.⦃_⦄)%ectx] => rewrite -interp_ctx_clk_naturality /compose; simplify_eqs
-| |- context[(_.⦃_⦄)%etm] => rewrite -interp_tm_clk_naturality /compose; simplify_eqs
-| |- context[(_.[_])%etm] => try rewrite -interp_tm_var_naturality /compose; try rewrite -interp_tm_var_ren_naturality /compose; simplify_eqs
-| |- context[(_ ⫽ _)%etm] => Term.simplify_subst
-end.
+Lemma cons_weak_simple {Λ κ} {κs : Env.t Λ} :
+  κ ∷ κs ∘ (^1)%ren = κs.
+Proof.
+  rewrite /compose.
+  T.eqcd => x.
+  by simplify_eqs.
+Qed.
+
+
+Hint Rewrite @cons_weak_simple : syn_db.
+Hint Rewrite <- @interp_ctx_clk_naturality @interp_tm_clk_naturality @interp_tm_var_naturality @interp_tm_var_ren_naturality @interp_tm_ren_naturality : syn_db.
+Hint Unfold compose : syn_db.
+
+Local Hint Extern 40 => autorewrite with syn_db; Term.simplify_subst.
 
 Local Hint Extern 20 => IR.Univ.tac.
+
 Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm.
 
 Tactic Notation "explode" "functionality" uconstr(𝒟) :=
   let X := fresh in
   (have X := (IR.General.functionality_square 𝒟));
-  (edestruct X as [? [? ?]]); simpl in *; eauto.
+  (edestruct X as [? [? ?]]); simpl in *; [eauto .. | idtac].
 
 Module Conversion.
   Module Structural.
@@ -140,7 +148,7 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e2 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
-    apply: IR.General.mem_eq_trans; eauto.
+    apply: IR.General.mem_eq_trans; auto.
     - apply: 𝒟; eauto.
     - apply: ℰ; eauto.
   Qed.
@@ -167,6 +175,7 @@ Module General.
       move=> γ0' γ1' γ01'.
       IR.Univ.tac.
       explode functionality (𝒟 _ _ _).
+      by eauto.
     - IR.Univ.tac.
       apply: 𝒟; auto.
       apply: IR.General.env_eq_refl_left; eassumption.
@@ -243,14 +252,16 @@ Module Prod.
     - by apply: 𝒟.
     - move=> ? ? γ01' //=.
       Term.simplify_subst.
-      T.efwd_thru ℰ; eauto.
+      T.efwd_thru ℰ.
+      + eauto.
       + split; Term.simplify_subst.
         * T.use γ01; f_equal; T.eqcd; Term.simplify_subst.
         * case: γ01' => _ 𝒢.
           T.use 𝒢; Term.simplify_subst.
-      + split; eauto.
+      + split; first by eassumption.
         move=> ? ? ?.
         explode functionality (𝒟 _ _ _).
+        eauto.
   Qed.
 
   (* ugly proof ! *)
@@ -276,21 +287,18 @@ Module Prod.
         IR.Univ.tac.
         repeat rewrite -interp_tm_subst_naturality.
         apply: 𝒢; eauto.
-        * split; eauto.
+        * split; first by eauto.
           IR.Univ.tac.
           apply: ℱ; auto.
-        * split; eauto.
+        * split; first by eassumption.
           Term.simplify_subst.
           apply: (@IR.General.replace_ty_in_mem_eq ((⟦ A ⟧ κs) ⫽ γ1')%tm).
           ** explode functionality (𝒟 _ _ _).
-             *** IR.Univ.tac.
-                 apply: ℱ; auto.
-             *** apply: IR.General.mem_eq_trans; auto.
-                 **** eauto.
-                 **** apply: (@IR.General.replace_ty_in_mem_eq ((⟦ A ⟧ κs) ⫽ γ0')%tm).
-                      ***** eauto.
-                      ***** explode functionality (ℱ _ _ _).
-          ** explode functionality (ℱ _ _ _).
+             *** IR.Univ.tac; apply: ℱ; auto.
+             *** apply: IR.General.mem_eq_trans; [eauto..|idtac].
+                 apply: (@IR.General.replace_ty_in_mem_eq ((⟦ A ⟧ κs) ⫽ γ0')%tm); first by eauto.
+                 explode functionality (ℱ _ _ _); eauto.
+          ** explode functionality (ℱ _ _ _); eauto.
     - IR.Univ.tac.
       apply: ℱ; eauto.
     - move=> γ0' γ1' γ01'.
@@ -321,7 +329,9 @@ Module Isect.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01 //=.
     apply: IR.Univ.intro.
     apply: IR.Isect.formation => κ.
-    T.efwd 𝒟; eauto.
+    T.efwd 𝒟; eauto;
+    autorewrite with core;
+    eauto.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} i {A e0 e1} :
@@ -333,9 +343,13 @@ Module Isect.
     apply: IR.Isect.intro.
     - IR.Univ.tac.
       apply: univ_eq; eauto.
-    - move=> κ; T.efwd_thru 𝒟.
-      IR.Univ.tac.
-      apply: ℱ; eauto.
+    - move=> κ.
+      T.efwd 𝒟.
+      + T.use 𝒟; eauto.
+      + eauto.
+      + IR.Univ.tac.
+        apply: ℱ; eauto.
+      + eauto.
   Qed.
 
   Theorem irrelevance `{Γ : ECtx.t Λ Ψ} {i A} :
@@ -366,12 +380,8 @@ Module Isect.
         (fun κ => (⟦ B0 ⟧ κ ∷ κs) ⫽ γ0)%tm
         (fun κ => (⟦ A1 ⟧ κ ∷ κs) ⫽ γ1)%tm
         (fun κ => (⟦ B1 ⟧ κ ∷ κs) ⫽ γ1)%tm.
-    T.efwd_thru R.
-    - T.eqcd => κ; f_equal; Term.simplify_subst.
-      rewrite -interp_tm_var_ren_naturality.
-      Term.simplify_subst.
-    - Term.simplify_subst.
-      rewrite -interp_tm_ren_naturality;
+    T.efwd R.
+    - T.use R; repeat f_equal; eauto.
       Term.simplify_subst.
       by dependent induction x0.
     - move=> κ.
@@ -390,7 +400,7 @@ Module Later.
   Proof.
     move=> 𝒟 ? ? ? ? ? ? //=.
     apply: IR.Later.univ_eq.
-    apply: 𝒟; eauto.
+    apply: 𝒟; try by eassumption.
 
     move=> ? ? ? //=.
     apply: Later.formationω.
@@ -427,17 +437,21 @@ Module Later.
     ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ μ{ e0 } ≐ μ{ e1 } ⟧.
   Proof.
-    move=> 𝒟 κs ? ℰ //=.
-    apply: (IR.Later.loeb_induction_open (κs k)).
-    move=> ? ? ?.
-    T.efwd_thru 𝒟.
-    - move=> ? ? [? ?].
-      T.efwd_thru ℰ.
-    - split; auto.
-      move=> ? ? ?.
+    move=> 𝒟 κs ? ℰ ? ? γ01 //=.
+    apply: (IR.Later.loeb_induction_closed (κs k)).
+    move=> //= ? ? [_ ℱ]; Term.simplify_subst.
+
+    T.efwd 𝒟.
+    - T.use 𝒟; eauto.
+    - split; [T.use γ01 | T.use ℱ]; eauto.
+    - move=> //= ? ? [? ?].
+      Term.simplify_subst.
+      apply: ℰ; eauto.
+    - split; first by [assumption].
+      move=> //= ? ? ?.
       apply: IR.Later.formationω.
       apply: Later.next.
-      auto.
+      eauto.
   Qed.
 End Later.
 
@@ -461,15 +475,17 @@ Module Examples.
     apply: Prod.univ_eq.
     - apply: Bool.univ_eq.
     - apply: Later.univ_eq.
-      move=> κs 𝒟 ℰ γ0 γ1 γ01.
-      (* annoying !*)
-      have R := @General.weakening Λ (S Ψ) (Γ∙_)%ectx (S i) (▶[k] 𝕌[i])%etm 𝟚%etm @0%etm @0%etm _ _ _ _ _ γ0 γ1 γ01.
-      T.efwd_thru R; eauto.
-      + apply: Later.univ_eq.
-        apply: Later.intro.
-        * apply: General.univ_formation; auto.
-        * apply: General.univ_formation; auto.
+
+      suff Q: @1%etm = (@0 .[^1])%etm; auto.
+      rewrite !Q {Q}.
+
+      suff Q : (▶[k] 𝕌[i])%etm = ((▶[k] 𝕌[i]).[^1])%etm; auto.
+      rewrite !Q {Q}.
+
+      apply: General.weakening.
       + apply: General.hypothesis.
+      + apply: Later.univ_eq.
+        apply: Later.intro; apply: General.univ_formation; auto.
   Qed.
 
   Example BitSeq_wf `{Γ : ECtx.t Λ Ψ} {i} :

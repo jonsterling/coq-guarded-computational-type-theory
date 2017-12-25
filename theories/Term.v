@@ -9,6 +9,7 @@ Module T := Tactic.
 
 Set Implicit Arguments.
 Delimit Scope tm_scope with tm.
+Delimit Scope subst_scope with subst.
 
 Module Tm.
   Inductive t (Ψ : Ctx) :=
@@ -130,7 +131,8 @@ Module Tm.
     end.
 
   Module SubstNotation.
-    Notation "e ⫽ σ" := (Tm.subst σ e%tm) (at level 20, left associativity) : tm_scope.
+    Notation "e ⫽ σ" := (Tm.subst σ%subst e%tm) (at level 20, left associativity) : tm_scope.
+    Notation "σ' ◎ σ" := (Tm.subst σ'%subst ∘ σ%subst) (at level 50) : subst_scope.
   End SubstNotation.
 
   Import SubstNotation.
@@ -158,10 +160,11 @@ Module Tm.
   Qed.
 
   Local Open Scope tm_scope.
+
   Theorem ren_subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) e :
-    (e ⫽ σ12).[ρ23]%tm
+    (e ⫽ σ12).[ρ23]
     =
-    (e ⫽ (map ρ23 ∘ σ12))%tm.
+    (e ⫽ (map ρ23 ∘ σ12)).
   Proof.
     move: Ψ2 Ψ3 σ12 ρ23.
     induction e; rewrites;
@@ -218,12 +221,18 @@ End Tm.
 
 Export Tm.Notations Tm.RenNotation Tm.SubstNotation.
 
+Hint Rewrite @Tm.subst_ren_coh @Tm.ren_subst_coh @Tm.subst_coh @Tm.subst_closed : syn_db.
+Hint Unfold compose : syn_db.
+
 Ltac simplify_subst_step :=
+  simpl; autorewrite with syn_db; autounfold with syn_db.
+(*
   try rewrite Tm.subst_ren_coh;
   try rewrite Tm.ren_subst_coh;
   try rewrite Tm.subst_coh;
   try rewrite Tm.subst_closed;
   try rewrite /compose.
+*)
 
 Ltac simplify_subst :=
   repeat (simplify_eqs; f_equal; try T.eqcd; intros; simplify_subst_step).

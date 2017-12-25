@@ -1089,22 +1089,6 @@ Module Later.
           by rewrite Tm.subst_ret.
       + by Later.gather; case.
   Qed.
-
-
-  Theorem loeb_induction_open κ {Ψ} {Γ : Prectx Ψ} {A e0 e1} :
-    τω ⊧ Γ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
-    → τω ⊧ Γ ≫ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
-  Proof.
-    move=> 𝒟 γ0 γ1 γ01 //=.
-    apply: (loeb_induction_closed κ).
-    move=> γ0' γ1' [_]; simplify_eqs => γ01'.
-    T.efwd 𝒟.
-    - T.use 𝒟; f_equal; rewrite ? Tm.subst_coh; eauto.
-      Term.simplify_subst.
-    - split; simplify_eqs.
-      + T.use γ01; Term.simplify_subst.
-      + T.use γ01'; Term.simplify_subst.
-  Qed.
 End Later.
 
 

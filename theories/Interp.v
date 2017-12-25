@@ -70,6 +70,13 @@ Definition interp_jdg `(J : EJdg.t Λ) : Ω :=
 Arguments interp_jdg [Λ] J%ejdg.
 Notation "⟦ J ⟧" := (interp_jdg J%ejdg) (at level 50) : type_scope.
 
+
+Definition interp_subst `(σ : @Sub.t (ETm.t Λ) Ψ0 Ψ1) (κs : Env.t Λ) : @Sub.t Tm.t Ψ0 Ψ1 :=
+  fun x =>
+    (⟦ σ x ⟧ κs)%tm.
+
+Notation "⟦ σ ⟧ κs" := (interp_subst σ%esubst κs) : subst_scope.
+
 Local Open Scope tm_scope.
 Local Open Scope program_scope.
 
@@ -97,10 +104,10 @@ Proof.
   T.rewrites.
 Qed.
 
-Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (γ : Sub.t Ψ1 Ψ2) ρ κs :
-  (⟦ e ⟧ κs) ⫽ (γ ∘ ρ) = (⟦ e.[ρ] ⟧ κs) ⫽ γ.
+Theorem interp_tm_var_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (σ : Sub.t Ψ1 Ψ2) ρ κs :
+  (⟦ e ⟧ κs) ⫽ (σ ∘ ρ) = (⟦ e.[ρ] ⟧ κs) ⫽ σ.
 Proof.
-  move: Ψ1 Ψ2 γ ρ κs.
+  move: Ψ1 Ψ2 σ ρ κs.
   induction e; eauto; simpl;
   T.rewrites_with
     ltac:(repeat f_equal;
@@ -120,9 +127,10 @@ Proof.
      interp_tm_var_naturality.
 Qed.
 
-Lemma interp_subst_cong_coh {Λ Ψ0 Ψ1 Ψ2} (σ01 : Sub.t Ψ0 Ψ1) (σ12 : Sub.t Ψ1 Ψ2) (κs : Env.t Λ) :
-  Tm.subst (Sub.cong σ12) ∘ (λ x, ⟦ Sub.cong σ01 x ⟧ κs) =
-  Sub.cong (Tm.subst σ12 ∘ (λ x, ⟦ σ01 x ⟧ κs)).
+
+Lemma interp_subst_cong_coh {Λ Ψ0 Ψ1 Ψ2} (σ01 : @Sub.t (ETm.t Λ) Ψ0 Ψ1) (σ12 : @Sub.t Tm.t Ψ1 Ψ2) (κs : Env.t Λ) :
+  (Sub.cong σ12 ◎ ⟦ Sub.cong σ01 ⟧ κs)%subst =
+  Sub.cong (σ12 ◎ ⟦ σ01 ⟧ κs)%subst.
 Proof.
   T.eqcd => x.
   dependent induction x.
@@ -132,21 +140,21 @@ Proof.
 Qed.
 
 Theorem interp_tm_subst_naturality {Λ Ψ0 Ψ1 Ψ2} (e : ETm.t Λ Ψ0) (σ12 : Sub.t Ψ1 Ψ2) (σ01 : Sub.t Ψ0 Ψ1) κs :
-  (⟦ e ⟧ κs) ⫽ (Tm.subst σ12 ∘ (fun x => ⟦ σ01 x ⟧ κs)) = (⟦ e ⫽ σ01 ⟧ κs) ⫽ σ12.
+  (⟦ e ⟧ κs) ⫽ (σ12 ◎ ⟦ σ01 ⟧ κs) = (⟦ e ⫽ σ01 ⟧ κs) ⫽ σ12.
 Proof.
   symmetry.
   move: Ψ1 Ψ2 σ01 σ12 κs.
   induction e; eauto; simpl;
   T.rewrites_with
     ltac:(repeat f_equal; try (T.eqcd; intros);
-          try rewrite /ETm.wk_sub;
+          try rewrite /interp_subst /ETm.wk_sub;
           try rewrite interp_subst_cong_coh;
           Term.simplify_subst;
           try rewrite -interp_tm_clk_naturality).
 Qed.
 
 Theorem interp_tm_ren_naturality {Λ0 Λ1 Ψ0 Ψ1 Ψ2} (e : ETm.t Λ0 Ψ0) (ρΛ : Ren.t Λ0 Λ1) (ρΨ : Ren.t Ψ0 Ψ1) (σ : Sub.t Ψ1 Ψ2) κs :
-  (⟦ e ⟧ κs ∘ ρΛ) ⫽ (σ ∘ ρΨ) = (⟦ ETm.map ρΛ ρΨ e ⟧ κs) ⫽ σ.
+  (⟦ e ⟧ κs ∘ ρΛ) ⫽ (σ ∘ ρΨ) = (⟦ e.⦃ρΛ⦄[ρΨ] ⟧ κs) ⫽ σ.
 Proof.
   symmetry.
   move: Ψ1 Ψ2 σ Λ1 ρΨ ρΛ κs.
