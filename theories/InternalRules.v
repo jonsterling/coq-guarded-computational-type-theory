@@ -665,6 +665,26 @@ Module Fam.
         replace Rℰ' with R𝒢; eauto.
         apply: TS.is_extensional; eauto.
   Qed.
+
+  Ltac quantifier_formation_tac :=
+    let 𝒟 := fresh in
+    let Rℰspec := fresh in
+    let e0 := fresh in
+    let e1 := fresh in
+    let R𝒟 := fresh in
+    let Q := fresh in
+
+    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec];
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1];
+
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto);
+    move=> e0 e1 e01;
+    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
+    move=> Q [? [? [? ?]]]; repeat split; eauto;
+    rewrite -Q; eauto.
+
 End Fam.
 
 Module Arr.
@@ -676,16 +696,7 @@ Module Arr.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
   Proof.
-    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec].
-    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
-
-    eexists; split; Tac.tower_intro;
-    (apply: Sig.conn; first by eauto);
-    (econstructor; first by eauto);
-    move=> e0 e1 e01;
-    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
-    move=> Q [? [? [? ?]]]; repeat split; eauto.
-    rewrite -Q; eauto.
+    by Fam.quantifier_formation_tac.
   Qed.
 End Arr.
 
@@ -699,16 +710,7 @@ Module Prod.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec].
-    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
-
-    eexists; split; Tac.tower_intro;
-    (apply: Sig.conn; first by eauto);
-    (econstructor; first by eauto);
-    move=> e0 e1 e01;
-    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
-    move=> Q [? [? [? ?]]]; repeat split; eauto.
-    rewrite -Q; eauto.
+    by Fam.quantifier_formation_tac.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
