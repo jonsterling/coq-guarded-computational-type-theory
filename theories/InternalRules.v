@@ -573,12 +573,11 @@ Module Bool.
     end.
 End Bool.
 
-
-Module Prod.
-
+Module Fam.
 
   Local Hint Extern 40 => Term.simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
+
 
   (* This is a very bad proof, sorry. *)
   Theorem family_choice {τ A0 A1 B0 B1} `{TS.cper_valued τ} `{TS.extensional τ} :
@@ -666,6 +665,33 @@ Module Prod.
         replace Rℰ' with R𝒢; eauto.
         apply: TS.is_extensional; eauto.
   Qed.
+End Fam.
+
+Module Arr.
+  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
+
+  Theorem formation {n A0 A1 B0 B1} :
+    τ[n] ⊧ A0 ∼ A1
+    → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
+    → τ[n] ⊧ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
+  Proof.
+    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec].
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
+
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto);
+    move=> e0 e1 e01;
+    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
+    move=> Q [? [? [? ?]]]; repeat split; eauto.
+    rewrite -Q; eauto.
+  Qed.
+End Arr.
+
+Module Prod.
+  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
 
 
   Theorem formation {n A0 A1 B0 B1} :
@@ -673,21 +699,16 @@ Module Prod.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    move=> 𝒟 /(family_choice 𝒟) [Rℰ Rℰspec].
-    case 𝒟 => R𝒟 [𝒟0 𝒟1].
+    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec].
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
 
-    eexists; split; Tac.tower_intro; apply: Sig.conn; eauto.
-    - apply: (@Connective.has_prod _ _ _ R𝒟 Rℰ); eauto.
-      move=> e0 e1 e01.
-      case: (Rℰspec e0 e1).
-      + exists R𝒟; auto.
-      + move=> Q [? [? [? ?]]]; repeat split; eauto.
-        by rewrite -Q.
-    - apply: (@Connective.has_prod _ _ _ R𝒟 Rℰ); eauto.
-      move=> e0 e1 e01.
-      case: (Rℰspec e0 e1).
-      + exists R𝒟; auto.
-      + move=> Q [? [? [? ?]]]; repeat split; eauto.
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto);
+    move=> e0 e1 e01;
+    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
+    move=> Q [? [? [? ?]]]; repeat split; eauto.
+    rewrite -Q; eauto.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
@@ -717,7 +738,7 @@ Module Prod.
      /Level.eq_mem_to_level [n1 𝒟]
      /Level.eq_mem_to_level [n2 ℰ]
      ℱ
-     /(family_choice ℱ) => 𝒢.
+     /(Fam.family_choice ℱ) => 𝒢.
 
     apply: (Level.eq_mem_from_level (i + n1 + n2)).
     case: 𝒟 => [R𝒟 [𝒟0 𝒟1]].
