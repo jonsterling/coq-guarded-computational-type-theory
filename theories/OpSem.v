@@ -45,7 +45,7 @@ Inductive step : Tm.t 0 → Tm.t 0 → Ω :=
 | step_fst_pair : ∀ {e1 e2}, ⟨e1,e2⟩.1 ↦ e1
 | step_snd_pair : ∀ {e1 e2}, ⟨e1,e2⟩.2 ↦ e2
 | step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ Sub.inst0 e2)
-| step_fix : ∀ e, Tm.fix_ e ↦ (e ⫽ Sub.inst0 (Tm.fix_ e))
+| step_fix : ∀ e, 𝛍{e} ↦ (e ⫽ Sub.inst0 (𝛍{e}))
 where "e ↦ e'" := (step e%tm e'%tm).
 
 Hint Constructors is_val.
@@ -122,7 +122,7 @@ Proof.
 Qed.
 
 Theorem fix_unfold :
-  ∀ f, (Tm.fix_ f) ≈₀ (f ⫽ Sub.inst0 (Tm.fix_ f)).
+  ∀ f, 𝛍{f} ≈₀ (f ⫽ Sub.inst0 (𝛍{f}%tm)).
 Proof.
   move=> f v.
   split.

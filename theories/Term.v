@@ -56,6 +56,7 @@ Module Tm.
     Notation "⟨ e1 , e2 ⟩" := (Tm.pair e1%tm e2%tm) : tm_scope.
     Notation "e1 ⋅ e2" := (Tm.app e1%tm e2%tm) (at level 50) : tm_scope.
     Notation "'𝛌{' e }" := (Tm.lam e%tm) (at level 50) : tm_scope.
+    Notation "'𝛍{' e }" := (Tm.fix_ e%tm) (at level 50) : tm_scope.
   End Notations.
 
   Import Notations.

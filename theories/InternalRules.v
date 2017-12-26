@@ -1210,7 +1210,7 @@ Module Later.
 
   Theorem loeb_induction_closed κ {A e0 e1} :
     τω ⊧ ⋄ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
-    → τω ⊧ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
+    → τω ⊧ A ∋ 𝛍{ e0 } ∼ 𝛍{ e1 }.
   Proof.
     move=> 𝒟.
     apply: (@Later.loeb κ).
