@@ -56,15 +56,20 @@ Module Connective.
         → (∀ e0 e1,
               R0 (e0, e1)
               → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1))
-        → has τ prod (Tm.prod A0 A1, prod_el R0 R1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e0))
+        → has τ prod (Tm.prod A0 A1, cext (prod_val R0 R1))
   | has_arr :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
         → (∀ e0 e1,
               R0 (e0, e1)
               → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1))
+                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e0))
+
         → has τ arr (Tm.arr A0 A1, cext (fun_val R0 R1))
 
   | has_later :
@@ -89,12 +94,13 @@ Module Connective.
     + auto.
     + move=> e0 e1 e0e1.
       edestruct H0; eauto.
-(*      repeat split; T.destruct_conjs; eauto. *)
+      T.destruct_conjs.
+      repeat split; eauto.
     + constructor; eauto.
       move=> e0 e1 e0e1.
-      edestruct H0; eauto.
-(*
-      repeat split; T.destruct_conjs; eauto. *)
+      edestruct H0; eauto;
+      T.destruct_conjs;
+      repeat split; eauto.
   Qed.
 
   Hint Resolve monotone.
@@ -145,28 +151,21 @@ Module Clo.
     auto.
   Qed.
 
-  Lemma close_has {ρ ι A R} :
-    Connective.has ρ ι (A, R)
-    → Connective.has (t ρ) ι (A, R).
+  Lemma map_has {σ ρ ι A R} :
+    ρ ⊑ σ
+    → Connective.has ρ ι (A, R)
+    → Connective.has σ ι (A, R).
   Proof.
-    move=> has.
+    move=> sub has.
     dependent destruction has; eauto.
+    - constructor; eauto.
+      move=> e0 e1 e01.
+      edestruct H0; T.destruct_conjs; repeat split; eauto.
+    - constructor; eauto.
+      move=> e0 e1 e01.
+      edestruct H0; T.destruct_conjs; repeat split; eauto.
     - constructor.
-      + rewrite -roll; by apply: Sig.init.
-      + move=> e0 e1 e0e1.
-        edestruct H0; eauto; split; rewrite -roll; by apply: Sig.init.
-    - constructor.
-      + rewrite -roll; by apply: Sig.init.
-      + move=> e0 e1 e0e1.
-        edestruct H0; eauto; split; rewrite -roll; by apply: Sig.init.
-    - constructor.
-      Later.gather.
-      move=> H'.
-      rewrite -roll; by apply: Sig.init.
-    - constructor.
-      move=> κ.
-      T.specialize_hyps.
-      rewrite -roll; by apply: Sig.init.
+      Later.gather; eauto.
   Qed.
 
   Theorem ind :
@@ -285,11 +284,6 @@ Module Clo.
              destruct (H0 e00 e10); auto.
              destruct (H3 e00 e10); auto.
              replace R2 with R0; auto.
-             (*destruct H6.
-             apply: H6.
-             T.destruct_conjs.
-             auto.
-*)
         * dependent destruction Q.
           constructor.
           ** rewrite_functionality_ih; eauto.
@@ -298,9 +292,6 @@ Module Clo.
              *** rewrite_functionality_ih; eauto.
              *** destruct (H3 e00 e10); auto.
                  rewrite_functionality_ih; eauto.
-                 (*destruct H6, H8.
-                 symmetry.
-                 apply: H6; eauto.*)
 
       + f_equal.
         T.eqcd; case => e0 e1.
@@ -318,12 +309,6 @@ Module Clo.
                  by apply: H.
              *** apply: H01; simpl.
                  edestruct H3 as [? [? ?]]; eauto.
-(*                 eauto.
-rewrite H4.
-                 apply: H02; simpl.
-                 edestruct H3 as [? [? ?]];
-                 eauto.
-                 by rewrite H5.*)
         * dependent destruction Q.
           constructor => e0 e1 e0e1.
           ** replace (R1 e0) with (R3 e0).
@@ -455,74 +440,157 @@ rewrite H4.
       | H : is_per _ |- _ => destruct H
       end.
 
-
+  (* HORRIFIC *)
   Instance cper_valued {σ} :
     TS.cper_valued σ
     → TS.extensional σ
     → TS.universe_system σ
     → TS.cper_valued (t σ).
   Proof.
-    move=> [IH] ext uni; constructor=> A R 𝒟.
-    destruct (@ind (A, R) σ (fun X => is_cper (snd X))); auto.
-    - move=> [A' R'] ?; eauto.
-    - move=> ι A' A'0 R' 𝒟' ℰ ℱ //=.
-      destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto]; cleanup.
-      + constructor.
-        * apply: cext_per.
-          apply: prod_val_per; auto.
-          move=> e0 e1 e01.
-          destruct (H0 e0 e1); eauto.
-          destruct H1; split.
-          ** apply: (@TS.is_extensional (t σ)); simpl.
-             destruct_clo; cleanup.
-             destruct_has.
+    move=> [IH] ext uni; constructor => A R 𝒟.
+    destruct (@ind (A, R) σ (fun X => t σ X ∧ is_cper (snd X))); auto; move {𝒟 A R}.
+    - move=> [A R] 𝒟.
+      split.
+      + rewrite -roll.
+        by apply: Sig.init.
+      + eauto.
 
-
-
-          destruct H2.
-          split; eauto.
-        * eauto.
-      + constructor.
-        * apply: cext_per.
-          apply: fun_val_per; auto.
-          move=> e0 e1 e01.
-          destruct (H0 e0 e1); eauto.
-          destruct H1.
-          destruct H2.
-          split; eauto.
-        * eauto.
-      + constructor.
+    - move=> ι A' A'0 R' 𝒟' ℰ //=; split.
+      + rewrite -roll.
+        apply: Sig.conn; eauto.
+        apply: map_has; eauto.
+        move=> ? [? ?] //=.
+      + destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto]; cleanup.
         * constructor.
-          ** move=> e0 e1 H1.
-             Later.gather.
-             move=> //= [[ihR0 _] e0e1].
-             eauto.
-             destruct_per; eauto.
-          ** move=> e0 e1 e2 H1 H2.
-             Later.gather.
-             move=> //= [[? ?] [e0e1 e1e2]].
-             destruct_per.
-             eauto.
-        * move=> ? ? ? ? ?.
-          Later.gather.
-          move=> [] [].
-          eauto.
-      + constructor.
+          ** constructor.
+             *** move=> e0 e1 e01.
+                 dependent destruction e01.
+                 econstructor; eauto.
+                 dependent destruction H3.
+                 constructor.
+                 **** apply: symmetric; auto.
+                      apply: per.
+                        by destruct H.
+                 **** replace (R1 e10) with (R1 e00).
+                      ***** apply: symmetric; auto.
+                            edestruct H0; eauto.
+                            T.destruct_conjs.
+                            by apply: per.
+                      ***** edestruct H0 as [[H01 H02] [H03 H04]]; eauto.
+                            eapply (TS.is_extensional (t σ)); eauto.
+                            T.destruct_conjs.
+                            eauto.
+             *** move=> e0 e1 e2 e01 e12.
+                 dependent destruction e01.
+                 dependent destruction e12.
+                 econstructor; eauto.
+                 dependent destruction H3.
+                 dependent destruction H7.
+                 OpSem.evals_to_eq.
+                 T.destruct_eqs.
+                 suff ?: is_per R0; last by destruct H; apply: per.
+                 constructor; first by [apply: transitive; eauto].
+                 destruct (H0 e00 e02); auto.
+                 destruct (H0 e02 e3); auto.
+                 suff: (R1 e00) = (R1 e02) ∧ (R1 e02) = (R1 e3).
+                 **** move=> [Q1 Q2].
+                      T.destruct_conjs.
+                      apply: transitive; first by [apply: per; eauto]; eauto.
+                      by rewrite Q1.
+                 **** split;
+                      T.destruct_conjs;
+                      match goal with
+                      | H1 : t σ (?A, ?R1), H2 : t σ (?A, ?R2) |- ?R1 = ?R2 =>
+                        eapply (@TS.is_extensional (t σ));
+                          [ apply: extensionality; eauto
+                          | exact H1
+                          | exact H2]
+                      end.
+          ** eauto.
+
         * constructor.
-          ** move=> ? ? H1 κ.
+          ** constructor.
+             *** move=> e0 e1 e01.
+                 dependent destruction e01.
+                 econstructor; eauto.
+                 dependent destruction H3.
+                 constructor.
+                 move=> e2 e3 e23.
+                 apply: symmetric.
+                 **** edestruct H0; eauto.
+                      T.destruct_conjs.
+                      apply: per; eauto.
+                 **** replace (R1 e2) with (R1 e3).
+                      ***** apply: H3; eauto.
+                            apply: symmetric; auto.
+                            apply: per; T.destruct_conjs; eauto.
+                      ***** edestruct H0; eauto.
+                            T.destruct_conjs.
+                            eapply (@TS.is_extensional (t σ)); eauto.
+                            apply: extensionality.
+
+             *** move=> e0 e1 e2 e01 e12.
+                 dependent destruction e01.
+                 dependent destruction e12.
+                 econstructor; eauto.
+                 dependent destruction H3.
+                 dependent destruction H6.
+                 OpSem.evals_to_eq.
+                 T.destruct_eqs.
+                 constructor => e3 e4 e34.
+                 destruct (H0 e3 e4); auto.
+                 T.destruct_conjs.
+                 apply: transitive; first by apply: per; eauto.
+                 **** apply: H3; eauto.
+                 **** replace (R1 e3) with (R1 e4).
+                      ***** apply: H6; eauto.
+                            apply: transitive; first by [apply: per; eauto]; eauto.
+                            apply: symmetric; first by [apply: per; eauto]; eauto.
+                      *****
+                      match goal with
+                      | H1 : t σ (?A, ?R1), H2 : t σ (?A, ?R2) |- ?R1 = ?R2 =>
+                        eapply (@TS.is_extensional (t σ));
+                          [ apply: extensionality; eauto
+                          | exact H1
+                          | exact H2]
+                      end.
+
+          ** eauto.
+
+        * constructor.
+          ** constructor.
+             *** move=> e0 e1 H1.
+                 Later.gather.
+                 move=> //= [[ihR0 ?] e0e1].
+                 apply: symmetric; eauto; apply: per; eauto.
+
+             *** move=> e0 e1 e2 H1 H2.
+                 Later.gather.
+                 move=> //= [[? ?] [e0e1 e1e2]].
+                 apply: transitive; eauto.
+                 by apply: per.
+          ** move=> ? ? ? ? ?.
+             Later.gather.
+             move=> [[? ?] ?].
+             apply: crel; eauto.
+
+        * constructor.
+          ** constructor.
+             *** move=> ? ? ? ?.
+                 T.specialize_hyps.
+                 case: H => //= [? ?].
+                 destruct_cper.
+                 destruct_per.
+                 eauto.
+             *** move=> ? ? ? ? ? ?.
+                 T.specialize_hyps.
+                 case: H => //= [? ?].
+                 destruct_cper; destruct_per; eauto.
+          ** move=> ? ? ? ? ?  ?.
              T.specialize_hyps.
-             case: H => //= [? ?].
-             destruct_per.
+             T.destruct_conjs.
+             destruct_cper.
              eauto.
-          ** move=> ? ? ? H1 H2 κ.
-             T.specialize_hyps.
-             case: H => //= [? ?].
-             destruct_per.
-             eauto.
-        * move=> ? ? ? ? ? ?.
-          T.specialize_hyps.
-          destruct_cper.
-          eauto.
   Qed.
 
   Instance type_computational {σ} :
@@ -542,8 +610,8 @@ rewrite H4.
         T.destruct_conjs.
         repeat split; eauto.
       + constructor; eauto.
-        move=> e0 e1 e01; destruct (H1 e0 e1); eauto.
-        T.destruct_conjs.
+        move=> e0 e1 e01; destruct (H1 e0 e1);
+        T.destruct_conjs;
         repeat split; eauto.
       + constructor.
         Later.gather.
