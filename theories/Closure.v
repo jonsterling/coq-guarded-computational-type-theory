@@ -24,6 +24,13 @@ Module Connective.
         → R1 e00 (e01, e11)
         → prod_val R0 R1 (Tm.pair e00 e01, Tm.pair e10 e11).
 
+  Inductive prod_el (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
+  | mk_prod_el :
+      ∀ e0 e1,
+        R0 (Tm.fst e0, Tm.fst e1)
+        ∧ R1 (Tm.fst e0) (Tm.snd e0, Tm.snd e1)
+        → prod_el R0 R1 (e0, e1).
+
   Inductive fun_val (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
   | lam :
       ∀ f0 f1,
@@ -48,17 +55,15 @@ Module Connective.
         τ (A0, R0)
         → (∀ e0 e1,
               R0 (e0, e1)
-              → R1 e0 = R1 e1
-                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
+              → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
                 ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1))
-        → has τ prod (Tm.prod A0 A1, cext (prod_val R0 R1))
+        → has τ prod (Tm.prod A0 A1, prod_el R0 R1)
   | has_arr :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
         → (∀ e0 e1,
               R0 (e0, e1)
-              → R1 e0 = R1 e1
-                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
+              → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
                 ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1))
         → has τ arr (Tm.arr A0 A1, cext (fun_val R0 R1))
 
@@ -84,11 +89,12 @@ Module Connective.
     + auto.
     + move=> e0 e1 e0e1.
       edestruct H0; eauto.
-      repeat split; T.destruct_conjs; eauto.
+(*      repeat split; T.destruct_conjs; eauto. *)
     + constructor; eauto.
       move=> e0 e1 e0e1.
       edestruct H0; eauto.
-      repeat split; T.destruct_conjs; eauto.
+(*
+      repeat split; T.destruct_conjs; eauto. *)
   Qed.
 
   Hint Resolve monotone.
@@ -139,6 +145,30 @@ Module Clo.
     auto.
   Qed.
 
+  Lemma close_has {ρ ι A R} :
+    Connective.has ρ ι (A, R)
+    → Connective.has (t ρ) ι (A, R).
+  Proof.
+    move=> has.
+    dependent destruction has; eauto.
+    - constructor.
+      + rewrite -roll; by apply: Sig.init.
+      + move=> e0 e1 e0e1.
+        edestruct H0; eauto; split; rewrite -roll; by apply: Sig.init.
+    - constructor.
+      + rewrite -roll; by apply: Sig.init.
+      + move=> e0 e1 e0e1.
+        edestruct H0; eauto; split; rewrite -roll; by apply: Sig.init.
+    - constructor.
+      Later.gather.
+      move=> H'.
+      rewrite -roll; by apply: Sig.init.
+    - constructor.
+      move=> κ.
+      T.specialize_hyps.
+      rewrite -roll; by apply: Sig.init.
+  Qed.
+
   Theorem ind :
     ∀ Y (σ ρ : cts),
       t σ Y
@@ -153,9 +183,8 @@ Module Clo.
 
     destruct AcloR.
     destruct H.
-    apply: H.
-    + move=> [A' R']; elim; auto.
-    + auto.
+    apply: H; auto.
+    move=> [A' R']; elim; eauto.
   Qed.
 
   Local Hint Constructors Sig.t.
@@ -242,7 +271,7 @@ Module Clo.
       + use_universe_system.
         destruct_has; by OpSem.evals_to_eq.
 
-    - move=> ? ? ? ? ? ?.
+    - move=> ? ? ? ? ? ?; simpl in *.
       destruct_has => ? ?;
       destruct_clo; try by [cleanup];
       destruct_has; cleanup.
@@ -256,11 +285,11 @@ Module Clo.
              destruct (H0 e00 e10); auto.
              destruct (H3 e00 e10); auto.
              replace R2 with R0; auto.
-             destruct H6.
+             (*destruct H6.
              apply: H6.
              T.destruct_conjs.
              auto.
-
+*)
         * dependent destruction Q.
           constructor.
           ** rewrite_functionality_ih; eauto.
@@ -269,9 +298,9 @@ Module Clo.
              *** rewrite_functionality_ih; eauto.
              *** destruct (H3 e00 e10); auto.
                  rewrite_functionality_ih; eauto.
-                 destruct H6, H8.
+                 (*destruct H6, H8.
                  symmetry.
-                 apply: H6; eauto.
+                 apply: H6; eauto.*)
 
       + f_equal.
         T.eqcd; case => e0 e1.
@@ -283,27 +312,31 @@ Module Clo.
              replace R0 with R2; auto.
              symmetry.
              by apply: H.
-          ** edestruct H0 as [? [H01 H02]].
+          ** edestruct H0 as [H01 H02].
              *** replace R0 with R2; eauto.
                  symmetry.
                  by apply: H.
-             *** rewrite H4.
+             *** apply: H01; simpl.
+                 edestruct H3 as [? [? ?]]; eauto.
+(*                 eauto.
+rewrite H4.
                  apply: H02; simpl.
                  edestruct H3 as [? [? ?]];
                  eauto.
-                 by rewrite H5.
+                 by rewrite H5.*)
         * dependent destruction Q.
           constructor => e0 e1 e0e1.
           ** replace (R1 e0) with (R3 e0).
              *** apply: H1.
                  replace R2 with R0; auto.
-             *** edestruct H0 as [? [H00 H01]]; eauto.
-                 symmetry; apply: H00; simpl.
-                 edestruct H3; eauto.
-                 **** replace R2 with R0; eauto.
-                 **** T.destruct_conjs; eauto.
-
-
+             *** edestruct (H0 e0 e1) as [H00 H01]; eauto.
+                 symmetry.
+                 apply: H00; simpl.
+                 edestruct H3.
+                 **** replace R2 with R0.
+                      eauto.
+                      apply: H; auto.
+                 **** auto.
       + do ? (T.eqcd; moves).
         Later.gather => *; T.destruct_conjs.
         rewrite_functionality_ih; eauto.
@@ -425,19 +458,27 @@ Module Clo.
 
   Instance cper_valued {σ} :
     TS.cper_valued σ
+    → TS.extensional σ
+    → TS.universe_system σ
     → TS.cper_valued (t σ).
   Proof.
-    move=> [IH]; constructor=> A R 𝒟.
-    apply: (@ind (A, R) σ (fun X => is_cper (snd X))); auto.
-    - move=> [A' R']; eauto.
-    - move=> ι A' A'0 R' 𝒟' ℰ //=.
-      destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto].
+    move=> [IH] ext uni; constructor=> A R 𝒟.
+    destruct (@ind (A, R) σ (fun X => is_cper (snd X))); auto.
+    - move=> [A' R'] ?; eauto.
+    - move=> ι A' A'0 R' 𝒟' ℰ ℱ //=.
+      destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto]; cleanup.
       + constructor.
         * apply: cext_per.
           apply: prod_val_per; auto.
           move=> e0 e1 e01.
           destruct (H0 e0 e1); eauto.
-          destruct H1.
+          destruct H1; split.
+          ** apply: (@TS.is_extensional (t σ)); simpl.
+             destruct_clo; cleanup.
+             destruct_has.
+
+
+
           destruct H2.
           split; eauto.
         * eauto.

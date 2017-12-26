@@ -1069,7 +1069,17 @@ Proof.
   by rewrite /rel.
 Qed.
 
-Hint Resolve rel_total rel_inh.
+Axiom rel_fam_total : Later.Total (Tm.t 0 → rel).
+
+Theorem rel_fam_inh : Later.Inh (Tm.t 0 → rel).
+Proof.
+  rewrite /rel.
+  split; auto.
+  move=> ? ?.
+  exact ⊤.
+Qed.
+
+Hint Resolve rel_total rel_inh rel_fam_total rel_fam_inh.
 
 Module Later.
   Theorem formationω {κ} {A B} :
@@ -1233,6 +1243,43 @@ Module Later.
           by rewrite Tm.subst_ret.
       + by Later.gather; case.
   Qed.
+
+  Theorem preserves_products i κ {A0 A1 B0 B1} :
+    ▷[κ] (τ[i] ⊧ A0 ∼ A1)
+    → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
+    → τ[i] ⊧ ▶[κ] (A0 × B0) ∼ ((▶[κ] A1) × (▶[κ] B1)).
+  Proof.
+    move=> 𝒟 ℰ.
+    case: (Later.yank_existential _ _ _ 𝒟); auto => R𝒟 𝒟'.
+
+    suff 𝒟ℰ: ▷[κ] (τ[i] ⊧ A0 ∼ A1 ∧ τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1).
+    - case: (Later.yank_existential _ _ _ (Later.map (fun x => Fam.family_choice (proj1 x) (proj2 x)) 𝒟ℰ)); auto.
+      move=> Rℰ ℰsp.
+
+      eexists; split.
+      + Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+        Later.gather; case => [[? [? ?]] [ℰ0 [[ℰ1 ℰ2] [[ℰ3 ℰ4] ℰ5]]]].
+        Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+        * eauto.
+        * move=> e0 e1 e0e1.
+          case (ℰ5 e0 e1).
+          ** eexists; eauto.
+          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto.
+             by rewrite -Q.
+      + Tac.ts_flex_rel.
+        * Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+          ** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+             move {ℰsp 𝒟ℰ 𝒟 ℰ}.
+             Later.gather; case; eauto.
+          ** simpl.
+             move=> e0 e1 //= e0e1; repeat split.
+             *** admit.
+             *** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+                 Later.gather.
+                 move=> ?.
+                 T.destruct_conjs.
+
+  Abort.
 End Later.
 
 
