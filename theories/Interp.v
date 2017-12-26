@@ -41,7 +41,9 @@ Fixpoint interp_tm `(e : ETm.t Λ Ψ) (κs : Env.t Λ) : Tm.t Ψ :=
   | ETm.ltr r A => ▶[κs r] ⟦A⟧ κs
   | ETm.isect A => ⋂[κ] ⟦A⟧ κ ∷ κs
   | ETm.univ i => 𝕌[i]
-  | ETm.fix_ e => Tm.fix_ (⟦e⟧ κs)
+  | ETm.fix_ e => 𝛍{⟦e⟧ κs}
+  | ETm.lam e => 𝛌{⟦e⟧ κs}
+  | ETm.app e1 e2 => ⟦e1⟧ κs ⋅ ⟦e2⟧ κs
   end
 where "⟦ e ⟧ κs" := (interp_tm e%etm κs) : tm_scope.
 

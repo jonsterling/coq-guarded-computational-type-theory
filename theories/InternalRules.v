@@ -573,12 +573,11 @@ Module Bool.
     end.
 End Bool.
 
-
-Module Prod.
-
+Module Fam.
 
   Local Hint Extern 40 => Term.simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
+
 
   (* This is a very bad proof, sorry. *)
   Theorem family_choice {τ A0 A1 B0 B1} `{TS.cper_valued τ} `{TS.extensional τ} :
@@ -667,27 +666,131 @@ Module Prod.
         apply: TS.is_extensional; eauto.
   Qed.
 
+  Ltac quantifier_formation_tac :=
+    let 𝒟 := fresh in
+    let Rℰspec := fresh in
+    let e0 := fresh in
+    let e1 := fresh in
+    let R𝒟 := fresh in
+    let Q := fresh in
+
+    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec];
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1];
+
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto);
+    move=> e0 e1 e01;
+    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
+    move=> Q [? [? [? ?]]]; repeat split; eauto;
+    rewrite -Q; eauto.
+
+End Fam.
+
+Module Arr.
+  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
+
+  Theorem formation {n A0 A1 B0 B1} :
+    τ[n] ⊧ A0 ∼ A1
+    → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
+    → τ[n] ⊧ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
+  Proof.
+    by Fam.quantifier_formation_tac.
+  Qed.
+
+  Theorem univ_eq {i A0 A1 B0 B1} :
+    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ ⋄ ∙ A0 ≫ 𝕌[i] ∋ B0 ∼ B1
+    → τω ⊧ 𝕌[i] ∋ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
+  Proof.
+    move=> /Univ.inversion 𝒟 /Univ.open_inversion ℰ.
+    apply: Univ.intro.
+    apply: formation.
+    - assumption.
+    - apply: ℰ.
+      split; auto.
+      move=> ? ? ?; Term.simplify_subst.
+      apply: General.ty_eq_refl_left; eauto.
+  Qed.
+
+  Theorem intro {i A B f0 f1} :
+    τω ⊧ ⋄ ∙ A ≫ B ∋ f0 ∼ f1
+    → τ[i] ⊧ A ∼ A
+    → τ[i] ⊧ ⋄ ∙ A ≫ B ∼ B
+    → τω ⊧ (A ⇒ B) ∋ 𝛌{f0} ∼ 𝛌{f1}.
+  Proof.
+    move=> 𝒟 ℰ /(Fam.family_choice ℰ) ℱ.
+    apply: (Level.eq_mem_from_level i).
+    case: ℰ => Rℰ [ℰ0 _].
+    case: ℱ => Rℱ ℱsp.
+    eexists; split.
+    - Tac.tower_intro.
+      apply: Sig.conn; first by auto.
+      econstructor; eauto.
+      move=> e0 e1 e0e1.
+      case: (ℱsp e0 e1); auto.
+      + eexists; eauto.
+      + move=> Q [? [? ?]].
+        repeat T.split; eauto.
+    - econstructor; eauto.
+      constructor => e0 e1 e0e1.
+      case: (ℱsp e0 e1); auto.
+      + eexists; eauto.
+      + move=> ? [? [? [? ?]]].
+        edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [? ?]]; simpl.
+        * split; first by auto.
+          Term.simplify_subst.
+          eexists; split; eauto.
+          eexists; eauto.
+        * replace (Rℱ e0) with R𝒟; auto.
+          apply: TS.is_extensional; eauto; simpl.
+          eexists; eauto.
+  Qed.
+
+  Theorem elim {i A B f0 f1 e0 e1} :
+    τ[i] ⊧ A ∼ A
+    → τ[i] ⊧ ⋄ ∙ A ≫ B ∼ B
+    → τω ⊧ (A ⇒ B) ∋ f0 ∼ f1
+    → τω ⊧ A ∋ e0 ∼ e1
+    → τω ⊧ (B ⫽ Sub.inst0 e0) ∋ (f0 ⋅ e0) ∼ (f1 ⋅ e1).
+  Proof.
+    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰsp] /Level.eq_mem_to_level [nℱ ℱ] /Level.eq_mem_to_level [n𝒢 𝒢].
+    case: ℱ => Rℱ [ℱ0 ℱ1].
+    case: (Rℰsp e0 e1).
+    - apply: Level.mem_eq_at_lvl_of_typehood; eauto.
+    - Tower.destruct_tower.
+      dependent destruction ℱ1.
+      dependent destruction H1.
+      dependent destruction H.
+      dependent destruction H0.
+      move=> Q [ℰ0 [ℰ1 [ℰ2 ℰ3]]].
+      apply: General.mem_eq_conv_both.
+      + apply: OpSem.app_lam; eauto.
+      + apply: OpSem.app_lam; eauto.
+      + apply: Level.eq_mem_from_level.
+        eexists; split; eauto.
+        case: 𝒢 => R𝒢 [𝒢0 𝒢1].
+        suff e0e1 : R0 (e0, e1).
+        * replace (Rℰ e0) with (R1 e0); auto.
+          apply: TS.is_extensional; eexists; eauto.
+          case: (H3 e0 e1); auto => ? [? ?]; eauto.
+        * replace R0 with R𝒢; auto.
+          apply: TS.is_extensional; eexists; eauto.
+  Qed.
+End Arr.
+
+Module Prod.
+  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
+
 
   Theorem formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    move=> 𝒟 /(family_choice 𝒟) [Rℰ Rℰspec].
-    case 𝒟 => R𝒟 [𝒟0 𝒟1].
-
-    eexists; split; Tac.tower_intro; apply: Sig.conn; eauto.
-    - apply: (@Connective.has_prod _ _ _ R𝒟 Rℰ); eauto.
-      move=> e0 e1 e01.
-      case: (Rℰspec e0 e1).
-      + exists R𝒟; auto.
-      + move=> Q [? [? [? ?]]]; repeat split; eauto.
-        by rewrite -Q.
-    - apply: (@Connective.has_prod _ _ _ R𝒟 Rℰ); eauto.
-      move=> e0 e1 e01.
-      case: (Rℰspec e0 e1).
-      + exists R𝒟; auto.
-      + move=> Q [? [? [? ?]]]; repeat split; eauto.
+    by Fam.quantifier_formation_tac.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
@@ -717,7 +820,7 @@ Module Prod.
      /Level.eq_mem_to_level [n1 𝒟]
      /Level.eq_mem_to_level [n2 ℰ]
      ℱ
-     /(family_choice ℱ) => 𝒢.
+     /(Fam.family_choice ℱ) => 𝒢.
 
     apply: (Level.eq_mem_from_level (i + n1 + n2)).
     case: 𝒟 => [R𝒟 [𝒟0 𝒟1]].
@@ -1107,7 +1210,7 @@ Module Later.
 
   Theorem loeb_induction_closed κ {A e0 e1} :
     τω ⊧ ⋄ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
-    → τω ⊧ A ∋ (Tm.fix_ e0) ∼ (Tm.fix_ e1).
+    → τω ⊧ A ∋ 𝛍{ e0 } ∼ 𝛍{ e1 }.
   Proof.
     move=> 𝒟.
     apply: (@Later.loeb κ).

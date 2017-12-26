@@ -8,7 +8,7 @@ Set Bullet Behavior "Strict Subproofs".
 Set Implicit Arguments.
 
 Module Connective.
-  Inductive ctor := unit | bool | prod | later | isect.
+  Inductive ctor := unit | bool | prod | arr | later | isect.
 
   Inductive unit_val : rel :=
   | ax : unit_val (Tm.ax, Tm.ax).
@@ -23,6 +23,14 @@ Module Connective.
         R0 (e00, e10)
         → R1 e00 (e01, e11)
         → prod_val R0 R1 (Tm.pair e00 e01, Tm.pair e10 e11).
+
+  Inductive fun_val (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
+  | lam :
+      ∀ f0 f1,
+        (∀ e0 e1,
+            R0 (e0, e1)
+            → R1 e0 ((f0 ⫽ Sub.inst0 e0)%tm, (f1 ⫽ Sub.inst0 e1)%tm))
+        → fun_val R0 R1 (Tm.lam f0, Tm.lam f1).
 
   Inductive cext (R : rel) : rel :=
   | mk_cext :
@@ -44,6 +52,16 @@ Module Connective.
                 ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
                 ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1))
         → has τ prod (Tm.prod A0 A1, cext (prod_val R0 R1))
+  | has_arr :
+      ∀ A0 A1 R0 R1,
+        τ (A0, R0)
+        → (∀ e0 e1,
+              R0 (e0, e1)
+              → R1 e0 = R1 e1
+                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1))
+        → has τ arr (Tm.arr A0 A1, cext (fun_val R0 R1))
+
   | has_later :
       ∀ κ B R,
         ▷[κ] (τ (B, R))
@@ -65,6 +83,10 @@ Module Connective.
     constructor.
     + auto.
     + move=> e0 e1 e0e1.
+      edestruct H0; eauto.
+      repeat split; T.destruct_conjs; eauto.
+    + constructor; eauto.
+      move=> e0 e1 e0e1.
       edestruct H0; eauto.
       repeat split; T.destruct_conjs; eauto.
   Qed.
@@ -251,6 +273,37 @@ Module Clo.
                  symmetry.
                  apply: H6; eauto.
 
+      + f_equal.
+        T.eqcd; case => e0 e1.
+        apply: propositional_extensionality; split => Q.
+        * dependent destruction Q.
+          constructor => e0 e1 e0e1.
+          replace (R3 e0) with (R1 e0).
+          ** apply: H1.
+             replace R0 with R2; auto.
+             symmetry.
+             by apply: H.
+          ** edestruct H0 as [? [H01 H02]].
+             *** replace R0 with R2; eauto.
+                 symmetry.
+                 by apply: H.
+             *** rewrite H4.
+                 apply: H02; simpl.
+                 edestruct H3 as [? [? ?]];
+                 eauto.
+                 by rewrite H5.
+        * dependent destruction Q.
+          constructor => e0 e1 e0e1.
+          ** replace (R1 e0) with (R3 e0).
+             *** apply: H1.
+                 replace R2 with R0; auto.
+             *** edestruct H0 as [? [H00 H01]]; eauto.
+                 symmetry; apply: H00; simpl.
+                 edestruct H3; eauto.
+                 **** replace R2 with R0; eauto.
+                 **** T.destruct_conjs; eauto.
+
+
       + do ? (T.eqcd; moves).
         Later.gather => *; T.destruct_conjs.
         rewrite_functionality_ih; eauto.
@@ -317,6 +370,35 @@ Module Clo.
       rewrite H3; auto.
   Qed.
 
+  Theorem fun_val_per {R0 R1} :
+    is_per R0
+    → (∀ e0 e1, R0 (e0, e1) → R1 e0 = R1 e1 ∧ is_per (R1 e1))
+    → is_per (Connective.fun_val R0 R1).
+  Proof.
+    move=> R0per ihper1.
+    constructor.
+    - move=> f0 f1 H1.
+      dependent destruction H1.
+      constructor => e0 e1 H2.
+      edestruct ihper1; eauto.
+      apply: symmetric; rewrite H0; auto.
+      apply: H.
+      by apply: symmetric.
+    - move=> f0 f1 f2 H1 H2.
+      dependent destruction H1.
+      dependent destruction H2.
+      constructor => e0 e1 H3.
+      edestruct ihper1; eauto.
+      apply: transitive.
+      + by rewrite H1.
+      + apply: H; eauto.
+      + rewrite H1.
+        apply: H0.
+        apply: transitive; auto.
+        * apply: symmetric; eauto.
+        * auto.
+  Qed.
+
   Theorem cext_computational {R} :
     rel_computational (Connective.cext R).
   Proof.
@@ -351,14 +433,23 @@ Module Clo.
     - move=> ι A' A'0 R' 𝒟' ℰ //=.
       destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto].
       + constructor.
-        ** apply: cext_per.
-           apply: prod_val_per; auto.
-           move=> e0 e1 e01.
-           destruct (H0 e0 e1); eauto.
-           destruct H1.
-           destruct H2.
-           split; eauto.
-        ** eauto.
+        * apply: cext_per.
+          apply: prod_val_per; auto.
+          move=> e0 e1 e01.
+          destruct (H0 e0 e1); eauto.
+          destruct H1.
+          destruct H2.
+          split; eauto.
+        * eauto.
+      + constructor.
+        * apply: cext_per.
+          apply: fun_val_per; auto.
+          move=> e0 e1 e01.
+          destruct (H0 e0 e1); eauto.
+          destruct H1.
+          destruct H2.
+          split; eauto.
+        * eauto.
       + constructor.
         * constructor.
           ** move=> e0 e1 H1.
@@ -405,6 +496,10 @@ Module Clo.
     - move=> ι A0 A0v R 𝒟 ℰ.
       destruct_has => ? //= ?;
       rewrite -roll; apply: Sig.conn; eauto.
+      + constructor; eauto.
+        move=> e0 e1 e01; destruct (H1 e0 e1); eauto.
+        T.destruct_conjs.
+        repeat split; eauto.
       + constructor; eauto.
         move=> e0 e1 e01; destruct (H1 e0 e1); eauto.
         T.destruct_conjs.

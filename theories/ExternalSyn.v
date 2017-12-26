@@ -27,12 +27,14 @@ Module ETm.
   | tt : t Λ Ψ
   | ff : t Λ Ψ
   | prod : t Λ Ψ -> t Λ (S Ψ) -> t Λ Ψ
-  | arr : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
+  | arr : t Λ Ψ -> t Λ (S Ψ) -> t Λ Ψ
   | pair : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
   | ltr : Var Λ → t Λ Ψ -> t Λ Ψ
   | isect : t (S Λ) Ψ -> t Λ Ψ
   | univ : nat -> t Λ Ψ
-  | fix_ : t Λ (S Ψ) → t Λ Ψ.
+  | lam : t Λ (S Ψ) → t Λ Ψ
+  | fix_ : t Λ (S Ψ) → t Λ Ψ
+  | app : t Λ Ψ → t Λ Ψ → t Λ Ψ.
 
   Arguments unit [Λ Ψ].
   Arguments bool [Λ Ψ].
@@ -55,15 +57,18 @@ Module ETm.
     Notation "e .1" := (ETm.fst e%etm) (at level 50) : etm_scope.
     Notation "e .2" := (ETm.snd e%etm) (at level 50) : etm_scope.
     Infix "×" := ETm.prod : etm_scope.
+    Infix "⇒" := ETm.arr : etm_scope.
     Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
     Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
     Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
-    Notation "μ{ e }" := (ETm.fix_ e%etm) (at level 50) : etm_scope.
+    Notation "'μ{' e }" := (ETm.fix_ e%etm) (at level 50) : etm_scope.
+    Notation "'𝛌{' e }" := (ETm.lam e%etm) (at level 50) : etm_scope.
+    Notation "e1 ⋅ e2" := (ETm.app e1%etm e2%etm) (at level 50) : etm_scope.
   End Notation.
 
   Import Notation.
 
-  Program Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
+  Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
     match e with
     | var i => var _ (ρΨ i)
     | fst e => fst (map ρΛ ρΨ e)
@@ -74,12 +79,14 @@ Module ETm.
     | tt => tt
     | ff => ff
     | prod A B => prod (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
-    | arr A B => arr (map ρΛ ρΨ A) (map ρΛ ρΨ B)
+    | arr A B => arr (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
     | pair e1 e2 => pair (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
     | ltr k A => ltr (ρΛ k) (map ρΛ ρΨ A)
     | isect A => isect (map (Ren.cong ρΛ) ρΨ A)
     | univ i => univ i
     | fix_ e => fix_ (map ρΛ (Ren.cong ρΨ) e)
+    | lam e => lam (map ρΛ (Ren.cong ρΨ) e)
+    | app e1 e2 => app (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
     end.
 
   Definition mapv {Λ} `(ρΨ : Ren.t Ψ1 Ψ2) : t Λ Ψ1 → t Λ Ψ2 :=
@@ -124,12 +131,14 @@ Module ETm.
     | tt => tt
     | ff => ff
     | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
-    | arr A B => arr (subst σ A) (subst σ B)
+    | arr A B => arr (subst σ A) (subst (Sub.cong σ) B)
     | pair e1 e2 => pair (subst σ e1) (subst σ e2)
     | ltr k A => ltr k (subst σ A)
     | isect A => isect (subst (wk_sub σ) A)
     | univ i => univ i
     | fix_ e => fix_ (subst (Sub.cong σ) e)
+    | lam e => lam (subst (Sub.cong σ) e)
+    | app e1 e2 => app (subst σ e1) (subst σ e2)
     end.
 
   Module SubstNotation.
