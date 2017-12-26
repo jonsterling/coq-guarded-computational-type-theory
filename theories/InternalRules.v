@@ -1258,6 +1258,10 @@ Module Later.
       + by Later.gather; case.
   Qed.
 
+  Axiom total_tm : Later.Total (Tm.t 0).
+  Axiom inh_tm : Later.Inh (Tm.t 0).
+  Hint Resolve total_tm inh_tm.
+
   Theorem preserves_products i κ {A0 A1 B0 B1} :
     ▷[κ] (τ[i] ⊧ A0 ∼ A1)
     → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
@@ -1278,21 +1282,32 @@ Module Later.
         * move=> e0 e1 e0e1.
           case (ℰ5 e0 e1).
           ** eexists; eauto.
-          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto.
-             by rewrite -Q.
+          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto; by rewrite -Q.
       + Tac.ts_flex_rel.
         * Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
           ** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
              move {ℰsp 𝒟ℰ 𝒟 ℰ}.
              Later.gather; case; eauto.
           ** simpl.
-             move=> e0 e1 //= e0e1; repeat split.
-             *** admit.
-             *** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
-                 Later.gather.
-                 move=> ?.
-                 T.destruct_conjs.
+             move=> e0 e1 //= e0e1.
+             repeat split;
+             Tac.tower_intro; (apply: Sig.conn; first by [auto]); constructor; Later.gather;
+             move=> [ℱ0 [ℱ1 [[ℱ2 ℱ3] [[ℱ4 ℱ5] [ℱ6 ℱ7]]]]];
+             (case: (ℱ6 e0 e1); first by [exists R𝒟]);
+             move=> Q [ℋ0 [ℋ1 [ℋ2 ℋ3]]]; eauto.
+             *** rewrite -Q; eauto.
+             *** rewrite Q; eauto.
+        * T.eqcd; case=> e0 e1.
+          apply: propositional_extensionality; split.
 
+          ** move=> ℱ.
+             rewrite Isect.cext_equiv_cext_transparent in ℱ.
+             case: {ℱ} (Later.yank_existential _ _ _ ℱ); eauto => v0 //= ℱ.
+             case: {ℱ} (Later.yank_existential _ _ _ ℱ); eauto => v1 //= ℱ.
+             econstructor.
+             *** admit.
+             *** admit.
+             *** constructor.
   Abort.
 End Later.
 
