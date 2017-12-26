@@ -666,25 +666,6 @@ Module Fam.
         apply: TS.is_extensional; eauto.
   Qed.
 
-  Ltac quantifier_formation_tac :=
-    let 𝒟 := fresh in
-    let Rℰspec := fresh in
-    let e0 := fresh in
-    let e1 := fresh in
-    let R𝒟 := fresh in
-    let Q := fresh in
-
-    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec];
-    case: 𝒟 => R𝒟 [𝒟0 𝒟1];
-
-    eexists; split; Tac.tower_intro;
-    (apply: Sig.conn; first by eauto);
-    (econstructor; first by eauto);
-    move=> e0 e1 e01;
-    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
-    move=> Q [? [? [? ?]]]; repeat split; eauto;
-    rewrite -Q; eauto.
-
 End Fam.
 
 Module Arr.
@@ -696,7 +677,23 @@ Module Arr.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
   Proof.
-    by Fam.quantifier_formation_tac.
+    move=> 𝒟 /(Fam.family_choice 𝒟) [ℰ Rℰsp].
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
+
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto).
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto;
+      rewrite -Q; eauto.
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto.
+      + rewrite -Q; eauto.
+      + rewrite Q; eauto.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
@@ -731,8 +728,9 @@ Module Arr.
       move=> e0 e1 e0e1.
       case: (ℱsp e0 e1); auto.
       + eexists; eauto.
-      + move=> Q [? [? ?]].
+      + move=> Q [? [? [? ?]]].
         repeat T.split; eauto.
+        by rewrite -Q.
     - econstructor; eauto.
       constructor => e0 e1 e0e1.
       case: (ℱsp e0 e1); auto.
@@ -790,7 +788,23 @@ Module Prod.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    by Fam.quantifier_formation_tac.
+    move=> 𝒟 /(Fam.family_choice 𝒟) [ℰ Rℰsp].
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
+
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto).
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto;
+      rewrite -Q; eauto.
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto.
+      + rewrite -Q; eauto.
+      + rewrite Q; eauto.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
@@ -833,9 +847,9 @@ Module Prod.
         * move=> e0 e1 p.
           specialize (𝒢 e0 e1).
           suff ℋ: τ[i] ⊧ A ∋ e0 ∼ e1.
-          ** case: (𝒢 ℋ) => ? [? [? [? ?]]].
-             repeat split; auto;
-             by Tac.tower_mono.
+          ** case: (𝒢 ℋ) => Q [? [? [? ?]]].
+             repeat split; auto; try by Tac.tower_mono.
+             rewrite -Q; Tac.tower_mono.
           ** apply: Level.mem_eq_at_lvl_of_typehood.
              *** exists R𝒟; split; eauto.
              *** eauto.
