@@ -237,6 +237,29 @@ Module Bool.
 End Bool.
 
 
+Module Arr.
+  Theorem univ_eq `{Γ : ECtx.t Λ Ψ} i {A0 A1 B0 B1} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ∙ A0 ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (A0 ⇒ B0) ≐ (A1 ⇒ B1) ⟧.
+  Proof.
+    move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
+    apply: IR.Arr.univ_eq.
+    - by apply: 𝒟.
+    - move=> ? ? //= [_ ℋ] //=.
+      Term.simplify_subst.
+      T.efwd ℰ.
+      + T.use ℰ; eauto.
+      + split; [T.use γ01 | T.use ℋ]; eauto.
+      + eauto.
+      + split; first by assumption.
+        apply: IR.General.open_ty_eq_refl_left.
+        * assumption.
+        * apply: IR.Univ.open_inversionω.
+          eauto.
+  Qed.
+End Arr.
+
 Module Prod.
   Theorem univ_eq `{Γ : ECtx.t Λ Ψ} i {A0 A1 B0 B1} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
