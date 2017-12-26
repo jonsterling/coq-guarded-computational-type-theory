@@ -738,7 +738,7 @@ Module Arr.
       case: (ℱsp e0 e1); auto.
       + eexists; eauto.
       + move=> ? [? [? [? ?]]].
-        edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [𝒟0 𝒟1]]; simpl.
+        edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [? ?]]; simpl.
         * split; first by auto.
           Term.simplify_subst.
           eexists; split; eauto.
@@ -746,6 +746,37 @@ Module Arr.
         * replace (Rℱ e0) with R𝒟; auto.
           apply: TS.is_extensional; eauto; simpl.
           eexists; eauto.
+  Qed.
+
+  Theorem elim {i A B f0 f1 e0 e1} :
+    τ[i] ⊧ A ∼ A
+    → τ[i] ⊧ ⋄ ∙ A ≫ B ∼ B
+    → τω ⊧ (A ⇒ B) ∋ f0 ∼ f1
+    → τω ⊧ A ∋ e0 ∼ e1
+    → τω ⊧ (B ⫽ Sub.inst0 e0) ∋ (f0 ⋅ e0) ∼ (f1 ⋅ e1).
+  Proof.
+    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰsp] /Level.eq_mem_to_level [nℱ ℱ] /Level.eq_mem_to_level [n𝒢 𝒢].
+    case: ℱ => Rℱ [ℱ0 ℱ1].
+    case: (Rℰsp e0 e1).
+    - apply: Level.mem_eq_at_lvl_of_typehood; eauto.
+    - Tower.destruct_tower.
+      dependent destruction ℱ1.
+      dependent destruction H1.
+      dependent destruction H.
+      dependent destruction H0.
+      move=> Q [ℰ0 [ℰ1 [ℰ2 ℰ3]]].
+      apply: General.mem_eq_conv_both.
+      + apply: OpSem.app_lam; eauto.
+      + apply: OpSem.app_lam; eauto.
+      + apply: Level.eq_mem_from_level.
+        eexists; split; eauto.
+        case: 𝒢 => R𝒢 [𝒢0 𝒢1].
+        suff e0e1 : R0 (e0, e1).
+        * replace (Rℰ e0) with (R1 e0); auto.
+          apply: TS.is_extensional; eexists; eauto.
+          case: (H3 e0 e1); auto => ? [? ?]; eauto.
+        * replace R0 with R𝒢; auto.
+          apply: TS.is_extensional; eexists; eauto.
   Qed.
 End Arr.
 

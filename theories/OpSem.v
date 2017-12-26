@@ -135,3 +135,18 @@ Proof.
     split; auto.
     econstructor; eauto.
 Qed.
+
+Theorem app_lam :
+  ∀ e0 f e1,
+    (e0 ↦⋆ 𝛌{f})
+    → (f ⫽ Sub.inst0 e1) ≼₀ (e0 ⋅ e1).
+Proof.
+  move=> e0 e e1 Q.
+  constructor.
+  - dependent induction H.
+    dependent induction Q.
+    + econstructor; eauto.
+    + econstructor; eauto.
+  - dependent induction H.
+    eauto.
+Qed.
