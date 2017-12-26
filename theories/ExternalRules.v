@@ -299,6 +299,48 @@ Module Arr.
         apply: ℰ; auto.
         apply: IR.General.env_eq_refl_left; eauto.
   Qed.
+
+  Theorem elim `{Γ : ECtx.t Λ Ψ} {i A B f0 f1 e0 e1} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ∙ A ≫ 𝕌[i] ∋ B ≐ B ⟧
+    → ⟦ Λ ∣ Γ ≫ (A ⇒ B) ∋ f0 ≐ f1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
+    → ⟦ Λ ∣ Γ ≫ (B ⫽ Sub.inst0 e0) ∋ (f0 ⋅ e0) ≐ (f1 ⋅ e1) ⟧.
+  Proof.
+    move=> 𝒟 ℰ ℱ 𝒢 κs ℋ ℐ γ0 γ1 γ01.
+    autorewrite with syn_db; simpl.
+    replace ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 e0⟧ κs)))%tm with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦e0⟧ κs) ⫽ γ0))%tm.
+    - apply: IR.Arr.elim.
+      + apply: IR.Univ.inversion.
+        apply: 𝒟; eauto.
+        apply: IR.General.env_eq_refl_left; eauto.
+      + apply: IR.Univ.open_inversion.
+        * move=> γ0' γ1' //= [_ 𝒥].
+          T.efwd ℰ.
+          ** T.use ℰ; auto.
+          ** split; simpl.
+             *** suff γ00 : τω ⊧ ⟦Γ⟧ κs ∋⋆ γ0 ∼ γ0.
+                 **** T.use γ00; eauto.
+                 **** apply: IR.General.env_eq_refl_left; eauto.
+             *** T.use 𝒥; auto.
+          ** eauto.
+          ** split; auto.
+             apply: IR.Univ.open_inversionω.
+             apply: 𝒟; auto.
+        * split; auto.
+          apply: IR.Univ.open_inversion; auto.
+          move=> ? ? ?; Term.simplify_subst.
+          apply: 𝒟; auto.
+          apply: IR.General.env_eq_refl_left; eauto.
+      + apply: ℱ; auto.
+        apply: IR.Univ.open_inversionω.
+        apply: univ_eq; eauto.
+      + apply: 𝒢; auto.
+        apply: IR.Univ.open_inversionω.
+        eauto.
+    - Term.simplify_subst.
+      dependent induction x; auto.
+  Qed.
 End Arr.
 
 Module Prod.
