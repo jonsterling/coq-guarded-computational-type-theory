@@ -309,20 +309,20 @@ Module Arr.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs ℋ ℐ γ0 γ1 γ01.
     autorewrite with syn_db; simpl.
-    replace ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 e0⟧ κs)))%tm with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦e0⟧ κs) ⫽ γ0))%tm.
+    replace
+      ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 e0⟧ κs)))%tm
+      with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦e0⟧ κs) ⫽ γ0))%tm.
     - apply: IR.Arr.elim.
       + apply: IR.Univ.inversion.
         apply: 𝒟; eauto.
         apply: IR.General.env_eq_refl_left; eauto.
       + apply: IR.Univ.open_inversion.
-        * move=> γ0' γ1' //= [_ 𝒥].
+        * move=> ? ? //= [_ 𝒥].
           T.efwd ℰ.
           ** T.use ℰ; auto.
-          ** split; simpl.
-             *** suff γ00 : τω ⊧ ⟦Γ⟧ κs ∋⋆ γ0 ∼ γ0.
-                 **** T.use γ00; eauto.
-                 **** apply: IR.General.env_eq_refl_left; eauto.
-             *** T.use 𝒥; auto.
+          ** suff γ00 : τω ⊧ ⟦Γ⟧ κs ∋⋆ γ0 ∼ γ0.
+             *** split; [T.use γ00 | T.use 𝒥]; eauto.
+             *** apply: IR.General.env_eq_refl_left; eauto.
           ** eauto.
           ** split; auto.
              apply: IR.Univ.open_inversionω.
