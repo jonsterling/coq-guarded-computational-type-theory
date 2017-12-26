@@ -33,7 +33,8 @@ Module ETm.
   | isect : t (S Λ) Ψ -> t Λ Ψ
   | univ : nat -> t Λ Ψ
   | lam : t Λ (S Ψ) → t Λ Ψ
-  | fix_ : t Λ (S Ψ) → t Λ Ψ.
+  | fix_ : t Λ (S Ψ) → t Λ Ψ
+  | app : t Λ Ψ → t Λ Ψ → t Λ Ψ.
 
   Arguments unit [Λ Ψ].
   Arguments bool [Λ Ψ].
@@ -62,6 +63,7 @@ Module ETm.
     Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
     Notation "'μ{' e }" := (ETm.fix_ e%etm) (at level 50) : etm_scope.
     Notation "'𝛌{' e }" := (ETm.lam e%etm) (at level 50) : etm_scope.
+    Notation "e1 ⋅ e2" := (ETm.app e1%etm e2%etm) (at level 50) : etm_scope.
   End Notation.
 
   Import Notation.
@@ -84,6 +86,7 @@ Module ETm.
     | univ i => univ i
     | fix_ e => fix_ (map ρΛ (Ren.cong ρΨ) e)
     | lam e => lam (map ρΛ (Ren.cong ρΨ) e)
+    | app e1 e2 => app (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
     end.
 
   Definition mapv {Λ} `(ρΨ : Ren.t Ψ1 Ψ2) : t Λ Ψ1 → t Λ Ψ2 :=
@@ -135,6 +138,7 @@ Module ETm.
     | univ i => univ i
     | fix_ e => fix_ (subst (Sub.cong σ) e)
     | lam e => lam (subst (Sub.cong σ) e)
+    | app e1 e2 => app (subst σ e1) (subst σ e2)
     end.
 
   Module SubstNotation.
