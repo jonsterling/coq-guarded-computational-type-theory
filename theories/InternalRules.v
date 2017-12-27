@@ -1273,7 +1273,7 @@ Module Later.
       by apply: H0.
   Qed.
 
-  Theorem preserves_products i κ {A0 A1 B0 B1} :
+  Theorem preserves_sigma i κ {A0 A1 B0 B1} :
     ▷[κ] (τ[i] ⊧ A0 ∼ A1)
     → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
     → τ[i] ⊧ ▶[κ] (A0 × B0) ∼ ((▶[κ] A1) × (▶[κ] B1)).
