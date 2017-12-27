@@ -753,7 +753,7 @@ Module Arr.
           apply: TS.is_cper_valued; eauto.
           eexists; eauto.
   Qed.
-(*
+
   Theorem elim {i A B f0 f1 e0 e1} :
     τ[i] ⊧ A ∼ A
     → τ[i] ⊧ ⋄ ∙ A ≫ B ∼ B
@@ -767,24 +767,21 @@ Module Arr.
     - apply: Level.mem_eq_at_lvl_of_typehood; eauto.
     - Tower.destruct_tower.
       dependent destruction ℱ1.
-      dependent destruction H1.
-      dependent destruction H.
-      dependent destruction H0.
       move=> Q [ℰ0 [ℰ1 [ℰ2 ℰ3]]].
-      apply: General.mem_eq_conv_both.
-      + apply: OpSem.app_lam; eauto.
-      + apply: OpSem.app_lam; eauto.
-      + apply: Level.eq_mem_from_level.
-        eexists; split; eauto.
-        case: 𝒢 => R𝒢 [𝒢0 𝒢1].
-        suff e0e1 : R0 (e0, e1).
-        * replace (Rℰ e0) with (R1 e0); auto.
+      eexists; split.
+      + eexists; eauto.
+      + replace (Rℰ e0) with (R1 e0).
+        * apply: H; eauto.
+          case: 𝒢 => R𝒢 [𝒢0 𝒢1].
+          replace R0 with R𝒢; auto.
           apply: TS.is_extensional; eexists; eauto.
-          case: (H3 e0 e1); auto => ? [? ?]; eauto.
-        * replace R0 with R𝒢; auto.
-          apply: TS.is_extensional; eexists; eauto.
+        * edestruct H1; eauto.
+          ** case: 𝒢 => R𝒢 [𝒢0 𝒢1].
+             replace R0 with R𝒢; eauto.
+             apply: TS.is_extensional; eexists; eauto.
+          ** T.destruct_conjs.
+             apply: TS.is_extensional; eexists; eauto.
   Qed.
-*)
 End Arr.
 
 
