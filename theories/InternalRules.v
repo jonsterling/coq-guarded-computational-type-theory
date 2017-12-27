@@ -1314,19 +1314,11 @@ Module Later.
         * T.eqcd; case=> e0 e1.
           apply: propositional_extensionality; split.
           ** move=> e0e1.
-             constructor; split; Later.gather.
-             *** move=> X.
-                 T.destruct_conjs.
-                 match goal with
-                 | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
-                 end.
-                 T.destruct_conjs; eauto.
-             *** move=> X.
-                 T.destruct_conjs.
-                 match goal with
-                 | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
-                 end.
-                 T.destruct_conjs; eauto.
+             constructor; split; Later.gather => X; T.destruct_conjs;
+             match goal with
+             | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
+             end;
+             T.destruct_conjs; eauto.
           ** move=> X.
              dependent destruction X.
              destruct H.
@@ -1335,10 +1327,7 @@ Module Later.
              move=> ?; T.destruct_conjs.
              constructor; eauto.
     - Later.gather.
-      case => [? [? [? ?]]].
-      split.
-      + eauto.
-      + eauto.
+      by case => [? [? [? ?]]].
   Qed.
 End Later.
 
