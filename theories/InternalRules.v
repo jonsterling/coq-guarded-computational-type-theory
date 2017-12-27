@@ -1273,6 +1273,84 @@ Module Later.
       by apply: H0.
   Qed.
 
+  Lemma existential_trickery {A} {P Q : A → Prop} :
+    (∀ (x : {x : A | P x}), Q (proj1_sig x))
+    → (∀ x : A, P x → Q x).
+  Proof.
+    move=> H x px.
+    apply: (H (exist _ x px)).
+  Defined.
+
+  Theorem pi_later_univ_eq i κ {A0 A1 B0 B1} :
+    τω ⊧ ▶[κ] 𝕌[i] ∋ A0 ∼ A1
+    → τω ⊧ ⋄ ∙ A0 ≫ ▶[κ] 𝕌[i] ∋ B0 ∼ B1
+    → τω ⊧ ▶[κ] 𝕌[i] ∋ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
+  Proof.
+    move=> [R𝒟 [𝒟0 𝒟1]] ℰ.
+    exists R𝒟; split; eauto.
+    case: 𝒟0 => n 𝒟0.
+    Tower.destruct_tower.
+
+    suff ℱ : ▷[κ0] (τω ⊧ ⋄ ∙ A0 ≫ 𝕌[i] ∋ B0 ∼ B1).
+    - Later.gather.
+      case => X [Y Z].
+      rewrite -Clo.roll in Y.
+      dependent induction n.
+      + dependent destruction Y.
+        * contradiction.
+        * OpSem.destruct_evals.
+          dependent destruction H1.
+      + dependent destruction Y; Spine.simplify.
+        * case: H => //= [j [pj [ev Q]]].
+          OpSem.destruct_evals.
+          rewrite Q; rewrite Q in X.
+          simpl in *.
+
+          suff: τ[j] ⊧ A0 ∼ A1 ∧ τ[j] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1.
+          ** case=> 𝒢0 𝒢1.
+             case: (Fam.family_choice 𝒢0 𝒢1) => Rℰ Rℰsp.
+             case: X => RA [X0 X1].
+             eexists; split.
+             *** Tac.tower_intro; apply: Sig.conn; auto.
+                 apply: Connective.has_arr; eauto.
+                 move=> e0 e1 e0e1; case: (Rℰsp e0 e1).
+                 **** exists RA; split; eauto.
+                 **** move=> Q' ?.
+                      T.destruct_conjs.
+                      repeat split; eauto.
+                      ***** by rewrite -Q'.
+                      ***** by rewrite -Q'.
+             *** Tac.tower_intro; apply: Sig.conn; auto.
+                 apply: Connective.has_arr; eauto.
+                 move=> e0 e1 e0e1; case: (Rℰsp e0 e1).
+                 **** exists RA; split; eauto.
+                 **** move=> Q' ?.
+                      T.destruct_conjs.
+                      repeat split; eauto.
+                      ***** by rewrite -Q'.
+                      ***** by rewrite Q'.
+          ** split.
+             *** case: X => ? [? ?]; eexists; eauto.
+             *** apply: Univ.open_inversion; auto.
+                 split; simpl; auto.
+                 move=> ? ? ?.
+                 Term.simplify_subst.
+                 case: X => ? [? ?]; eexists; eauto.
+
+        * OpSem.destruct_evals.
+          dependent induction H1.
+
+    - apply: Later.push_universal => γ0.
+      apply: (Later.map existential_trickery).
+      apply: Later.push_universal => γ1.
+      case: γ1 => [γ1 γ01].
+      specialize (ℰ γ0 γ1 γ01).
+      simpl.
+
+      apply: mem_univ_inversion.
+      apply: univ_eq; auto.
+  Qed.
+
   Theorem preserves_sigma i κ {A0 A1 B0 B1} :
     ▷[κ] (τ[i] ⊧ A0 ∼ A1)
     → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
