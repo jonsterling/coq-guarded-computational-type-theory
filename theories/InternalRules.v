@@ -818,7 +818,6 @@ Module Prod.
       apply: General.ty_eq_refl_left; eauto.
   Qed.
 
-(*
 
   Theorem intro i {A B e00 e01 e10 e11} :
     τω ⊧ A ∋ e00 ∼ e10
@@ -850,59 +849,45 @@ Module Prod.
           ** apply: Level.mem_eq_at_lvl_of_typehood.
              *** exists R𝒟; split; eauto.
              *** eauto.
-      + econstructor; eauto.
-        constructor; eauto.
-        case: ℰ => Rℰ [ℰ0 ℰ1].
-        replace (R𝒢 e00) with Rℰ; auto.
-
-        specialize (𝒢 e00 e10).
-        suff ℋ: τ[i] ⊧ A ∋ e00 ∼ e10.
-        * case: (𝒢 ℋ) => ? [? [? [? ?]]].
-          apply: TS.is_extensional; eexists; eauto.
-        * apply: Level.mem_eq_at_lvl_of_typehood.
-          ** exists R𝒟; split; eauto.
-          ** eauto.
+      + econstructor; split.
+        * apply: crel.
+          ** apply: TS.is_cper_valued; eexists; eauto.
+          ** apply: OpSem.fst_pair.
+          ** apply: symmetric; first by [apply: per; apply: TS.is_cper_valued; eexists; eauto].
+             apply: crel.
+             *** apply: TS.is_cper_valued; eexists; eauto.
+             *** apply: OpSem.fst_pair.
+             *** apply: symmetric; auto.
+                 apply: per; apply: TS.is_cper_valued; eexists; eauto.
+        * case: ℰ => Rℰ [ℰ0 ℰ1].
+          replace (R𝒢 (⟨e00,e01⟩.1)%tm) with Rℰ; auto.
+          ** apply: crel.
+             *** apply: TS.is_cper_valued; eexists; eauto.
+             *** apply: OpSem.snd_pair.
+             *** apply: symmetric; first by [apply: per; apply: TS.is_cper_valued; eexists; eauto].
+                 apply: crel.
+                 **** apply: TS.is_cper_valued; eexists; eauto.
+                 **** apply: OpSem.snd_pair.
+                 **** apply: symmetric; auto.
+                      apply: per; apply: TS.is_cper_valued; eexists; eauto.
+          ** edestruct (𝒢 e00(⟨e10,e11⟩.1)%tm).
+             *** apply: General.mem_eq_conv_both.
+                 **** auto.
+                 **** apply: OpSem.fst_pair.
+                 **** apply: Level.mem_eq_at_lvl_of_typehood; first (exists R𝒟); eauto.
+             *** edestruct (𝒢 (⟨e00,e01⟩.1)%tm (⟨e10,e11⟩.1)%tm).
+                 **** apply: General.mem_eq_conv_both.
+                      ***** apply: OpSem.fst_pair.
+                      ***** apply: OpSem.fst_pair.
+                      ***** apply: Level.mem_eq_at_lvl_of_typehood; first (exists R𝒟); eauto.
+                 **** destruct H0 as [H01 [H02 [H03 H04]]].
+                      destruct H2 as [H21 [H22 [H23 H24]]].
+                      apply: (TS.is_extensional τω); eauto.
+                      ***** eexists; eauto.
+                      ***** exists i; simpl.
+                            rewrite H in H04.
+                            by rewrite H1.
   Qed.
-
-
-  Theorem ind_formation {n A0 A1 B0 B1} :
-    τ[n] ⊧ A0 ∼ A1
-    → τ[n] ⊧ B0 ∼ B1
-    → τ[n] ⊧ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
-  Proof.
-    move=> [R𝒟 [𝒟0 𝒟1]] [Rℰ [ℰ0 ℰ1]].
-    eexists; split; Tac.tower_intro; apply: Sig.conn; auto;
-    apply: (@Connective.has_prod _ _ _ R𝒟 (fun _ => Rℰ)); eauto;
-    move=> e0 e1 e01; repeat T.split; Term.simplify_subst; eauto.
-  Qed.
-
-  Theorem ind_univ_eq {i A0 A1 B0 B1} :
-    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
-    → τω ⊧ 𝕌[i] ∋ B0 ∼ B1
-    → τω ⊧ 𝕌[i] ∋ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
-  Proof.
-    move=> /Univ.inversion 𝒟 /Univ.inversion ℰ.
-    apply: Univ.intro.
-    by apply: ind_formation.
-  Qed.
-
-  Theorem ind_intro {A B e00 e01 e10 e11} :
-    τω ⊧ A ∋ e00 ∼ e10
-    → τω ⊧ B ∋ e01 ∼ e11
-    → τω ⊧ (A × B.[^1]) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
-  Proof.
-    move=> /Level.eq_mem_to_level [n1 [R𝒟 [𝒟0 𝒟1]]] /Level.eq_mem_to_level [n2 [Rℰ [ℰ0 ℰ1]]].
-    apply: (Level.eq_mem_from_level (n1 + n2)).
-    eexists; split.
-    - Tac.tower_intro; apply: Sig.conn; auto.
-      apply: (@Connective.has_prod _ _ _ R𝒟 (fun _ => Rℰ)).
-      + Tac.tower_mono.
-      + move=> e0 e1 e0e1; repeat split; Term.simplify_subst; auto; Tac.tower_mono.
-    - eauto.
-  Qed.
-
-*)
-
 End Prod.
 
 Module TowerChoice.
