@@ -964,33 +964,6 @@ Module Isect.
     eexists; split; T.specialize_hyps; eauto.
   Qed.
 
-
-
-  Definition cext_transparent (R : rel) (es : Tm.t 0 × Tm.t 0) :=
-    exists v0 v1, π₁ es ⇓ v0 ∧ π₂ es ⇓ v1 ∧ R (v0, v1).
-
-  Theorem cext_implies_cext_transparent {R es} :
-    Connective.cext R es
-    → cext_transparent R es.
-  Proof.
-    case: es => e0 e1; move=> 𝒞.
-    dependent destruction 𝒞.
-    exists v0, v1; eauto.
-  Qed.
-
-  Lemma cext_equiv_cext_transparent :
-    Connective.cext = cext_transparent.
-  Proof.
-    T.eqcd => R.
-    T.eqcd; case => e0 e1.
-    apply: propositional_extensionality; split.
-    - apply: cext_implies_cext_transparent.
-    - move=> //= [v0 [v1 ?]].
-      T.destruct_conjs.
-      econstructor; eauto.
-  Qed.
-
-(*
   Theorem cartesian {n A0 B0 A1 B1} :
     (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
     → (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
@@ -1021,24 +994,20 @@ Module Isect.
 
       + T.eqcd; case => e0 e1.
         apply: propositional_extensionality; split => H.
+        * constructor; split=> κ.
+          ** T.specialize_hyps.
+             dependent destruction H.
+             by destruct H.
 
-        * rewrite cext_equiv_cext_transparent in H.
-          case: LocalClock => κ₀ _.
-          case: (H κ₀) => //= [v0 [v1 [? [? ?]]]].
-
-          econstructor; eauto.
-          Tac.destruct_prod_val.
-          constructor => κ;
-          case: (H κ) => //= [v0' [v1' [? [? ?]]]];
-          Tac.destruct_prod_val;
-          OpSem.evals_to_eq;
-          by T.destruct_eqs.
-
-        * Connective.destruct_cext.
-          repeat Tac.destruct_prod_val;
+          ** T.specialize_hyps.
+             dependent destruction H.
+             by destruct H.
+        * move=> κ.
+          dependent destruction H.
+          destruct H.
+          constructor; split;
           eauto.
   Qed.
-*)
 
   Theorem irrelevance {i A B}:
     τ[i] ⊧ A ∼ B
