@@ -1230,6 +1230,49 @@ Module Later.
   Axiom inh_tm : Later.Inh (Tm.t 0).
   Hint Resolve total_tm inh_tm.
 
+  Lemma fun_ty_inversion {i A B R} :
+    τ[i] ((A ⇒ B)%tm, R)
+    → ∃ (RA : rel) (RB : Tm.t 0 → rel),
+      τ[i] (A, RA)
+      ∧ (∀ e0 e1 : Tm.t 0,
+            RA (e0, e1)
+            → τ[i] ((B ⫽ Sub.inst0 e0)%tm, RB e0)
+              ∧ τ[i] ((B ⫽ Sub.inst0 e0)%tm, RB e1)
+              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%tm, RB e1)
+              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%tm, RB e0))
+      ∧ R = Connective.fun_el RA RB.
+  Proof.
+    move=> 𝒟.
+    Tower.destruct_tower.
+    eauto.
+  Qed.
+
+  Theorem apply κ {A B f0 f1} :
+    τω ⊧ ▶[κ] (A ⇒ B) ∋ f0 ∼ f1
+    → τω ⊧ (▶[κ] A) ⇒ (▶[κ] B) ∋ f0 ∼ f1.
+  Proof.
+    move=> /Level.eq_mem_to_level [n𝒟 [R𝒟 [𝒟0 𝒟1]]].
+    apply: (Level.eq_mem_from_level n𝒟).
+    Tower.destruct_tower.
+    have := Later.map fun_ty_inversion H0.
+    move=> /Later.yank_existential; case; auto => RA.
+    move=> /Later.yank_existential; case; auto => RB.
+    repeat rewrite Later.cart.
+    case => H1 [H2 H3].
+
+    eexists; split.
+    - Tac.tower_intro; apply: Sig.conn; auto; constructor.
+      + Tac.tower_intro; apply: Sig.conn; auto; constructor; eauto.
+      + move=> e0 e1 //= H4; repeat split; Tac.tower_intro; apply: Sig.conn; auto; constructor;
+        Later.gather; case => X1 [X2 [X3 [X4 [X5 X6]]]];
+        edestruct X4; T.destruct_conjs; eauto.
+    - constructor => e0 e1 e0e1.
+      Later.gather; case => X1 [X2 [X3 [X4 [X5 X6]]]].
+      rewrite X5 in X1.
+      dependent destruction X1.
+      by apply: H0.
+  Qed.
+
   Theorem preserves_products i κ {A0 A1 B0 B1} :
     ▷[κ] (τ[i] ⊧ A0 ∼ A1)
     → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
