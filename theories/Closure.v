@@ -18,12 +18,22 @@ Module Connective.
   | ff : bool_val (Tm.ff, Tm.ff).
 
   Inductive prod_el (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
-  | pair :
+  | proj :
       ∀ e0 e1,
         R0 (Tm.fst e0, Tm.fst e1)
         ∧ R1 (Tm.fst e0) (Tm.snd e0, Tm.snd e1)
         → prod_el R0 R1 (e0, e1).
 
+  (* negative definition of pi type *)
+  Inductive fun_el (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
+  | app :
+      ∀ f0 f1,
+        (∀ e0 e1,
+            R0 (e0, e1)
+            → R1 e0 ((f0 ⋅ e0)%tm, (f1 ⋅ e1)%tm))
+        → fun_el R0 R1 (f0, f1).
+
+  (* positive definition of pi type: to be removed *)
   Inductive fun_val (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
   | lam :
       ∀ f0 f1,
