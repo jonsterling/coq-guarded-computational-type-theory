@@ -537,6 +537,21 @@ Module Later.
     apply: 𝒟; eauto.
   Qed.
 
+  Theorem apply `{Γ : ECtx.t Λ Ψ} i {k A B f0 f1} :
+    ⟦ Λ ∣ Γ ≫ ▶[k] 𝕌[i] ∋ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ∙ A ≫ ▶[k] 𝕌[i] ∋ B ≐ B ⟧
+    → ⟦ Λ ∣ Γ ≫ ▶[k] (A ⇒ B) ∋ f0 ≐ f1 ⟧
+    → ⟦ Λ ∣ Γ ≫ (▶[k] A) ⇒ (▶[k] B) ∋ f0 ≐ f1 ⟧.
+  Proof.
+    move=> 𝒟 ℰ ℱ κs 𝒢 ℋ γ0 γ1 γ01 //=.
+    apply: IR.Later.apply.
+    apply: ℱ; auto.
+
+    apply: IR.Univ.open_inversionω.
+    apply: univ_eq; auto.
+(* need some principle for showing that later of a function type is a type *)
+  Abort.
+
   Theorem induction `{Γ : ECtx.t Λ Ψ} k {A e0 e1} :
     ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ μ{ e0 } ≐ μ{ e1 } ⟧.
