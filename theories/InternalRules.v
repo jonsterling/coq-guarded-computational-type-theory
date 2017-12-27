@@ -36,12 +36,6 @@ Module Tac.
     | |- ?A ⇓ ?Av => eauto
     end.
 
-  Ltac destruct_prod_val :=
-    match goal with
-    | H : Connective.prod_val _ _ _ |- _ => dependent destruction H
-    end.
-
-
   (* When you need to show 'τ[n] (A, R)' but R is not of the right
    shape.  This tactic will replace R with a unification variable,
    which allows you to make progress in your proof; then, you have to
@@ -666,25 +660,6 @@ Module Fam.
         apply: TS.is_extensional; eauto.
   Qed.
 
-  Ltac quantifier_formation_tac :=
-    let 𝒟 := fresh in
-    let Rℰspec := fresh in
-    let e0 := fresh in
-    let e1 := fresh in
-    let R𝒟 := fresh in
-    let Q := fresh in
-
-    move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰspec];
-    case: 𝒟 => R𝒟 [𝒟0 𝒟1];
-
-    eexists; split; Tac.tower_intro;
-    (apply: Sig.conn; first by eauto);
-    (econstructor; first by eauto);
-    move=> e0 e1 e01;
-    (case: (Rℰspec e0 e1); first by [exists R𝒟]);
-    move=> Q [? [? [? ?]]]; repeat split; eauto;
-    rewrite -Q; eauto.
-
 End Fam.
 
 Module Arr.
@@ -696,7 +671,23 @@ Module Arr.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 ⇒ B0) ∼ (A1 ⇒ B1).
   Proof.
-    by Fam.quantifier_formation_tac.
+    move=> 𝒟 /(Fam.family_choice 𝒟) [ℰ Rℰsp].
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
+
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto).
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto;
+      rewrite -Q; eauto.
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto.
+      + rewrite -Q; eauto.
+      + rewrite Q; eauto.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
@@ -731,20 +722,35 @@ Module Arr.
       move=> e0 e1 e0e1.
       case: (ℱsp e0 e1); auto.
       + eexists; eauto.
-      + move=> Q [? [? ?]].
+      + move=> Q [? [? [? ?]]].
         repeat T.split; eauto.
-    - econstructor; eauto.
-      constructor => e0 e1 e0e1.
-      case: (ℱsp e0 e1); auto.
-      + eexists; eauto.
-      + move=> ? [? [? [? ?]]].
-        edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [? ?]]; simpl.
-        * split; first by auto.
-          Term.simplify_subst.
-          eexists; split; eauto.
-          eexists; eauto.
-        * replace (Rℱ e0) with R𝒟; auto.
-          apply: TS.is_extensional; eauto; simpl.
+        by rewrite -Q.
+    - econstructor=> e0 e1 e0e1.
+      suff ? : is_cper (Rℱ e0).
+      + apply: crel.
+        * destruct (ℱsp e0 e1); auto.
+          by exists Rℰ.
+        * by apply: OpSem.app_lam.
+        * apply: symmetric.
+          ** by apply: per.
+          ** apply: crel; first by auto.
+             *** by apply: OpSem.app_lam.
+             *** edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [𝒟0 𝒟1]]; eauto.
+                 **** simpl; split; auto.
+                      Term.simplify_subst.
+                      exists Rℰ; split; eauto.
+                      eexists; eauto.
+                 **** replace (Rℱ e0) with R𝒟.
+                      ***** apply: symmetric; auto.
+                            apply: per; apply: TS.is_cper_valued; eauto.
+                      ***** edestruct ℱsp; first by [exists Rℰ; eauto].
+                            T.destruct_conjs.
+                            apply: TS.is_extensional; eauto.
+                            eexists; eauto.
+      + edestruct ℱsp; eauto.
+        * eexists Rℰ; eauto.
+        * T.destruct_conjs.
+          apply: TS.is_cper_valued; eauto.
           eexists; eauto.
   Qed.
 
@@ -761,24 +767,23 @@ Module Arr.
     - apply: Level.mem_eq_at_lvl_of_typehood; eauto.
     - Tower.destruct_tower.
       dependent destruction ℱ1.
-      dependent destruction H1.
-      dependent destruction H.
-      dependent destruction H0.
       move=> Q [ℰ0 [ℰ1 [ℰ2 ℰ3]]].
-      apply: General.mem_eq_conv_both.
-      + apply: OpSem.app_lam; eauto.
-      + apply: OpSem.app_lam; eauto.
-      + apply: Level.eq_mem_from_level.
-        eexists; split; eauto.
-        case: 𝒢 => R𝒢 [𝒢0 𝒢1].
-        suff e0e1 : R0 (e0, e1).
-        * replace (Rℰ e0) with (R1 e0); auto.
+      eexists; split.
+      + eexists; eauto.
+      + replace (Rℰ e0) with (R1 e0).
+        * apply: H; eauto.
+          case: 𝒢 => R𝒢 [𝒢0 𝒢1].
+          replace R0 with R𝒢; auto.
           apply: TS.is_extensional; eexists; eauto.
-          case: (H3 e0 e1); auto => ? [? ?]; eauto.
-        * replace R0 with R𝒢; auto.
-          apply: TS.is_extensional; eexists; eauto.
+        * edestruct H1; eauto.
+          ** case: 𝒢 => R𝒢 [𝒢0 𝒢1].
+             replace R0 with R𝒢; eauto.
+             apply: TS.is_extensional; eexists; eauto.
+          ** T.destruct_conjs.
+             apply: TS.is_extensional; eexists; eauto.
   Qed.
 End Arr.
+
 
 Module Prod.
   Local Hint Extern 40 => Term.simplify_subst.
@@ -790,8 +795,25 @@ Module Prod.
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
     → τ[n] ⊧ (A0 × B0) ∼ (A1 × B1).
   Proof.
-    by Fam.quantifier_formation_tac.
+    move=> 𝒟 /(Fam.family_choice 𝒟) [ℰ Rℰsp].
+    case: 𝒟 => R𝒟 [𝒟0 𝒟1].
+
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by eauto);
+    (econstructor; first by eauto).
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto;
+      rewrite -Q; eauto.
+    - move=> e0 e1 e0e1;
+      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+      move=> Q [? [? [? ?]]];
+      repeat split; eauto.
+      + rewrite -Q; eauto.
+      + rewrite Q; eauto.
   Qed.
+
 
   Theorem univ_eq {i A0 A1 B0 B1} :
     τω ⊧ 𝕌[i] ∋ A0 ∼ A1
@@ -833,61 +855,50 @@ Module Prod.
         * move=> e0 e1 p.
           specialize (𝒢 e0 e1).
           suff ℋ: τ[i] ⊧ A ∋ e0 ∼ e1.
-          ** case: (𝒢 ℋ) => ? [? [? [? ?]]].
-             repeat split; auto;
-             by Tac.tower_mono.
+          ** case: (𝒢 ℋ) => Q [? [? [? ?]]].
+             repeat split; auto; try by Tac.tower_mono.
+             rewrite -Q; Tac.tower_mono.
           ** apply: Level.mem_eq_at_lvl_of_typehood.
              *** exists R𝒟; split; eauto.
              *** eauto.
-      + econstructor; eauto.
-        constructor; eauto.
-        case: ℰ => Rℰ [ℰ0 ℰ1].
-        replace (R𝒢 e00) with Rℰ; auto.
-
-        specialize (𝒢 e00 e10).
-        suff ℋ: τ[i] ⊧ A ∋ e00 ∼ e10.
-        * case: (𝒢 ℋ) => ? [? [? [? ?]]].
-          apply: TS.is_extensional; eexists; eauto.
-        * apply: Level.mem_eq_at_lvl_of_typehood.
-          ** exists R𝒟; split; eauto.
-          ** eauto.
-  Qed.
-
-
-  Theorem ind_formation {n A0 A1 B0 B1} :
-    τ[n] ⊧ A0 ∼ A1
-    → τ[n] ⊧ B0 ∼ B1
-    → τ[n] ⊧ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
-  Proof.
-    move=> [R𝒟 [𝒟0 𝒟1]] [Rℰ [ℰ0 ℰ1]].
-    eexists; split; Tac.tower_intro; apply: Sig.conn; auto;
-    apply: (@Connective.has_prod _ _ _ R𝒟 (fun _ => Rℰ)); eauto;
-    move=> e0 e1 e01; repeat T.split; Term.simplify_subst; eauto.
-  Qed.
-
-  Theorem ind_univ_eq {i A0 A1 B0 B1} :
-    τω ⊧ 𝕌[i] ∋ A0 ∼ A1
-    → τω ⊧ 𝕌[i] ∋ B0 ∼ B1
-    → τω ⊧ 𝕌[i] ∋ (A0 × B0.[^1]) ∼ (A1 × B1.[^1]).
-  Proof.
-    move=> /Univ.inversion 𝒟 /Univ.inversion ℰ.
-    apply: Univ.intro.
-    by apply: ind_formation.
-  Qed.
-
-  Theorem ind_intro {A B e00 e01 e10 e11} :
-    τω ⊧ A ∋ e00 ∼ e10
-    → τω ⊧ B ∋ e01 ∼ e11
-    → τω ⊧ (A × B.[^1]) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
-  Proof.
-    move=> /Level.eq_mem_to_level [n1 [R𝒟 [𝒟0 𝒟1]]] /Level.eq_mem_to_level [n2 [Rℰ [ℰ0 ℰ1]]].
-    apply: (Level.eq_mem_from_level (n1 + n2)).
-    eexists; split.
-    - Tac.tower_intro; apply: Sig.conn; auto.
-      apply: (@Connective.has_prod _ _ _ R𝒟 (fun _ => Rℰ)).
-      + Tac.tower_mono.
-      + move=> e0 e1 e0e1; repeat split; Term.simplify_subst; auto; Tac.tower_mono.
-    - eauto.
+      + econstructor; split.
+        * apply: crel.
+          ** apply: TS.is_cper_valued; eexists; eauto.
+          ** apply: OpSem.fst_pair.
+          ** apply: symmetric; first by [apply: per; apply: TS.is_cper_valued; eexists; eauto].
+             apply: crel.
+             *** apply: TS.is_cper_valued; eexists; eauto.
+             *** apply: OpSem.fst_pair.
+             *** apply: symmetric; auto.
+                 apply: per; apply: TS.is_cper_valued; eexists; eauto.
+        * case: ℰ => Rℰ [ℰ0 ℰ1].
+          replace (R𝒢 (⟨e00,e01⟩.1)%tm) with Rℰ; auto.
+          ** apply: crel.
+             *** apply: TS.is_cper_valued; eexists; eauto.
+             *** apply: OpSem.snd_pair.
+             *** apply: symmetric; first by [apply: per; apply: TS.is_cper_valued; eexists; eauto].
+                 apply: crel.
+                 **** apply: TS.is_cper_valued; eexists; eauto.
+                 **** apply: OpSem.snd_pair.
+                 **** apply: symmetric; auto.
+                      apply: per; apply: TS.is_cper_valued; eexists; eauto.
+          ** edestruct (𝒢 e00(⟨e10,e11⟩.1)%tm).
+             *** apply: General.mem_eq_conv_both.
+                 **** auto.
+                 **** apply: OpSem.fst_pair.
+                 **** apply: Level.mem_eq_at_lvl_of_typehood; first (exists R𝒟); eauto.
+             *** edestruct (𝒢 (⟨e00,e01⟩.1)%tm (⟨e10,e11⟩.1)%tm).
+                 **** apply: General.mem_eq_conv_both.
+                      ***** apply: OpSem.fst_pair.
+                      ***** apply: OpSem.fst_pair.
+                      ***** apply: Level.mem_eq_at_lvl_of_typehood; first (exists R𝒟); eauto.
+                 **** destruct H0 as [H01 [H02 [H03 H04]]].
+                      destruct H2 as [H21 [H22 [H23 H24]]].
+                      apply: (TS.is_extensional τω); eauto.
+                      ***** eexists; eauto.
+                      ***** exists i; simpl.
+                            rewrite H in H04.
+                            by rewrite H1.
   Qed.
 End Prod.
 
@@ -965,32 +976,6 @@ Module Isect.
     eexists; split; T.specialize_hyps; eauto.
   Qed.
 
-
-
-  Definition cext_transparent (R : rel) (es : Tm.t 0 × Tm.t 0) :=
-    exists v0 v1, π₁ es ⇓ v0 ∧ π₂ es ⇓ v1 ∧ R (v0, v1).
-
-  Theorem cext_implies_cext_transparent {R es} :
-    Connective.cext R es
-    → cext_transparent R es.
-  Proof.
-    case: es => e0 e1; move=> 𝒞.
-    dependent destruction 𝒞.
-    exists v0, v1; eauto.
-  Qed.
-
-  Lemma cext_equiv_cext_transparent :
-    Connective.cext = cext_transparent.
-  Proof.
-    T.eqcd => R.
-    T.eqcd; case => e0 e1.
-    apply: propositional_extensionality; split.
-    - apply: cext_implies_cext_transparent.
-    - move=> //= [v0 [v1 ?]].
-      T.destruct_conjs.
-      econstructor; eauto.
-  Qed.
-
   Theorem cartesian {n A0 B0 A1 B1} :
     (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
     → (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
@@ -1021,21 +1006,18 @@ Module Isect.
 
       + T.eqcd; case => e0 e1.
         apply: propositional_extensionality; split => H.
+        * constructor; split=> κ.
+          ** T.specialize_hyps.
+             dependent destruction H.
+             by destruct H.
 
-        * rewrite cext_equiv_cext_transparent in H.
-          case: LocalClock => κ₀ _.
-          case: (H κ₀) => //= [v0 [v1 [? [? ?]]]].
-
-          econstructor; eauto.
-          Tac.destruct_prod_val.
-          constructor => κ;
-          case: (H κ) => //= [v0' [v1' [? [? ?]]]];
-          Tac.destruct_prod_val;
-          OpSem.evals_to_eq;
-          by T.destruct_eqs.
-
-        * Connective.destruct_cext.
-          repeat Tac.destruct_prod_val;
+          ** T.specialize_hyps.
+             dependent destruction H.
+             by destruct H.
+        * move=> κ.
+          dependent destruction H.
+          destruct H.
+          constructor; split;
           eauto.
   Qed.
 
@@ -1069,7 +1051,17 @@ Proof.
   by rewrite /rel.
 Qed.
 
-Hint Resolve rel_total rel_inh.
+Axiom rel_fam_total : Later.Total (Tm.t 0 → rel).
+
+Theorem rel_fam_inh : Later.Inh (Tm.t 0 → rel).
+Proof.
+  rewrite /rel.
+  split; auto.
+  move=> ? ?.
+  exact ⊤.
+Qed.
+
+Hint Resolve rel_total rel_inh rel_fam_total rel_fam_inh.
 
 Module Later.
   Theorem formationω {κ} {A B} :
@@ -1232,6 +1224,78 @@ Module Later.
         move=> [? ?].
           by rewrite Tm.subst_ret.
       + by Later.gather; case.
+  Qed.
+
+  Axiom total_tm : Later.Total (Tm.t 0).
+  Axiom inh_tm : Later.Inh (Tm.t 0).
+  Hint Resolve total_tm inh_tm.
+
+  Theorem preserves_products i κ {A0 A1 B0 B1} :
+    ▷[κ] (τ[i] ⊧ A0 ∼ A1)
+    → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
+    → τ[i] ⊧ ▶[κ] (A0 × B0) ∼ ((▶[κ] A1) × (▶[κ] B1)).
+  Proof.
+    move=> 𝒟 ℰ.
+    case: (Later.yank_existential _ _ _ 𝒟); auto => R𝒟 𝒟'.
+
+    suff 𝒟ℰ: ▷[κ] (τ[i] ⊧ A0 ∼ A1 ∧ τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1).
+    - case: (Later.yank_existential _ _ _ (Later.map (fun x => Fam.family_choice (proj1 x) (proj2 x)) 𝒟ℰ)); auto.
+      move=> Rℰ ℰsp.
+
+      eexists; split.
+      + Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+        Later.gather; case => [[? [? ?]] [ℰ0 [[ℰ1 ℰ2] [[ℰ3 ℰ4] ℰ5]]]].
+        Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+        * exact ℰ1.
+        * move=> e0 e1 e0e1.
+          case (ℰ5 e0 e1).
+          ** eexists; eauto.
+          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto.
+             *** rewrite -Q; exact H.
+             *** rewrite -Q; assumption.
+
+      + Tac.ts_flex_rel.
+        * Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+          ** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
+             move {ℰsp 𝒟ℰ 𝒟 ℰ}.
+             Later.gather; case; eauto.
+          ** simpl.
+             move=> e0 e1 //= e0e1.
+             repeat split;
+             Tac.tower_intro; (apply: Sig.conn; first by [auto]); constructor; Later.gather;
+             move=> [ℱ0 [ℱ1 [[ℱ2 ℱ3] [[ℱ4 ℱ5] [ℱ6 ℱ7]]]]];
+             (case: (ℱ6 e0 e1); first by [exists R𝒟]);
+             move=> Q [ℋ0 [ℋ1 [ℋ2 ℋ3]]]; eauto.
+             *** rewrite -Q; eauto.
+             *** rewrite Q; eauto.
+        * T.eqcd; case=> e0 e1.
+          apply: propositional_extensionality; split.
+          ** move=> e0e1.
+             constructor; split; Later.gather.
+             *** move=> X.
+                 T.destruct_conjs.
+                 match goal with
+                 | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
+                 end.
+                 T.destruct_conjs; eauto.
+             *** move=> X.
+                 T.destruct_conjs.
+                 match goal with
+                 | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
+                 end.
+                 T.destruct_conjs; eauto.
+          ** move=> X.
+             dependent destruction X.
+             destruct H.
+             clear ℰsp 𝒟 ℰ 𝒟' 𝒟ℰ.
+             Later.gather.
+             move=> ?; T.destruct_conjs.
+             constructor; eauto.
+    - Later.gather.
+      case => [? [? [? ?]]].
+      split.
+      + eauto.
+      + eauto.
   Qed.
 End Later.
 

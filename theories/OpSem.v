@@ -150,3 +150,27 @@ Proof.
   - dependent induction H.
     eauto.
 Qed.
+
+Theorem fst_pair :
+  ∀ e0 e1,
+    e0 ≼₀ (⟨e0,e1⟩.1).
+Proof.
+  move=> e0 e1 v H.
+  dependent destruction H.
+  constructor; auto.
+  - econstructor.
+    + apply: step_fst_pair.
+    + auto.
+Qed.
+
+Theorem snd_pair :
+  ∀ e0 e1,
+    e1 ≼₀ (⟨e0,e1⟩.2).
+Proof.
+  move=> e0 e1 v H.
+  dependent destruction H.
+  constructor; auto.
+  - econstructor.
+    + apply: step_snd_pair.
+    + auto.
+Qed.
