@@ -36,12 +36,6 @@ Module Tac.
     | |- ?A ⇓ ?Av => eauto
     end.
 
-  Ltac destruct_prod_val :=
-    match goal with
-    | H : Connective.prod_val _ _ _ |- _ => dependent destruction H
-    end.
-
-
   (* When you need to show 'τ[n] (A, R)' but R is not of the right
    shape.  This tactic will replace R with a unification variable,
    which allows you to make progress in your proof; then, you have to
@@ -778,6 +772,7 @@ Module Arr.
   Qed.
 End Arr.
 
+
 Module Prod.
   Local Hint Extern 40 => Term.simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
@@ -807,6 +802,7 @@ Module Prod.
       + rewrite Q; eauto.
   Qed.
 
+
   Theorem univ_eq {i A0 A1 B0 B1} :
     τω ⊧ 𝕌[i] ∋ A0 ∼ A1
     → τω ⊧ ⋄∙A0 ≫ 𝕌[i] ∋ B0 ∼ B1
@@ -822,6 +818,7 @@ Module Prod.
       apply: General.ty_eq_refl_left; eauto.
   Qed.
 
+(*
 
   Theorem intro i {A B e00 e01 e10 e11} :
     τω ⊧ A ∋ e00 ∼ e10
@@ -903,6 +900,9 @@ Module Prod.
       + move=> e0 e1 e0e1; repeat split; Term.simplify_subst; auto; Tac.tower_mono.
     - eauto.
   Qed.
+
+*)
+
 End Prod.
 
 Module TowerChoice.
@@ -1005,6 +1005,7 @@ Module Isect.
       econstructor; eauto.
   Qed.
 
+(*
   Theorem cartesian {n A0 B0 A1 B1} :
     (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
     → (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
@@ -1052,6 +1053,7 @@ Module Isect.
           repeat Tac.destruct_prod_val;
           eauto.
   Qed.
+*)
 
   Theorem irrelevance {i A B}:
     τ[i] ⊧ A ∼ B
@@ -1278,11 +1280,14 @@ Module Later.
       + Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
         Later.gather; case => [[? [? ?]] [ℰ0 [[ℰ1 ℰ2] [[ℰ3 ℰ4] ℰ5]]]].
         Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
-        * eauto.
+        * exact ℰ1.
         * move=> e0 e1 e0e1.
           case (ℰ5 e0 e1).
           ** eexists; eauto.
-          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto; by rewrite -Q.
+          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto.
+             *** rewrite -Q; exact H.
+             *** rewrite -Q; assumption.
+
       + Tac.ts_flex_rel.
         * Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
           ** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
@@ -1299,16 +1304,33 @@ Module Later.
              *** rewrite Q; eauto.
         * T.eqcd; case=> e0 e1.
           apply: propositional_extensionality; split.
-
-          ** move=> ℱ.
-             rewrite Isect.cext_equiv_cext_transparent in ℱ.
-             case: {ℱ} (Later.yank_existential _ _ _ ℱ); eauto => v0 //= ℱ.
-             case: {ℱ} (Later.yank_existential _ _ _ ℱ); eauto => v1 //= ℱ.
-             econstructor.
-             *** admit.
-             *** admit.
-             *** constructor.
-  Abort.
+          ** move=> e0e1.
+             constructor; split; Later.gather.
+             *** move=> X.
+                 T.destruct_conjs.
+                 match goal with
+                 | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
+                 end.
+                 T.destruct_conjs; eauto.
+             *** move=> X.
+                 T.destruct_conjs.
+                 match goal with
+                 | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
+                 end.
+                 T.destruct_conjs; eauto.
+          ** move=> X.
+             dependent destruction X.
+             destruct H.
+             clear ℰsp 𝒟 ℰ 𝒟' 𝒟ℰ.
+             Later.gather.
+             move=> ?; T.destruct_conjs.
+             constructor; eauto.
+    - Later.gather.
+      case => [? [? [? ?]]].
+      split.
+      + eauto.
+      + eauto.
+  Qed.
 End Later.
 
 
