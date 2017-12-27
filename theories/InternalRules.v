@@ -725,21 +725,35 @@ Module Arr.
       + move=> Q [? [? [? ?]]].
         repeat T.split; eauto.
         by rewrite -Q.
-    - econstructor; eauto.
-      constructor => e0 e1 e0e1.
-      case: (ℱsp e0 e1); auto.
-      + eexists; eauto.
-      + move=> ? [? [? [? ?]]].
-        edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [? ?]]; simpl.
-        * split; first by auto.
-          Term.simplify_subst.
-          eexists; split; eauto.
-          eexists; eauto.
-        * replace (Rℱ e0) with R𝒟; auto.
-          apply: TS.is_extensional; eauto; simpl.
+    - econstructor=> e0 e1 e0e1.
+      suff ? : is_cper (Rℱ e0).
+      + apply: crel.
+        * destruct (ℱsp e0 e1); auto.
+          by exists Rℰ.
+        * by apply: OpSem.app_lam.
+        * apply: symmetric.
+          ** by apply: per.
+          ** apply: crel; first by auto.
+             *** by apply: OpSem.app_lam.
+             *** edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [𝒟0 𝒟1]]; eauto.
+                 **** simpl; split; auto.
+                      Term.simplify_subst.
+                      exists Rℰ; split; eauto.
+                      eexists; eauto.
+                 **** replace (Rℱ e0) with R𝒟.
+                      ***** apply: symmetric; auto.
+                            apply: per; apply: TS.is_cper_valued; eauto.
+                      ***** edestruct ℱsp; first by [exists Rℰ; eauto].
+                            T.destruct_conjs.
+                            apply: TS.is_extensional; eauto.
+                            eexists; eauto.
+      + edestruct ℱsp; eauto.
+        * eexists Rℰ; eauto.
+        * T.destruct_conjs.
+          apply: TS.is_cper_valued; eauto.
           eexists; eauto.
   Qed.
-
+(*
   Theorem elim {i A B f0 f1 e0 e1} :
     τ[i] ⊧ A ∼ A
     → τ[i] ⊧ ⋄ ∙ A ≫ B ∼ B
@@ -770,6 +784,7 @@ Module Arr.
         * replace R0 with R𝒢; auto.
           apply: TS.is_extensional; eexists; eauto.
   Qed.
+*)
 End Arr.
 
 
