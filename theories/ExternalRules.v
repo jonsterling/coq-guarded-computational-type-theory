@@ -538,7 +538,7 @@ Module Later.
   Qed.
 
   Theorem apply `{Γ : ECtx.t Λ Ψ} i {k A B f0 f1} :
-    ⟦ Λ ∣ Γ ≫ ▶[k] 𝕌[i] ∋ A ≐ A ⟧
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
     → ⟦ Λ ∣ Γ ∙ A ≫ ▶[k] 𝕌[i] ∋ B ≐ B ⟧
     → ⟦ Λ ∣ Γ ≫ ▶[k] (A ⇒ B) ∋ f0 ≐ f1 ⟧
     → ⟦ Λ ∣ Γ ≫ (▶[k] A) ⇒ (▶[k] B) ∋ f0 ≐ f1 ⟧.
@@ -548,9 +548,28 @@ Module Later.
     apply: ℱ; auto.
 
     apply: IR.Univ.open_inversionω.
-    apply: univ_eq; auto.
-(* need some principle for showing that later of a function type is a type *)
-  Abort.
+    move=> γ0' γ1' γ01' //=.
+    apply: IR.Later.univ_eq.
+    apply: IR.Later.pi_later_univ_eq.
+    - apply: IR.Later.intro; apply: Later.next.
+      apply: 𝒟; auto.
+    - move=> δ0 δ1 δ01.
+      Term.simplify_subst.
+      T.efwd ℰ.
+      + T.use ℰ; eauto.
+      + split; simpl.
+        * T.use γ01'; eauto.
+        * case: δ01 => _ ℱ.
+          T.use ℱ; eauto.
+      + move=> ? ? ? //=.
+        apply: IR.Later.formationω.
+        apply: Later.next.
+        eauto.
+      + split; auto.
+        apply: IR.Univ.open_inversionω.
+        apply: 𝒟; auto.
+  Qed.
+
 
   Theorem induction `{Γ : ECtx.t Λ Ψ} k {A e0 e1} :
     ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
