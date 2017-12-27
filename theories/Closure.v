@@ -72,8 +72,7 @@ Module Connective.
                 ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e1)
                 ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1)
                 ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e0))
-
-        → has τ arr (Tm.arr A0 A1, cext (fun_val R0 R1))
+        → has τ arr (Tm.arr A0 A1, fun_el R0 R1)
 
   | has_later :
       ∀ κ B R,
@@ -277,6 +276,7 @@ Module Clo.
       destruct_has => ? ?;
       destruct_clo; try by [cleanup];
       destruct_has; cleanup.
+
       + T.eqcd; case => e0 e1; apply: propositional_extensionality; split => e0e1.
         * dependent destruction e0e1.
           destruct H1.
@@ -298,35 +298,28 @@ Module Clo.
              *** symmetry.
                  apply: H01; eauto.
                  destruct (H3 (e0.1)%tm (e1.1)%tm); eauto.
-      + f_equal.
-        T.eqcd; case => e0 e1.
-        apply: propositional_extensionality; split => Q.
-        * dependent destruction Q.
+      + T.eqcd; case => f0 f1; apply: propositional_extensionality; split => f0f1.
+        * dependent destruction f0f1.
           constructor => e0 e1 e0e1.
           replace (R3 e0) with (R1 e0).
           ** apply: H1.
              replace R0 with R2; auto.
              symmetry.
-             by apply: H.
-          ** edestruct H0 as [H01 H02].
+             apply: H; auto.
+          ** edestruct H0; eauto.
              *** replace R0 with R2; eauto.
-                 symmetry.
-                 by apply: H.
-             *** apply: H01; simpl.
-                 edestruct H3 as [? [? ?]]; eauto.
-        * dependent destruction Q.
+                 symmetry; apply: H; eauto.
+             *** edestruct H3; eauto.
+        * dependent destruction f0f1.
           constructor => e0 e1 e0e1.
-          ** replace (R1 e0) with (R3 e0).
-             *** apply: H1.
-                 replace R2 with R0; auto.
-             *** edestruct (H0 e0 e1) as [H00 H01]; eauto.
-                 symmetry.
-                 apply: H00; simpl.
-                 edestruct H3.
-                 **** replace R2 with R0.
-                      eauto.
-                      apply: H; auto.
-                 **** auto.
+          replace (R1 e0) with (R3 e0).
+          ** apply: H1.
+             replace R2 with R0; auto.
+          ** edestruct H0; eauto.
+             *** edestruct H3; eauto.
+                 **** replace R2 with R0; eauto.
+                 **** T.destruct_conjs; symmetry; auto.
+
       + do ? (T.eqcd; moves).
         Later.gather => *; T.destruct_conjs.
         rewrite_functionality_ih; eauto.
@@ -371,58 +364,6 @@ Module Clo.
       by [dependent destruction H1;
           dependent destruction H2].
   Qed.
-(*
-  Theorem prod_val_per {R0 R1} :
-    is_per R0
-    → (∀ e0 e1, R0 (e0, e1) → R1 e0 = R1 e1 ∧ is_per (R1 e1))
-    → is_per (Connective.prod_val R0 R1).
-  Proof.
-    move=> [ihSm0 ihTr0] ihper1.
-    constructor.
-    - move=> e0 e1 H1.
-      dependent destruction H1.
-      constructor; eauto.
-      destruct (ihper1 e10 e00); eauto.
-      apply: symmetric; eauto; by rewrite H1.
-    - move=> ? ? ? H1 H2.
-      dependent destruction H1.
-      dependent destruction H2.
-      constructor; eauto.
-      destruct (ihper1 e10 e00); eauto.
-      apply: transitive; rewrite -H3; eauto;
-      rewrite H3; auto.
-  Qed.
-
-*)
-
-  Theorem fun_val_per {R0 R1} :
-    is_per R0
-    → (∀ e0 e1, R0 (e0, e1) → R1 e0 = R1 e1 ∧ is_per (R1 e1))
-    → is_per (Connective.fun_val R0 R1).
-  Proof.
-    move=> R0per ihper1.
-    constructor.
-    - move=> f0 f1 H1.
-      dependent destruction H1.
-      constructor => e0 e1 H2.
-      edestruct ihper1; eauto.
-      apply: symmetric; rewrite H0; auto.
-      apply: H.
-      by apply: symmetric.
-    - move=> f0 f1 f2 H1 H2.
-      dependent destruction H1.
-      dependent destruction H2.
-      constructor => e0 e1 H3.
-      edestruct ihper1; eauto.
-      apply: transitive.
-      + by rewrite H1.
-      + apply: H; eauto.
-      + rewrite H1.
-        apply: H0.
-        apply: transitive; auto.
-        * apply: symmetric; eauto.
-        * auto.
-  Qed.
 
   Theorem cext_computational {R} :
     rel_computational (Connective.cext R).
@@ -465,6 +406,27 @@ Module Clo.
       constructor; auto.
       econstructor.
       * apply: step_fst_cong; eauto.
+      * edestruct IHeval_steps; eauto.
+  Qed.
+
+  Theorem app_eval :
+    ∀ f f' e v,
+      (f ⇓ 𝛌{f'})
+      → f' ⫽ Sub.inst0 e ⇓ v
+      → (f ⋅ e) ⇓ v.
+  Proof.
+    move=> f f' e v H0 H1.
+    dependent induction H0.
+    dependent induction eval_steps.
+    - constructor; auto.
+      + econstructor.
+        * by apply: step_app_lam.
+        * by dependent induction H1.
+      + by destruct H1.
+    - dependent destruction H1.
+      constructor; auto.
+      econstructor.
+      * apply: step_app_cong; eauto.
       * edestruct IHeval_steps; eauto.
   Qed.
 
@@ -529,6 +491,27 @@ Module Clo.
       + by exists e1, e2.
   Qed.
 
+  Theorem app_eval_inv :
+    ∀ f e v,
+      f ⋅ e ⇓ v
+      → ∃ f', (f ⇓ 𝛌{f'}) ∧ (f' ⫽ Sub.inst0 e) ⇓ v.
+  Proof.
+    move=> f e v H.
+    dependent induction H.
+    dependent induction eval_steps.
+    - dependent induction eval_val.
+    - dependent induction H.
+      + edestruct IHeval_steps; eauto.
+        destruct H0.
+        exists x; split.
+        * constructor; auto.
+          econstructor; eauto.
+          by dependent induction H0.
+        * auto.
+      + by exists e1.
+  Qed.
+
+
   Theorem fst_cong_approx :
     ∀ e0 e1,
       e0 ≼₀ e1
@@ -550,6 +533,18 @@ Module Clo.
     move=> [e' [p2 [H0 H1]]].
     apply: snd_eval; eauto.
   Qed.
+
+  Theorem app_cong_approx :
+    ∀ f0 f1 e,
+      f0 ≼₀ f1
+      → (f0 ⋅ e) ≼₀ (f1 ⋅ e).
+  Proof.
+    move=> f0 f1 e f01 v ℰ.
+    have := app_eval_inv ℰ.
+    move=> [f' [? ?]].
+    apply: app_eval; eauto.
+  Qed.
+
 
   (* HORRIFIC *)
   Instance cper_valued {σ} :
@@ -631,54 +626,48 @@ Module Clo.
                             apply: (TS.is_extensional (t σ)); eauto.
 
 
-        * constructor.
+        * destruct H.
+          constructor.
           ** constructor.
-             *** move=> e0 e1 e01.
-                 dependent destruction e01.
-                 econstructor; eauto.
-                 dependent destruction H3.
-                 constructor.
-                 move=> e2 e3 e23.
-                 apply: symmetric.
-                 **** edestruct H0; eauto.
-                      T.destruct_conjs.
-                      apply: per; eauto.
-                 **** replace (R1 e2) with (R1 e3).
-                      ***** apply: H3; eauto.
+             *** move=> f0 f1 f01.
+                 dependent destruction f01.
+                 constructor=> e0 e1 e01.
+                 destruct H.
+                 apply: symmetric; auto.
+                 **** edestruct H0; T.destruct_conjs; eauto.
+                      by apply: per.
+                 **** replace (R1 e0) with (R1 e1).
+                      ***** apply: H2; auto.
                             apply: symmetric; auto.
-                            apply: per; T.destruct_conjs; eauto.
+                            apply: per; auto.
                       ***** edestruct H0; eauto.
                             T.destruct_conjs.
-                            eapply (@TS.is_extensional (t σ)); eauto.
-                            apply: extensionality.
-
-             *** move=> e0 e1 e2 e01 e12.
-                 dependent destruction e01.
-                 dependent destruction e12.
-                 econstructor; eauto.
-                 dependent destruction H3.
-                 dependent destruction H6.
-                 OpSem.evals_to_eq.
-                 T.destruct_eqs.
-                 constructor => e3 e4 e34.
-                 destruct (H0 e3 e4); auto.
-                 T.destruct_conjs.
-                 apply: transitive; first by apply: per; eauto.
-                 **** apply: H3; eauto.
-                 **** replace (R1 e3) with (R1 e4).
-                      ***** apply: H6; eauto.
-                            apply: transitive; first by [apply: per; eauto]; eauto.
-                            apply: symmetric; first by [apply: per; eauto]; eauto.
-                      *****
-                      match goal with
-                      | H1 : t σ (?A, ?R1), H2 : t σ (?A, ?R2) |- ?R1 = ?R2 =>
-                        eapply (@TS.is_extensional (t σ));
-                          [ apply: extensionality; eauto
-                          | exact H1
-                          | exact H2]
-                      end.
-
-          ** eauto.
+                            apply: (TS.is_extensional (t σ)); eauto.
+             *** move=> f0 f1 f2 f01 f12.
+                 dependent destruction f01.
+                 dependent destruction f12.
+                 constructor=> e0 e1 e01.
+                 apply: transitive.
+                 **** edestruct H0; eauto.
+                      T.destruct_conjs.
+                      by apply: per.
+                 **** apply: H2.
+                      eauto.
+                 **** replace (R1 e0) with (R1 e1).
+                      ***** apply: H3; eauto.
+                            apply: transitive; first by [apply: per]; eauto.
+                            apply: symmetric; first by [apply: per]; eauto.
+                      ***** edestruct H0; eauto.
+                            T.destruct_conjs.
+                            apply: (TS.is_extensional (t σ)); eauto.
+          ** move=> f0 f1 f2 f01 H2.
+             dependent destruction H2.
+             constructor.
+             move=> e0 e1 e0e1.
+             apply: crel.
+             *** edestruct H0; eauto; T.destruct_conjs; eauto.
+             *** apply: app_cong_approx; exact f01.
+             *** apply: H2; auto.
 
         * constructor.
           ** constructor.
