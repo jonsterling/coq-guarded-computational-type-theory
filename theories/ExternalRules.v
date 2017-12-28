@@ -293,11 +293,6 @@ Module Arr.
              *** case: γ01' => //= _ ℐ.
                  T.use ℐ; eauto.
           ** apply: IR.General.env_eq_refl_left; eauto.
-      + split; auto.
-        move=> ? ? ?; Term.simplify_subst.
-        apply: IR.Univ.inversion.
-        apply: ℰ; auto.
-        apply: IR.General.env_eq_refl_left; eauto.
   Qed.
 
   Theorem elim `{Γ : ECtx.t Λ Ψ} {i A B f0 f1 e0 e1} :
@@ -327,11 +322,6 @@ Module Arr.
           ** split; auto.
              apply: IR.Univ.open_inversionω.
              apply: 𝒟; auto.
-        * split; auto.
-          apply: IR.Univ.open_inversion; auto.
-          move=> ? ? ?; Term.simplify_subst.
-          apply: 𝒟; auto.
-          apply: IR.General.env_eq_refl_left; eauto.
       + apply: ℱ; auto.
         apply: IR.Univ.open_inversionω.
         apply: univ_eq; eauto.

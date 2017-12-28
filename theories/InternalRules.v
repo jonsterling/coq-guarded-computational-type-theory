@@ -120,6 +120,20 @@ Module Level.
     - auto.
   Qed.
 
+
+  Lemma eq_env_from_level {Ψ} {Γ : Prectx Ψ} i {γ0 γ1} :
+    τ[i] ⊧ Γ ∋⋆ γ0 ∼ γ1
+    → τω ⊧ Γ ∋⋆ γ0 ∼ γ1.
+  Proof.
+    move=> 𝒟.
+    induction Γ; simpl; repeat split.
+    - apply: IHΓ.
+      by case: 𝒟.
+    - apply: eq_mem_from_level.
+      case: 𝒟 => _ //= ?.
+      eauto.
+  Qed.
+
   Lemma mem_eq_at_lvl_of_typehood {m n A B e0 e1} :
     τ[n] ⊧ A ∋ e0 ∼ e1
     → τ[m] ⊧ A ∼ B
@@ -474,37 +488,21 @@ Module Univ.
       apply: Level.eq_ty_from_level.
       apply: inversion.
       eassumption.
-    - induction Γ; simpl; auto; split.
+    - by induction Γ.
   Qed.
+
 
   Lemma open_inversion {Ψ} {Γ : Prectx Ψ} {i A0 A1} :
     τω ⊧ Γ ≫ 𝕌[i] ∋ A0 ∼ A1
-    → τ[i] ⊧ Γ ctx
     → τ[i] ⊧ Γ ≫ A0 ∼ A1.
   Proof.
-    move=> 𝒟 ℰ γ0 γ1 γ01.
+    move=> 𝒟 γ0 γ1 γ01.
     specialize (𝒟 γ0 γ1).
-    suff: τω ⊧ Γ ∋⋆ γ0 ∼ γ1.
-    - move=> /𝒟 ℱ.
-      by apply: inversion.
-    - induction Γ; simpl; auto; split.
-      + apply: (IHΓ t t).
-        * move=> ?.
-          Term.simplify_subst.
-          apply: intro.
-          simpl in *.
-          case: ℰ => 𝒢 ℋ.
-          case: γ01 => ? ?.
-          by apply: ℋ.
-        * by case: ℰ.
-        * by case: γ01.
-
-      + apply: Level.eq_mem_from_level.
-        case: γ01 => ? ?.
-        eauto.
+    apply: inversion.
+    apply: 𝒟.
+    apply: Level.eq_env_from_level.
+    eauto.
   Qed.
-
-
 
   Theorem spine_inversion {n i R} :
     τ[n] (Tm.univ i, R)
@@ -582,81 +580,81 @@ Module Fam.
         τ ⊧ A0 ∋ e0 ∼ e1
         → R e0 = R e1
           ∧ τ ((B0 ⫽ Sub.inst0 e0)%tm, R e0)
-          ∧ τ ((B1 ⫽ Sub.inst0 e1)%tm, R e1)
+          ∧ τ ((B1 ⫽ Sub.inst0 e1)%tm, R e0)
           ∧ τ ((B0 ⫽ Sub.inst0 e1)%tm, R e0)
           ∧ τ ((B1 ⫽ Sub.inst0 e0)%tm, R e0).
   Proof.
     move=> 𝒟 ℰ.
-    exists (fun e =>
+    set R := (fun e =>
          fun es =>
            τ ⊧ A0 ∋ e ∼ e
            → τ ⊧ B0 ⫽ Sub.inst0 e ∋ (π₁ es) ∼ (π₂ es)).
+
+    exists R.
 
     move=> e0 e1 ℱ.
     destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e0)) as [Rℰ [ℰ0 ℰ1]]; eauto.
     destruct (ℰ (Sub.inst0 e0) (Sub.inst0 e0)) as [Rℰ' [ℰ0' ℰ1']]; eauto.
 
-    repeat split.
+    suff: R e0 = R e1.
+    - move=> Q; repeat split; auto.
+      + T.use ℰ0'; repeat f_equal.
+        T.eqcd; case => e'0 e'1 //=.
+        apply: propositional_extensionality; split.
+        * move=> e'0e'1 e0e0 //=.
+          eexists; split; eauto.
+        * move=> //= 𝒢.
+          destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+          replace Rℰ' with R𝒢; eauto.
+          apply: TS.is_extensional; eauto.
+
+      + destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+        T.use ℰ1''; repeat f_equal.
+        rewrite Q.
+        T.eqcd; case => e'0 e'1 //=.
+        apply: propositional_extensionality; split.
+        * move=> e'0e'1 e1e1 //=.
+          eexists; split; eauto.
+        * move=> //= 𝒢.
+          destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+          replace Rℰ'' with R𝒢; eauto.
+          apply: TS.is_extensional; eauto.
+      +  destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+         T.use ℰ0''; repeat f_equal.
+         rewrite Q.
+         T.eqcd; case => e'0 e'1 //=.
+         apply: propositional_extensionality; split.
+         * move=> e'0e'1 e1e1 //=.
+           exists Rℰ''; split; auto.
+         * move=> //= 𝒢.
+           destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+           replace Rℰ'' with R𝒢; eauto.
+           apply: TS.is_extensional; eauto.
+
+      + T.use ℰ1'; repeat f_equal.
+        T.eqcd; case => e'0 e'1 //=.
+        apply: propositional_extensionality; split.
+
+        * move=> e'0e'1 e1e1 //=.
+          eexists; split; eauto.
+        * move=> //= 𝒢.
+          destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
+          replace Rℰ' with R𝒢; eauto.
+          apply: TS.is_extensional; eauto.
+
     - T.eqcd; case => e'0 e'1 //=.
       apply: propositional_extensionality; split => 𝒢 ℋ.
-      + case: 𝒢 => [|R [𝒢1 𝒢2]]; eauto.
+      + case: 𝒢 => [|S [𝒢1 𝒢2]]; eauto.
         eexists; split; eauto.
-        replace Rℰ with R; eauto.
+        replace Rℰ with S; eauto.
         apply: TS.is_extensional; eauto; simpl.
         replace Rℰ with Rℰ'; eauto.
         apply: TS.is_extensional; eauto.
-      + case: 𝒢 => [|R [𝒢1 𝒢2]]; eauto.
+      + case: 𝒢 => [|S [𝒢1 𝒢2]]; eauto.
         eexists; split; eauto.
-        replace Rℰ' with R; eauto.
+        replace Rℰ' with S; eauto.
         apply: TS.is_extensional; eauto; simpl.
         replace Rℰ' with Rℰ; eauto.
-        apply: TS.is_extensional; eauto.
-    - T.use ℰ0'; repeat f_equal.
-      T.eqcd; case => e'0 e'1 //=.
-      apply: propositional_extensionality; split.
-      * move=> e'0e'1 e0e0 //=.
-        eexists; split; eauto.
-      * move=> //= 𝒢.
-        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
-        replace Rℰ' with R𝒢; eauto.
-        apply: TS.is_extensional; eauto.
-    - destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
-      T.use ℰ1''; repeat f_equal.
-      T.eqcd; case => e'0 e'1 //=.
-      apply: propositional_extensionality; split.
-      + move=> e'0e'1 e1e1 //=.
-        eexists; split; eauto.
-      + move=> //= 𝒢.
-        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
-        replace Rℰ'' with R𝒢; eauto.
-        apply: TS.is_extensional; eauto.
-    - destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
-      T.use ℰ0''; repeat f_equal.
-      T.eqcd; case => e'0 e'1 //=.
-      apply: propositional_extensionality; split.
-      + move=> e'0e'1 e1e1 //=.
-        exists Rℰ''; split; auto.
-        replace Rℰ'' with Rℰ'; auto.
-        replace Rℰ' with Rℰ.
-        * apply: TS.is_extensional; first by [exact ℰ0]; eauto.
-        * apply: TS.is_extensional; eauto.
-      + move=> //= 𝒢.
-        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
-        replace Rℰ'' with R𝒢; eauto.
-        replace R𝒢 with Rℰ'.
-        * replace Rℰ' with Rℰ.
-          ** apply: TS.is_extensional; first by [exact ℰ0]; eauto.
-          ** apply: TS.is_extensional; eauto.
-        * apply: TS.is_extensional; first by [exact ℰ0']; eauto.
-
-    - T.use ℰ1'; repeat f_equal.
-      T.eqcd; case => e'0 e'1 //=.
-      apply: propositional_extensionality; split.
-      + move=> e'0e'1 e1e1 //=.
-        eexists; split; eauto.
-      + move=> //= 𝒢.
-        destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
-        replace Rℰ' with R𝒢; eauto.
         apply: TS.is_extensional; eauto.
   Qed.
 
@@ -685,9 +683,7 @@ Module Arr.
     - move=> e0 e1 e0e1;
       (case: (Rℰsp e0 e1); first by [exists R𝒟]).
       move=> Q [? [? [? ?]]];
-      repeat split; eauto.
-      + rewrite -Q; eauto.
-      + rewrite Q; eauto.
+      repeat split; eauto; by rewrite -Q.
   Qed.
 
   Theorem univ_eq {i A0 A1 B0 B1} :
@@ -697,12 +693,7 @@ Module Arr.
   Proof.
     move=> /Univ.inversion 𝒟 /Univ.open_inversion ℰ.
     apply: Univ.intro.
-    apply: formation.
-    - assumption.
-    - apply: ℰ.
-      split; auto.
-      move=> ? ? ?; Term.simplify_subst.
-      apply: General.ty_eq_refl_left; eauto.
+    apply: formation; auto.
   Qed.
 
   Theorem intro {i A B f0 f1} :
@@ -723,7 +714,7 @@ Module Arr.
       case: (ℱsp e0 e1); auto.
       + eexists; eauto.
       + move=> Q [? [? [? ?]]].
-        repeat T.split; eauto.
+        repeat T.split; eauto;
         by rewrite -Q.
     - econstructor=> e0 e1 e0e1.
       suff ? : is_cper (Rℱ e0).
@@ -809,9 +800,7 @@ Module Prod.
     - move=> e0 e1 e0e1;
       (case: (Rℰsp e0 e1); first by [exists R𝒟]).
       move=> Q [? [? [? ?]]];
-      repeat split; eauto.
-      + rewrite -Q; eauto.
-      + rewrite Q; eauto.
+      repeat split; eauto; by rewrite -Q.
   Qed.
 
 
@@ -822,12 +811,7 @@ Module Prod.
   Proof.
     move=> /Univ.inversion 𝒟 /Univ.open_inversion ℰ.
     apply: Univ.intro.
-    apply: formation.
-    - assumption.
-    - apply: ℰ.
-      split; auto.
-      move=> ? ? ?; Term.simplify_subst.
-      apply: General.ty_eq_refl_left; eauto.
+    apply: formation; auto.
   Qed.
 
 
@@ -856,11 +840,11 @@ Module Prod.
           specialize (𝒢 e0 e1).
           suff ℋ: τ[i] ⊧ A ∋ e0 ∼ e1.
           ** case: (𝒢 ℋ) => Q [? [? [? ?]]].
-             repeat split; auto; try by Tac.tower_mono.
-             rewrite -Q; Tac.tower_mono.
-          ** apply: Level.mem_eq_at_lvl_of_typehood.
-             *** exists R𝒟; split; eauto.
-             *** eauto.
+             repeat split; auto;
+             (rewrite -Q + idtac);
+             by Tac.tower_mono.
+          ** apply: Level.mem_eq_at_lvl_of_typehood; eauto.
+             exists R𝒟; split; eauto.
       + econstructor; split.
         * apply: crel.
           ** apply: TS.is_cper_valued; eexists; eauto.
@@ -1296,47 +1280,35 @@ Module Later.
       case => X [Y Z].
       rewrite -Clo.roll in Y.
       dependent induction n.
-      + dependent destruction Y.
+      + Clo.destruct_sig.
         * contradiction.
         * OpSem.destruct_evals.
-          dependent destruction H1.
-      + dependent destruction Y; Spine.simplify.
-        * case: H => //= [j [pj [ev Q]]].
+          Clo.destruct_has.
+      + Clo.destruct_sig; Spine.simplify.
+        * case: H => //= [j [? [? Q]]].
           OpSem.destruct_evals.
-          rewrite Q; rewrite Q in X.
-          simpl in *.
+          rewrite Q //=; rewrite Q //= in X.
 
-          suff: τ[j] ⊧ A0 ∼ A1 ∧ τ[j] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1.
-          ** case=> 𝒢0 𝒢1.
-             case: (Fam.family_choice 𝒢0 𝒢1) => Rℰ Rℰsp.
+          ecase (@Fam.family_choice τ[j]); try by [typeclasses eauto].
+          ** eauto.
+          ** apply: Univ.open_inversion; eauto.
+          ** move=> Rℰ Rℰsp.
              case: X => RA [X0 X1].
              eexists; split.
              *** Tac.tower_intro; apply: Sig.conn; auto.
                  apply: Connective.has_arr; eauto.
                  move=> e0 e1 e0e1; case: (Rℰsp e0 e1).
-                 **** exists RA; split; eauto.
-                 **** move=> Q' ?.
+                 **** exists RA; split; eauto; eexists; eauto.
+                 **** move=> Q' ?; T.destruct_conjs.
                       T.destruct_conjs.
-                      repeat split; eauto.
-                      ***** by rewrite -Q'.
-                      ***** by rewrite -Q'.
+                      repeat split; eauto; by rewrite -Q'.
              *** Tac.tower_intro; apply: Sig.conn; auto.
                  apply: Connective.has_arr; eauto.
                  move=> e0 e1 e0e1; case: (Rℰsp e0 e1).
                  **** exists RA; split; eauto.
                  **** move=> Q' ?.
                       T.destruct_conjs.
-                      repeat split; eauto.
-                      ***** by rewrite -Q'.
-                      ***** by rewrite Q'.
-          ** split.
-             *** case: X => ? [? ?]; eexists; eauto.
-             *** apply: Univ.open_inversion; auto.
-                 split; simpl; auto.
-                 move=> ? ? ?.
-                 Term.simplify_subst.
-                 case: X => ? [? ?]; eexists; eauto.
-
+                      repeat split; eauto; by rewrite -Q'.
         * OpSem.destruct_evals.
           dependent induction H1.
 
@@ -1386,9 +1358,7 @@ Module Later.
              Tac.tower_intro; (apply: Sig.conn; first by [auto]); constructor; Later.gather;
              move=> [ℱ0 [ℱ1 [[ℱ2 ℱ3] [[ℱ4 ℱ5] [ℱ6 ℱ7]]]]];
              (case: (ℱ6 e0 e1); first by [exists R𝒟]);
-             move=> Q [ℋ0 [ℋ1 [ℋ2 ℋ3]]]; eauto.
-             *** rewrite -Q; eauto.
-             *** rewrite Q; eauto.
+             move=> Q [ℋ0 [ℋ1 [ℋ2 ℋ3]]]; eauto; by rewrite -Q.
         * T.eqcd; case=> e0 e1.
           apply: propositional_extensionality; split.
           ** move=> e0e1.
