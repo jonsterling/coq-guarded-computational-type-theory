@@ -834,15 +834,13 @@ Module Prod.
     - move=> R𝒢 𝒢.
       eexists; split.
       + Tac.tower_intro; apply: Sig.conn; auto.
-        apply: (@Connective.has_prod _ _ _ R𝒟 R𝒢); eauto.
+        constructor; eauto.
         * Tac.tower_mono.
         * move=> e0 e1 p.
           specialize (𝒢 e0 e1).
           suff ℋ: τ[i] ⊧ A ∋ e0 ∼ e1.
           ** case: (𝒢 ℋ) => Q [? [? [? ?]]].
-             repeat split; auto;
-             (rewrite -Q + idtac);
-             by Tac.tower_mono.
+             repeat split; auto; (rewrite -Q; Tac.tower_mono) || Tac.tower_mono.
           ** apply: Level.mem_eq_at_lvl_of_typehood; eauto.
              exists R𝒟; split; eauto.
       + econstructor; split.
