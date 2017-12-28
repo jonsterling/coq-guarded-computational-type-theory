@@ -73,6 +73,8 @@ Module Tac.
     | |- _ → _ => move=> ?
     end.
 
+
+  (* TODO: get rid of this, since it only really works in the easy cases. *)
   Ltac prove := repeat prove_step.
 End Tac.
 
@@ -155,13 +157,9 @@ Module General.
     → τ ⊧ A0 ∼ A1
     → τ ⊧ A1 ∋ e1 ∼ e2.
   Proof.
-    Tac.prove.
-
-    match goal with
-    | _ : ?R0 ?X |- ?R1 ?X =>
-      replace R1 with R0; auto
-    end.
-
+    move=> [R1 [? ?]] [R2 [? ?]].
+    exists R2; split; auto.
+    replace R2 with R1; auto.
     apply: TS.is_extensional; eauto.
   Qed.
 
@@ -169,14 +167,16 @@ Module General.
     τ ⊧ A ∼ B
     → τ ⊧ A ∼ A.
   Proof.
-    Tac.prove.
+    move=> [? [? ?]].
+    eexists; eauto.
   Qed.
 
   Theorem ty_eq_symm {τ A B} :
     τ ⊧ A ∼ B
     → τ ⊧ B ∼ A.
   Proof.
-    Tac.prove.
+    move=> [? [? ?]].
+    eexists; eauto.
   Qed.
 
   Theorem ty_eq_conv {τ A0 A1 B} `{TS.type_computational τ} :
@@ -661,9 +661,6 @@ Module Fam.
 End Fam.
 
 Module Arr.
-  Local Hint Extern 40 => Term.simplify_subst.
-  Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
-
   Theorem formation {n A0 A1 B0 B1} :
     τ[n] ⊧ A0 ∼ A1
     → τ[n] ⊧ (⋄ ∙ A0) ≫ B0 ∼ B1
@@ -1022,29 +1019,6 @@ Module Isect.
   Qed.
 End Isect.
 
-(* TODO: move these elsewhere *)
-Theorem rel_total : Later.Total rel.
-Proof.
-  by rewrite /rel.
-Qed.
-
-Theorem rel_inh : Later.Inh rel.
-Proof.
-  by rewrite /rel.
-Qed.
-
-Axiom rel_fam_total : Later.Total (Tm.t 0 → rel).
-
-Theorem rel_fam_inh : Later.Inh (Tm.t 0 → rel).
-Proof.
-  rewrite /rel.
-  split; auto.
-  move=> ? ?.
-  exact ⊤.
-Qed.
-
-Hint Resolve rel_total rel_inh rel_fam_total rel_fam_inh.
-
 Module Later.
   Theorem formationω {κ} {A B} :
     ▷[κ] (τω ⊧ A ∼ B)
@@ -1107,7 +1081,7 @@ Module Later.
         move=> //= [H5 [H6 E]].
         exists R; split; first by [auto].
         by rewrite -E in H5.
-      + refine (Later.map (functional_extensionality R R0) _).
+      + apply: (Later.map (functional_extensionality R R0)).
         apply: Later.push_universal.
         move=> e0e1.
         rewrite -Later.commute_eq.
@@ -1208,10 +1182,6 @@ Module Later.
       + by Later.gather; case.
   Qed.
 
-  Axiom total_tm : Later.Total (Tm.t 0).
-  Axiom inh_tm : Later.Inh (Tm.t 0).
-  Hint Resolve total_tm inh_tm.
-
   Lemma fun_ty_inversion {i A B R} :
     τ[i] ((A ⇒ B)%tm, R)
     → ∃ (RA : rel) (RB : Tm.t 0 → rel),
@@ -1292,33 +1262,21 @@ Module Later.
           ** apply: Univ.open_inversion; eauto.
           ** move=> Rℰ Rℰsp.
              case: X => RA [X0 X1].
-             eexists; split.
-             *** Tac.tower_intro; apply: Sig.conn; auto.
-                 apply: Connective.has_arr; eauto.
-                 move=> e0 e1 e0e1; case: (Rℰsp e0 e1).
-                 **** exists RA; split; eauto; eexists; eauto.
-                 **** move=> Q' ?; T.destruct_conjs.
-                      T.destruct_conjs.
-                      repeat split; eauto; by rewrite -Q'.
-             *** Tac.tower_intro; apply: Sig.conn; auto.
-                 apply: Connective.has_arr; eauto.
-                 move=> e0 e1 e0e1; case: (Rℰsp e0 e1).
-                 **** exists RA; split; eauto.
-                 **** move=> Q' ?.
-                      T.destruct_conjs.
-                      repeat split; eauto; by rewrite -Q'.
+             eexists; split; Tac.tower_intro;
+             (apply: Sig.conn; first by [auto]);
+             (constructor; first by [eassumption]);
+             move=> e0 e1 e0e1;
+             (case: (Rℰsp e0 e1); first by [eexists; split; eauto]);
+             move=> Q' ?; T.destruct_conjs; repeat split; eauto; by rewrite -Q'.
         * OpSem.destruct_evals.
           dependent induction H1.
 
     - apply: Later.push_universal => γ0.
       apply: (Later.map existential_trickery).
-      apply: Later.push_universal => γ1.
-      case: γ1 => [γ1 γ01].
-      specialize (ℰ γ0 γ1 γ01).
-      simpl.
-
+      apply: Later.push_universal; case => γ1 γ01 //=.
       apply: mem_univ_inversion.
-      apply: univ_eq; auto.
+      apply: univ_eq.
+      by apply: ℰ.
   Qed.
 
   Theorem preserves_sigma i κ {A0 A1 B0 B1} :
@@ -1341,17 +1299,14 @@ Module Later.
         * move=> e0 e1 e0e1.
           case (ℰ5 e0 e1).
           ** eexists; eauto.
-          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto.
-             *** rewrite -Q; exact H.
-             *** rewrite -Q; assumption.
+          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto; rewrite -Q; eauto.
 
       + Tac.ts_flex_rel.
         * Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
           ** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
              move {ℰsp 𝒟ℰ 𝒟 ℰ}.
              Later.gather; case; eauto.
-          ** simpl.
-             move=> e0 e1 //= e0e1.
+          ** move=> e0 e1 //= e0e1.
              repeat split;
              Tac.tower_intro; (apply: Sig.conn; first by [auto]); constructor; Later.gather;
              move=> [ℱ0 [ℱ1 [[ℱ2 ℱ3] [[ℱ4 ℱ5] [ℱ6 ℱ7]]]]];

@@ -1,4 +1,6 @@
 Require Import Unicode.Utf8.
+From mathcomp Require Import ssreflect.
+Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Import Notation Term OpSem Axioms.
 
@@ -75,3 +77,26 @@ Module TS.
             → type_computational_at (A, R) }.
   End Law.
 End TS.
+
+
+Theorem rel_total : Later.Total rel.
+Proof.
+  by rewrite /rel.
+Qed.
+
+Theorem rel_inh : Later.Inh rel.
+Proof.
+  by rewrite /rel.
+Qed.
+
+Axiom rel_fam_total : Later.Total (Tm.t 0 → rel).
+
+Theorem rel_fam_inh : Later.Inh (Tm.t 0 → rel).
+Proof.
+  rewrite /rel.
+  split; auto.
+  move=> ? ?.
+  exact ⊤.
+Qed.
+
+Hint Resolve rel_total rel_inh rel_fam_total rel_fam_inh.

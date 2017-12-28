@@ -230,3 +230,7 @@ Ltac simplify_subst_step :=
 
 Ltac simplify_subst :=
   repeat (simplify_eqs; f_equal; try T.eqcd; intros; simplify_subst_step).
+
+Axiom total_tm : Later.Total (Tm.t 0).
+Axiom inh_tm : Later.Inh (Tm.t 0).
+Hint Resolve total_tm inh_tm.
