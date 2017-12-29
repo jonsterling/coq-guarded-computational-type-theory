@@ -7,6 +7,8 @@ From gctt Require Tactic.
 Module T := Tactic.
 
 
+Set Implicit Arguments.
+
 Reserved Notation "e 'val'" (at level 50).
 Reserved Notation "e ↦ e'" (at level 50).
 Reserved Notation "e ↦⋆ e'" (at level 50).
@@ -173,4 +175,163 @@ Proof.
   - econstructor.
     + apply: step_snd_pair.
     + auto.
+Qed.
+
+
+
+Theorem fst_eval :
+  ∀ e e0 e1 v0,
+    e ⇓ ⟨e0,e1⟩
+    → e0 ⇓ v0
+    → e.1 ⇓ v0.
+Proof.
+  move=> e e0 e1 v0 H0 H1.
+  dependent induction H0.
+  dependent induction eval_steps0.
+  - constructor; auto.
+    + econstructor.
+      * by apply: step_fst_pair.
+      * by dependent destruction H1.
+    + by destruct H1.
+  - dependent destruction H1.
+    constructor; auto.
+    econstructor.
+    * apply: step_fst_cong; eauto.
+    * edestruct IHeval_steps0; eauto.
+Qed.
+
+Theorem app_eval :
+  ∀ f f' e v,
+    (f ⇓ 𝛌{f'})
+    → f' ⫽ Sub.inst0 e ⇓ v
+    → (f ⋅ e) ⇓ v.
+Proof.
+  move=> f f' e v H0 H1.
+  dependent induction H0.
+  dependent induction eval_steps0.
+  - constructor; auto.
+    + econstructor.
+      * by apply: step_app_lam.
+      * by dependent induction H1.
+    + by destruct H1.
+  - dependent destruction H1.
+    constructor; auto.
+    econstructor.
+    * apply: step_app_cong; eauto.
+    * edestruct IHeval_steps0; eauto.
+Qed.
+
+Theorem snd_eval :
+  ∀ e e0 e1 v,
+    e ⇓ ⟨e0,e1⟩
+    → e1 ⇓ v
+    → e.2 ⇓ v.
+Proof.
+  move=> e e0 e1 v H0 H1.
+  dependent induction H0.
+  dependent induction eval_steps0.
+  - constructor; auto.
+    + econstructor.
+      * by apply: step_snd_pair.
+      * by dependent destruction H1.
+    + by destruct H1.
+  - dependent destruction H1.
+    constructor; auto.
+    econstructor.
+    * apply: step_snd_cong; eauto.
+    * edestruct IHeval_steps0; eauto.
+Qed.
+
+Theorem fst_eval_inv :
+  ∀ e v1,
+    e.1 ⇓ v1
+    → ∃ e1 e2, e1 ⇓ v1 ∧ e ⇓ ⟨e1, e2⟩.
+Proof.
+  move=> e e1 H.
+  dependent induction H.
+  dependent induction eval_steps0.
+  - dependent destruction eval_val0.
+  - dependent induction H.
+    + edestruct IHeval_steps0; eauto.
+      case: H0 => [z [zz zzz]].
+      exists x, z; split; auto.
+      constructor; auto.
+      econstructor; eauto.
+      dependent destruction zzz.
+      eauto.
+    + by exists e1, e2.
+Qed.
+
+Theorem snd_eval_inv :
+  ∀ e v,
+    e.2 ⇓ v
+    → ∃ e1 e2, e2 ⇓ v ∧ e ⇓ ⟨e1,e2⟩.
+Proof.
+  move=> e e1 H.
+  dependent induction H.
+  dependent induction eval_steps0.
+  - dependent induction eval_val0.
+  - dependent induction H.
+    + edestruct IHeval_steps0; eauto.
+      case: H0 => [z [zz zzz]].
+      exists x, z; split; auto.
+      constructor; auto.
+      econstructor; eauto.
+      dependent destruction zzz.
+      eauto.
+    + by exists e1, e2.
+Qed.
+
+Theorem app_eval_inv :
+  ∀ f e v,
+    f ⋅ e ⇓ v
+    → ∃ f', (f ⇓ 𝛌{f'}) ∧ (f' ⫽ Sub.inst0 e) ⇓ v.
+Proof.
+  move=> f e v H.
+  dependent induction H.
+  dependent induction eval_steps0.
+  - dependent induction eval_val0.
+  - dependent induction H.
+    + edestruct IHeval_steps0; eauto.
+      destruct H0.
+      exists x; split.
+      * constructor; auto.
+        econstructor; eauto.
+        by dependent induction H0.
+      * auto.
+    + by exists e1.
+Qed.
+
+
+Theorem fst_cong_approx :
+  ∀ e0 e1,
+    e0 ≼₀ e1
+    → Tm.fst e0 ≼₀ Tm.fst e1.
+Proof.
+  move=> e0 e1 e01 p1 ℰ.
+  have := fst_eval_inv ℰ.
+  move=> [e' [p2 [H0 H1]]].
+  apply: fst_eval; eauto.
+Qed.
+
+Theorem snd_cong_approx :
+  ∀ e0 e1,
+    e0 ≼₀ e1
+    → Tm.snd e0 ≼₀ Tm.snd e1.
+Proof.
+  move=> e0 e1 e01 p1 ℰ.
+  have := snd_eval_inv ℰ.
+  move=> [e' [p2 [H0 H1]]].
+  apply: snd_eval; eauto.
+Qed.
+
+Theorem app_cong_approx :
+  ∀ f0 f1 e,
+    f0 ≼₀ f1
+    → (f0 ⋅ e) ≼₀ (f1 ⋅ e).
+Proof.
+  move=> f0 f1 e f01 v ℰ.
+  have := app_eval_inv ℰ.
+  move=> [f' [? ?]].
+  apply: app_eval; eauto.
 Qed.

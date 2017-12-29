@@ -26,11 +26,6 @@ Local Hint Extern 20 => IR.Univ.tac.
 
 Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm IR.General.open_mem_eq_refl_left IR.General.open_ty_eq_refl_left.
 
-Tactic Notation "explode" "functionality" uconstr(𝒟) :=
-  let X := fresh in
-  (have X := (IR.General.functionality_square 𝒟));
-  (edestruct X as [? [? ?]]); simpl in *; [eauto .. | idtac].
-
 Module Conversion.
   Module Structural.
     Theorem symm {Λ Ψ e1 e2} :

@@ -352,29 +352,6 @@ Module General.
   Qed.
 
 
-  Section FunctionalitySquare.
-    Context {Ψ} {Γ : Prectx Ψ} {A e0 e1 : Tm.t Ψ} {γ0 γ1 : @Sub.t Tm.t Ψ 0} {τ} `{TS.cper_valued τ} `{TS.extensional τ}.
-
-    Lemma functionality_square :
-      τ ⊧ Γ ≫ A ∋ e0 ∼ e1
-      → τ ⊧ Γ ctx
-      → τ ⊧ Γ ∋⋆ γ0 ∼ γ1
-      → τ ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ1)
-        ∧ τ ⊧ A ⫽ γ1 ∋ (e0 ⫽ γ1) ∼ (e1 ⫽ γ1)
-        ∧ τ ⊧ A ⫽ γ0 ∋ (e0 ⫽ γ0) ∼ (e1 ⫽ γ0).
-    Proof.
-      move=> 𝒟 ℰ γ01.
-      repeat T.split.
-      - by apply: 𝒟.
-      - apply: 𝒟.
-        apply: env_eq_refl_left; auto.
-        apply: env_eq_symm; eauto.
-      - apply: 𝒟.
-        apply: env_eq_refl_left; eauto.
-    Qed.
-  End FunctionalitySquare.
-
-
   Theorem open_ty_eq_refl_left {Ψ} {Γ : Prectx Ψ} {τ A A'} `{TS.cper_valued τ} `{TS.extensional τ} :
     τ ⊧ Γ ctx
     → τ ⊧ Γ ≫ A ∼ A'

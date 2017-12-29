@@ -33,15 +33,6 @@ Module Connective.
             → R1 e0 ((f0 ⋅ e0)%tm, (f1 ⋅ e1)%tm))
         → fun_el R0 R1 (f0, f1).
 
-  (* positive definition of pi type: to be removed *)
-  Inductive fun_val (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
-  | lam :
-      ∀ f0 f1,
-        (∀ e0 e1,
-            R0 (e0, e1)
-            → R1 e0 ((f0 ⫽ Sub.inst0 e0)%tm, (f1 ⫽ Sub.inst0 e1)%tm))
-        → fun_val R0 R1 (Tm.lam f0, Tm.lam f1).
-
   Inductive cext (R : rel) : rel :=
   | mk_cext :
       ∀ e0 e1 v0 v1,
@@ -50,9 +41,15 @@ Module Connective.
         → R (v0, v1)
         → cext R (e0, e1).
 
+  Module CExtNotation.
+    Notation "[ R ]⇓" := (cext R).
+  End CExtNotation.
+
+  Import CExtNotation.
+
   Inductive has (τ : cts) : ctor → Tm.t 0 × rel → Ω :=
-  | has_unit : has τ unit (Tm.unit, cext unit_val)
-  | has_bool : has τ bool (Tm.bool, cext bool_val)
+  | has_unit : has τ unit (Tm.unit, [unit_val]⇓)
+  | has_bool : has τ bool (Tm.bool, [bool_val]⇓)
   | has_prod :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
@@ -109,9 +106,11 @@ Module Connective.
 
   Ltac destruct_cext :=
     match goal with
-    | H : cext _ _ |- _ => dependent destruction H
+    | H : [_]⇓ _ |- _ => dependent destruction H
     end.
 End Connective.
+
+Export Connective.CExtNotation.
 
 Module Sig.
   (* For each refinement cts σ, we define a monotone map on
@@ -330,7 +329,7 @@ Module Clo.
 
   Theorem cext_per {R} :
     is_per R
-    → is_per (Connective.cext R).
+    → is_per [R]⇓.
   Proof.
     move=> [ihSm ihTr].
     constructor.
@@ -366,7 +365,7 @@ Module Clo.
   Qed.
 
   Theorem cext_computational {R} :
-    rel_computational (Connective.cext R).
+    rel_computational [R]⇓.
   Proof.
     move=> e0 e1 e2 e01 cext.
     Connective.destruct_cext.
@@ -375,176 +374,6 @@ Module Clo.
 
   Hint Resolve cext_per cext_computational unit_val_per bool_val_per cext_per.
   Hint Constructors is_cper.
-
-  Ltac destruct_cper :=
-    repeat
-      match goal with
-      | H : is_cper _ |- _ => destruct H
-      end.
-
-  Ltac destruct_per :=
-    repeat
-      match goal with
-      | H : is_per _ |- _ => destruct H
-      end.
-
-  Theorem fst_eval :
-    ∀ e e0 e1 v0,
-      e ⇓ ⟨e0,e1⟩
-      → e0 ⇓ v0
-      → e.1 ⇓ v0.
-  Proof.
-    move=> e e0 e1 v0 H0 H1.
-    dependent induction H0.
-    dependent induction eval_steps.
-    - constructor; auto.
-      + econstructor.
-        * by apply: step_fst_pair.
-        * by dependent destruction H1.
-      + by destruct H1.
-    - dependent destruction H1.
-      constructor; auto.
-      econstructor.
-      * apply: step_fst_cong; eauto.
-      * edestruct IHeval_steps; eauto.
-  Qed.
-
-  Theorem app_eval :
-    ∀ f f' e v,
-      (f ⇓ 𝛌{f'})
-      → f' ⫽ Sub.inst0 e ⇓ v
-      → (f ⋅ e) ⇓ v.
-  Proof.
-    move=> f f' e v H0 H1.
-    dependent induction H0.
-    dependent induction eval_steps.
-    - constructor; auto.
-      + econstructor.
-        * by apply: step_app_lam.
-        * by dependent induction H1.
-      + by destruct H1.
-    - dependent destruction H1.
-      constructor; auto.
-      econstructor.
-      * apply: step_app_cong; eauto.
-      * edestruct IHeval_steps; eauto.
-  Qed.
-
-  Theorem snd_eval :
-    ∀ e e0 e1 v,
-      e ⇓ ⟨e0,e1⟩
-      → e1 ⇓ v
-      → e.2 ⇓ v.
-  Proof.
-    move=> e e0 e1 v H0 H1.
-    dependent induction H0.
-    dependent induction eval_steps.
-    - constructor; auto.
-      + econstructor.
-        * by apply: step_snd_pair.
-        * by dependent destruction H1.
-      + by destruct H1.
-    - dependent destruction H1.
-      constructor; auto.
-      econstructor.
-      * apply: step_snd_cong; eauto.
-      * edestruct IHeval_steps; eauto.
-  Qed.
-
-  Theorem fst_eval_inv :
-    ∀ e v1,
-      e.1 ⇓ v1
-      → ∃ e1 e2, e1 ⇓ v1 ∧ e ⇓ ⟨e1, e2⟩.
-  Proof.
-    move=> e e1 H.
-    dependent induction H.
-    dependent induction eval_steps.
-    - dependent induction eval_val.
-    - dependent induction H.
-      + edestruct IHeval_steps; eauto.
-        case: H0 => [z [zz zzz]].
-        exists x, z; split; auto.
-        constructor; auto.
-        econstructor; eauto.
-        dependent destruction zzz.
-        eauto.
-      + by exists e1, e2.
-  Qed.
-
-  Theorem snd_eval_inv :
-    ∀ e v,
-      e.2 ⇓ v
-      → ∃ e1 e2, e2 ⇓ v ∧ e ⇓ ⟨e1,e2⟩.
-  Proof.
-    move=> e e1 H.
-    dependent induction H.
-    dependent induction eval_steps.
-    - dependent induction eval_val.
-    - dependent induction H.
-      + edestruct IHeval_steps; eauto.
-        case: H0 => [z [zz zzz]].
-        exists x, z; split; auto.
-        constructor; auto.
-        econstructor; eauto.
-        dependent destruction zzz.
-        eauto.
-      + by exists e1, e2.
-  Qed.
-
-  Theorem app_eval_inv :
-    ∀ f e v,
-      f ⋅ e ⇓ v
-      → ∃ f', (f ⇓ 𝛌{f'}) ∧ (f' ⫽ Sub.inst0 e) ⇓ v.
-  Proof.
-    move=> f e v H.
-    dependent induction H.
-    dependent induction eval_steps.
-    - dependent induction eval_val.
-    - dependent induction H.
-      + edestruct IHeval_steps; eauto.
-        destruct H0.
-        exists x; split.
-        * constructor; auto.
-          econstructor; eauto.
-          by dependent induction H0.
-        * auto.
-      + by exists e1.
-  Qed.
-
-
-  Theorem fst_cong_approx :
-    ∀ e0 e1,
-      e0 ≼₀ e1
-      → Tm.fst e0 ≼₀ Tm.fst e1.
-  Proof.
-    move=> e0 e1 e01 p1 ℰ.
-    have := fst_eval_inv ℰ.
-    move=> [e' [p2 [H0 H1]]].
-    apply: fst_eval; eauto.
-  Qed.
-
-  Theorem snd_cong_approx :
-    ∀ e0 e1,
-      e0 ≼₀ e1
-      → Tm.snd e0 ≼₀ Tm.snd e1.
-  Proof.
-    move=> e0 e1 e01 p1 ℰ.
-    have := snd_eval_inv ℰ.
-    move=> [e' [p2 [H0 H1]]].
-    apply: snd_eval; eauto.
-  Qed.
-
-  Theorem app_cong_approx :
-    ∀ f0 f1 e,
-      f0 ≼₀ f1
-      → (f0 ⋅ e) ≼₀ (f1 ⋅ e).
-  Proof.
-    move=> f0 f1 e f01 v ℰ.
-    have := app_eval_inv ℰ.
-    move=> [f' [? ?]].
-    apply: app_eval; eauto.
-  Qed.
-
 
   (* HORRIFIC *)
   Instance cper_valued {σ} :
@@ -566,7 +395,7 @@ Module Clo.
         apply: Sig.conn; eauto.
         apply: map_has; eauto.
         move=> ? [? ?] //=.
-      + destruct_has; simpl; destruct_cper; simpl in *; try by [constructor; eauto]; cleanup.
+      + destruct_has; simpl in *; try by [constructor; eauto]; cleanup.
         * constructor.
           ** constructor.
              *** move=> e0 e1 e01.
@@ -576,14 +405,11 @@ Module Clo.
                  split; eauto.
                  **** apply: symmetric; auto.
                       by apply: per.
-                 **** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm).
+                 **** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm);
+                      edestruct H0; T.destruct_conjs; eauto.
                       ***** apply: symmetric; auto.
-                            edestruct H0; eauto.
-                            T.destruct_conjs.
                             by apply: per.
-                      ***** edestruct H0; eauto.
-                            T.destruct_conjs.
-                            eapply (TS.is_extensional (t σ)); eauto.
+                      ***** apply: (TS.is_extensional (t σ)); eauto.
 
              *** move=> e0 e1 e2 e01 e12.
                  dependent destruction e01.
@@ -691,18 +517,17 @@ Module Clo.
              *** move=> ? ? ? ?.
                  T.specialize_hyps.
                  case: H => //= [? ?].
-                 destruct_cper.
-                 destruct_per.
-                 eauto.
+                 apply: symmetric; auto.
+                 by apply: per.
              *** move=> ? ? ? ? ? ?.
                  T.specialize_hyps.
                  case: H => //= [? ?].
-                 destruct_cper; destruct_per; eauto.
+                 apply: transitive; eauto.
+                 by apply: per.
           ** move=> ? ? ? ? ?  ?.
              T.specialize_hyps.
              T.destruct_conjs.
-             destruct_cper.
-             eauto.
+             apply: crel; eauto.
   Qed.
 
   Instance type_computational {σ} :
