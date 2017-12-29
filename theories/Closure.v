@@ -21,7 +21,7 @@ Module Connective.
   | proj :
       ∀ e0 e1,
         R0 (Tm.fst e0, Tm.fst e1)
-        ∧ R1 (Tm.fst e0) (Tm.snd e0, Tm.snd e1)
+        → R1 (Tm.fst e0) (Tm.snd e0, Tm.snd e1)
         → prod_el R0 R1 (e0, e1).
 
   (* negative definition of pi type *)
@@ -278,16 +278,14 @@ Module Clo.
 
       + T.eqcd; case => e0 e1; apply: propositional_extensionality; split => e0e1.
         * dependent destruction e0e1.
-          destruct H1.
-          constructor; split.
+          constructor.
           ** replace R2 with R0; eauto.
           ** replace (R3 (e0 .1)%tm) with (R1 (e0 .1)%tm); eauto.
              destruct (H0 (e0.1)%tm (e1.1)%tm) as [H01 [H02 [H03 H04]]]; auto.
              replace R2 with R0 in H3; eauto.
              destruct (H3 (e0.1)%tm (e1.1)%tm); eauto.
         * dependent destruction e0e1.
-          destruct H1.
-          constructor; split.
+          constructor.
           ** replace R0 with R2; auto.
              symmetry; eauto.
           ** replace (R1 (e0.1)%tm) with (R3 (e0.1)%tm); eauto.
@@ -400,11 +398,9 @@ Module Clo.
           ** constructor.
              *** move=> e0 e1 e01.
                  dependent destruction e01.
-                 econstructor; eauto.
-                 destruct H1; destruct H.
-                 split; eauto.
+                 constructor.
                  **** apply: symmetric; auto.
-                      by apply: per.
+                      apply: per; by destruct H.
                  **** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm);
                       edestruct H0; T.destruct_conjs; eauto.
                       ***** apply: symmetric; auto.
@@ -413,10 +409,9 @@ Module Clo.
 
              *** move=> e0 e1 e2 e01 e12.
                  dependent destruction e01.
-                 destruct H1.
                  dependent destruction e12.
-                 destruct H3.
-                 econstructor; eauto; split.
+                 destruct H.
+                 constructor.
 
                  **** apply: transitive; eauto.
                       edestruct H0; eauto.
@@ -434,8 +429,7 @@ Module Clo.
           ** move=> e0 e1 e2 e0e1 el.
              dependent destruction el.
              destruct H.
-             destruct H1.
-             constructor; split.
+             constructor.
              *** apply: crel; first by [auto]; last by eauto.
                  by apply: fst_cong_approx.
              *** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm).

@@ -817,7 +817,7 @@ Module Prod.
              repeat split; auto; (rewrite -Q; Tac.tower_mono) || Tac.tower_mono.
           ** apply: Level.mem_eq_at_lvl_of_typehood; eauto.
              exists R𝒟; split; eauto.
-      + econstructor; split.
+      + constructor.
         * apply: crel.
           ** apply: TS.is_cper_valued; eexists; eauto.
           ** apply: OpSem.fst_pair.
@@ -958,23 +958,15 @@ Module Isect.
           apply: Sig.conn; auto.
           apply: Connective.has_isect => κ.
           T.specialize_hyps; T.destruct_conjs; Tac.prove.
-        * move=> e0 e1 //= e0e1; repeat T.split; auto; Tac.tower_intro; Term.simplify_subst; Tac.prove; T.specialize_hyps; T.destruct_conjs; Term.simplify_subst; eauto.
+        * move=> e0 e1 //= e0e1;
+          repeat T.split; auto;
+          Tac.tower_intro; Term.simplify_subst;
+          Tac.prove; T.specialize_hyps;
+          T.destruct_conjs; Term.simplify_subst; eauto.
 
       + T.eqcd; case => e0 e1.
-        apply: propositional_extensionality; split => H.
-        * constructor; split=> κ.
-          ** T.specialize_hyps.
-             dependent destruction H.
-             by destruct H.
-
-          ** T.specialize_hyps.
-             dependent destruction H.
-             by destruct H.
-        * move=> κ.
-          dependent destruction H.
-          destruct H.
-          constructor; split;
-          eauto.
+        apply: propositional_extensionality; (split => H; first constructor) => κ;
+        T.specialize_hyps; by dependent destruction H.
   Qed.
 
   Theorem irrelevance {i A B}:
@@ -1292,15 +1284,13 @@ Module Later.
         * T.eqcd; case=> e0 e1.
           apply: propositional_extensionality; split.
           ** move=> e0e1.
-             constructor; split; Later.gather => X; T.destruct_conjs;
+             constructor; Later.gather => X; T.destruct_conjs;
              match goal with
              | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
              end;
              T.destruct_conjs; eauto.
           ** move=> X.
              dependent destruction X.
-             destruct H.
-             clear ℰsp 𝒟 ℰ 𝒟' 𝒟ℰ.
              Later.gather.
              move=> ?; T.destruct_conjs.
              constructor; eauto.
