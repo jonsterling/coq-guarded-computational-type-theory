@@ -186,6 +186,51 @@ Module Tower.
   Hint Resolve monotonicity.
 End Tower.
 
+Definition extensional_core (τ : cts) : cts :=
+  fun X =>
+    τ X ∧ TS.extensional_at τ X.
+
+Definition extensional_core_extensional : ∀ τ, TS.extensional (extensional_core τ).
+Proof.
+  move=> τ; split => A R1 [𝒟1 ℰ1] R2 //= [𝒟2 ℰ2].
+  apply: ℰ1; auto.
+Qed.
+
+Program Definition cts_succ {κ} (τ : ▶[κ] cts) : cts :=
+  fun X => LaterT.succ (LaterT.map (fun τ' => τ' X) τ).
+
+Program Definition τ_infty (κ : 𝕂) : cts :=
+  LaterT.loeb (fun τ : ▶[κ] cts => Clo.t (extensional_core (cts_succ τ))).
+
+Notation "'τ∞'" := τ_infty.
+
+Instance τ_infty_extensionality : ∀ κ, TS.extensional (τ∞ κ).
+Proof.
+  move=> κ.
+(*  eapply (@Later.loeb κ) => IH.*)
+  constructor => ? R1.
+  move=> 𝒟; rewrite /τ∞ LaterT.loeb_spec in 𝒟; move: 𝒟.
+  Clo.elim_clo; clear H.
+  - move=> [A R] [𝒟1 𝒟2] R' //= ℰ.
+    rewrite /cts_succ LaterT.map_spec -LaterT.succ_spec in 𝒟1.
+    rewrite /τ∞ LaterT.loeb_spec in ℰ.
+    Clo.destruct_clo.
+    + destruct H.
+      rewrite /cts_succ LaterT.map_spec -LaterT.succ_spec in H.
+      apply: 𝒟2.
+      rewrite /cts_succ LaterT.map_spec -LaterT.succ_spec.
+      auto.
+    + apply: 𝒟2.
+      rewrite /cts_succ LaterT.map_spec -LaterT.succ_spec //=.
+      apply: Later.next.
+      rewrite LaterT.loeb_spec.
+      rewrite -Clo.roll.
+      apply: Sig.conn; eauto.
+  -
+Abort.
+
+
+
 
 Definition τω : cts :=
   fun X =>
