@@ -76,7 +76,24 @@ Module Later.
   Hint Resolve pow_total pow_inh nat_total nat_inh.
 End Later.
 
-Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 0).
+Notation "▷[ κ ] ϕ" := (Later.t κ ϕ) (at level 50) : type_scope.
+
+Module LaterT.
+  Axiom t : 𝕂 → Type → Type.
+  Axiom next : ∀ κ (X : Type), X → t κ X.
+  Axiom map : ∀ κ (X Y : Type), (X → Y) → (t κ X → t κ Y).
+  Axiom map_spec : ∀ κ (X Y : Type) (f : X → Y) x, map f (next κ x) = next κ (f x).
+
+  Axiom loeb : ∀ κ X, (t κ X → X) → X.
+  Axiom loeb_spec : ∀ κ X (F : t κ X → X), loeb F = F (next κ (loeb F)).
+
+  (* succ witnesses the contractivity of ▷[κ] on Ω *)
+  Axiom succ : ∀ κ, t κ Ω → Ω.
+  Axiom succ_spec : ∀ κ ϕ, ▷[κ] ϕ = succ (next κ ϕ).
+End LaterT.
+
+
+Notation "▶[ κ ] X" := (LaterT.t κ X) (at level 50) : type_scope.
 
 (* True in any topos. *)
 Axiom constructive_definite_description :
