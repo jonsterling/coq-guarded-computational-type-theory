@@ -1020,7 +1020,6 @@ Module Later.
     Tac.prove.
   Qed.
 
-  (* This proof is really horrific! And I apparently didn't use it. *)
   Theorem mem_univ_inversion {κ i} {A0 A1} :
     (τω ⊧ 𝕌[i] ∋ ▶[κ] A0 ∼ ▶[κ] A1)
     → ▷[κ] (τω ⊧ 𝕌[i] ∋ A0 ∼ A1).
@@ -1053,7 +1052,7 @@ Module Later.
       + apply: (Later.map (functional_extensionality R R0)).
         apply: Later.push_universal.
         move=> e0e1.
-        rewrite -Later.commute_eq.
+        apply: Later.commute_eq.
         by apply: (equal_f x).
   Qed.
 

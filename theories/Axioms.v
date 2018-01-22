@@ -15,7 +15,7 @@ Module Later.
   Axiom force : ∀ p, (∀ κ, t κ (p κ)) = (∀ κ, p κ).
   Axiom loeb : ∀ κ p, (t κ p → p) → p.
   Axiom next : ∀ κ (p : Ω), p → t κ p.
-  Axiom commute_eq : ∀ κ (p q : Ω), ((t κ p) = (t κ q)) = t κ (p = q).
+  Axiom commute_eq : ∀ κ (p q : Ω), ((t κ p) = (t κ q)) → t κ (p = q).
 
   Theorem join : ∀ κ p q, t κ p → t κ q → t κ (p ∧ q).
   Proof.
