@@ -52,13 +52,22 @@ Axiom LocalClock : ∃ κ : 𝕂, ⊤.
 
 Module Later.
   Axiom t : 𝕂 → Ω → Ω.
-  Axiom map : forall κ (p q : Ω), (p → q) → (t κ p → t κ q).
   Axiom cart : ∀ κ (p q : Ω), t κ (p ∧ q) = ((t κ p) ∧ (t κ q)).
   Axiom force : ∀ p, (∀ κ, t κ (p κ)) = (∀ κ, p κ).
   Axiom loeb : ∀ κ p, (t κ p → p) → p.
   Axiom commute_imp : ∀ κ (p q : Ω),  t κ (p → q) = ((t κ p) → (t κ q)).
   Axiom next : ∀ κ (p : Ω), p → t κ p.
 
+  Theorem map : forall κ (p q : Ω), (p → q) → (t κ p → t κ q).
+  Proof.
+    move=> κ p q f.
+    suff H: (t κ p ∧ t κ q) = t κ p.
+    - rewrite -H; case; auto.
+    - rewrite -cart.
+      replace (p ∧ q) with p; auto.
+      apply: propositional_extensionality.
+      intuition.
+  Qed.
 
   Theorem join : ∀ κ p q, t κ p → t κ q → t κ (p ∧ q).
   Proof.
@@ -126,8 +135,9 @@ Module Later.
     - move=> [H1 H2].
       apply: (map (fun z => propositional_extensionality z)).
       rewrite /iff cart !commute_imp; auto.
-    - rewrite H /iff; auto.
+    - rewrite H/iff; auto.
   Qed.
+
 
 End Later.
 
