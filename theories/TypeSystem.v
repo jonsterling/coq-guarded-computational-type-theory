@@ -81,7 +81,9 @@ End TS.
 
 Theorem rel_total : Later.Total rel.
 Proof.
-  by rewrite /rel.
+  rewrite /rel.
+  apply: Later.pow_total.
+  eauto.
 Qed.
 
 Theorem rel_inh : Later.Inh rel.

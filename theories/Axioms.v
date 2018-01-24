@@ -92,6 +92,11 @@ Module Later.
     end.
 
   Axiom Total : Type → Ω.
+
+  (* A type is "time constant" when it does not vary in the time-assignment part of the worlds.
+     It may vary in clock *names*. *)
+  Axiom TimeConstant : Type → Ω.
+
   Definition Inh (A : Type) : Ω := ∃ x : A, ⊤.
 
   Axiom yank_existential :
@@ -111,7 +116,8 @@ Module Later.
       (∀ x : A, t κ (P x))
       → t κ (∀ x : A, P x).
 
-  Axiom pow_total : ∀ A, Total (A → Ω).
+  Axiom time_constant_prod : ∀ A B, TimeConstant A → TimeConstant B → TimeConstant (A * B).
+  Axiom pow_total : ∀ A, TimeConstant A → Total (A → Ω).
   Axiom nat_total : Total nat.
 
   Theorem pow_inh : ∀ A, Inh (A → Ω).
@@ -125,7 +131,7 @@ Module Later.
       by exists 0.
   Qed.
 
-  Hint Resolve pow_total pow_inh nat_total nat_inh.
+  Hint Resolve pow_total pow_inh nat_total nat_inh time_constant_prod.
 
 
   Theorem commute_eq : ∀ κ (p q : Ω), (t κ p) = (t κ q) → t κ (p = q).

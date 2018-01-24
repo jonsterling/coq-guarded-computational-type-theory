@@ -31,6 +31,9 @@ Module Tm.
   | univ : nat -> t Ψ
   | fix_ : t (S Ψ) → t Ψ.
 
+  Axiom tm_time_constant : ∀ Ψ, Later.TimeConstant (t Ψ).
+  Hint Resolve tm_time_constant.
+
   Arguments unit [Ψ].
   Arguments bool [Ψ].
   Arguments ax [Ψ].
