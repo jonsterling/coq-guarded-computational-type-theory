@@ -992,28 +992,7 @@ Module Later.
   Inductive Pick (τ : cts) A es : Prop :=
   | pick : (∀ R, τ (A, R) → R es) → Pick τ A es.
 
-  Lemma Pick_lemma {τ} {κ} {A} {R} :
-    TS.extensional τ
-    → ▷[κ] (τ (A, R))
-    → ▷[κ] (Pick τ A = R).
-  Proof.
-    move=> ext.
-    rewrite -Later.commute_imp.
-    apply: Later.next.
-    move=> AR.
-    apply: binrel_extensionality.
-    move=> x y; split.
-    - move=> pick.
-      dependent destruction pick.
-      apply: H; auto.
-    - move=> xy.
-      split => R'.
-      move=> AR'.
-      replace R' with R; auto.
-      apply: TS.is_extensional; eauto.
-  Qed.
-
-  Lemma Pick_lemma2 {τ} {A} {R} :
+  Lemma Pick_lemma {τ} {A} {R} :
     TS.extensional τ
     → τ (A, R)
     → Pick τ A = R.
@@ -1050,7 +1029,7 @@ Module Later.
       + move=> [R' [AR' BR']].
         replace R' with R in AR', BR'.
         * eauto.
-        * apply: Pick_lemma2; eauto.
+        * apply: Pick_lemma; eauto.
       + auto.
     - rewrite /Tower.t -Clo.roll.
       apply: Sig.conn; eauto.
@@ -1058,7 +1037,7 @@ Module Later.
       Later.gather.
       move=> [R' [AR' BR']].
       replace R with R'; eauto.
-      symmetry; apply: Pick_lemma2; eauto.
+      symmetry; apply: Pick_lemma; eauto.
   Qed.
 
   Lemma level_commute_eq_ty {A B} :
@@ -1096,13 +1075,13 @@ Module Later.
         apply: Connective.has_later.
         Later.gather; case => [R' [AR' e0e1]].
         replace R' with R in AR', e0e1; eauto.
-        apply: Pick_lemma2; eexists; eauto.
+        apply: Pick_lemma; eexists; eauto.
       + auto.
     - Later.gather.
       case => [R' [AR' e0e1]].
       replace R with R'; eauto.
       symmetry.
-      apply: Pick_lemma2.
+      apply: Pick_lemma.
       eexists; eauto.
   Qed.
 
@@ -1171,12 +1150,12 @@ Module Later.
              apply: Connective.has_later; eauto.
              Later.gather; case => A0A1 [UiR0 [UiR0' [S' [A0S' A1S']]]].
              replace S with S'; auto.
-             symmetry; apply: Pick_lemma2; auto.
+             symmetry; apply: Pick_lemma; auto.
           ** rewrite -Clo.roll; apply: Sig.conn; eauto.
              apply: Connective.has_later; eauto.
              Later.gather; case => A0A1 [UiR0 [UiR0' [S' [A0S' A1S']]]].
              replace S with S'; eauto.
-             symmetry; apply: Pick_lemma2; eauto.
+             symmetry; apply: Pick_lemma; eauto.
         * Later.gather; case => H1 [H2 H3].
           Spine.simplify; simpl in *.
           case: H3 => [j [? [? R0spec]]].
@@ -1281,7 +1260,7 @@ Module Later.
           replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in H1; auto.
           Tower.destruct_tower.
           replace R0 with RA in H1; eauto.
-          apply: Pick_lemma2; auto.
+          apply: Pick_lemma; auto.
         * simpl. match goal with
           | |- ∀ e0 _ : Tm.t 0, _ → Clo.t (Spine.t n𝒟) (_, ?fuck _) ∧ _ ∧ _ ∧ _ =>
             suff Q: fuck = (fun e es => ▷[κ0] (RB e es)); [ rewrite Q | reflexivity ]
@@ -1298,12 +1277,12 @@ Module Later.
              replace (R1 e0) with (RB e0) in H2.
              *** edestruct H2; eauto.
                  replace R0 with RA; eauto.
-                 apply: Pick_lemma2.
+                 apply: Pick_lemma.
                  auto.
-             *** apply: Pick_lemma2; eauto.
+             *** apply: Pick_lemma; eauto.
                  edestruct H2; eauto.
                  replace R0 with RA; eauto.
-                 apply: Pick_lemma2; eauto.
+                 apply: Pick_lemma; eauto.
           ** eauto.
 
           ** Tac.tower_intro; apply: Sig.conn; eauto.
@@ -1315,13 +1294,13 @@ Module Later.
              replace (R1 e1) with (RB e1) in H2.
              *** edestruct H2; eauto.
                  **** replace R0 with RA; eauto.
-                      apply: Pick_lemma2.
+                      apply: Pick_lemma.
                       exact H1.
                  **** edestruct H3; eauto.
-             *** apply: Pick_lemma2; eauto.
+             *** apply: Pick_lemma; eauto.
                  edestruct H2; eauto.
                  replace R0 with RA; eauto.
-                 apply: Pick_lemma2; eauto.
+                 apply: Pick_lemma; eauto.
                  edestruct H3.
                  edestruct H5.
                  eauto.
@@ -1335,14 +1314,14 @@ Module Later.
              replace (R1 e1) with (RB e1) in H2.
              *** edestruct H2; eauto.
                  replace R0 with RA; eauto.
-                 apply: Pick_lemma2.
+                 apply: Pick_lemma.
                  auto.
                  destruct H3; eauto.
                  destruct H4; eauto.
-             *** apply: Pick_lemma2; eauto.
+             *** apply: Pick_lemma; eauto.
                  edestruct H2; eauto.
                  replace R0 with RA; eauto.
-                 apply: Pick_lemma2; eauto.
+                 apply: Pick_lemma; eauto.
                  T.destruct_conjs; eauto.
 
           ** Tac.tower_intro; apply: Sig.conn; eauto.
@@ -1354,14 +1333,14 @@ Module Later.
              replace (R1 e0) with (RB e0) in H2.
              *** edestruct H2; eauto.
                  replace R0 with RA; eauto.
-                 apply: Pick_lemma2.
+                 apply: Pick_lemma.
                  auto.
                  T.destruct_conjs.
                  eauto.
-             *** apply: Pick_lemma2; eauto.
+             *** apply: Pick_lemma; eauto.
                  edestruct H2; eauto.
                  replace R0 with RA; eauto.
-                 apply: Pick_lemma2; eauto.
+                 apply: Pick_lemma; eauto.
       + eauto.
 
     - constructor => e0 e1 e0e1.
@@ -1371,17 +1350,17 @@ Module Later.
       replace (RB e0) with (R1 e0).
       + edestruct H2.
         * replace R0 with RA; eauto.
-          apply: Pick_lemma2; eauto.
+          apply: Pick_lemma; eauto.
         * T.destruct_conjs; eauto.
           dependent destruction X1; eauto.
           apply: H; eauto.
           replace R0 with RA; eauto.
-          apply: Pick_lemma2; eauto.
+          apply: Pick_lemma; eauto.
       + symmetry.
-        apply: Pick_lemma2; eauto.
+        apply: Pick_lemma; eauto.
         edestruct H2; eauto.
         replace R0 with RA; eauto.
-        apply: Pick_lemma2; eauto.
+        apply: Pick_lemma; eauto.
   Qed.
 
   Lemma existential_trickery {A} {P Q : A → Prop} :
