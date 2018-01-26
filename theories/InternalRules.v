@@ -1245,7 +1245,6 @@ Module Later.
     move=> /Level.eq_mem_to_level [n𝒟 [R𝒟 [𝒟0 𝒟1]]].
     apply: (Level.eq_mem_from_level n𝒟).
     Tower.destruct_tower.
-(*    have := Later.map fun_ty_inversion H0.*)
 
     pose RA := Pick τ[n𝒟] A.
     pose RB : Tm.t 0 → rel := fun (e : Tm.t 0) => Pick τ[n𝒟] (B ⫽ @Sub.inst0 _ Tm.syn_struct_term _ e)%tm.
@@ -1417,57 +1416,138 @@ Module Later.
       by apply: ℰ.
   Qed.
 
-  (*
+
   Theorem preserves_sigma i κ {A0 A1 B0 B1} :
     ▷[κ] (τ[i] ⊧ A0 ∼ A1)
     → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
     → τ[i] ⊧ ▶[κ] (A0 × B0) ∼ ((▶[κ] A1) × (▶[κ] B1)).
   Proof.
     move=> 𝒟 ℰ.
-    case: (Later.yank_existential _ _ _ 𝒟); auto => R𝒟 𝒟'.
 
-    suff 𝒟ℰ: ▷[κ] (τ[i] ⊧ A0 ∼ A1 ∧ τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1).
-    - case: (Later.yank_existential _ _ _ (Later.map (fun x => Fam.family_choice (proj1 x) (proj2 x)) 𝒟ℰ)); auto.
-      move=> Rℰ ℰsp.
+    pose RA := Pick τ[i] A0.
+    pose RB : Tm.t 0 → rel := fun (e : Tm.t 0) => Pick τ[i] (B0 ⫽ @Sub.inst0 _ Tm.syn_struct_term _ e)%tm.
 
-      eexists; split.
-      + Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
-        Later.gather; case => [[? [? ?]] [ℰ0 [[ℰ1 ℰ2] [[ℰ3 ℰ4] ℰ5]]]].
-        Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
-        * exact ℰ1.
+    exists (Connective.prod_el (fun es => ▷[κ] (RA es)) (fun x => fun es => ▷[κ] (RB x es))).
+    split.
+    - Tac.ts_flex_rel.
+      + Tac.tower_intro.
+        apply: Sig.conn; eauto.
+        apply: Connective.has_later; eauto.
+        Later.gather; case => [[RA' [𝒟0 𝒟1]]].
+        move=> /(Fam.family_choice) => H1.
+        Tac.tower_intro; apply: Sig.conn; eauto.
+        apply: Connective.has_prod.
+        * T.use 𝒟0; eauto.
+          rewrite /Tower.t.
+          repeat f_equal.
+          replace RA' with RA; eauto.
+          apply: Pick_lemma; eauto.
         * move=> e0 e1 e0e1.
-          case (ℰ5 e0 e1).
-          ** eexists; eauto.
-          ** move=> Q ℱ; destruct ℱ as [? [? [? ?]]]; repeat split; eauto; rewrite -Q; eauto.
+          match goal with
+          | |- Clo.t (Spine.t i) (_, ?R ?e) ∧ _ => replace (R e) with (RB e)
+          end; eauto.
+          specialize (H1 A1).
+          destruct H1 as [RB' ?].
+          ** exists RA'; auto.
+          ** specialize (H0 e0 e1).
+             edestruct H0.
+             *** eexists RA; split; auto.
+                 replace RA with RA'; auto.
+                 symmetry; apply: Pick_lemma; auto.
+             *** T.destruct_conjs.
+                 replace (RB e0) with (RB' e0).
+                 **** replace (RB e1) with (RB' e1).
+                      ***** repeat split; try (rewrite -H1); eauto.
+                      ***** symmetry; apply: Pick_lemma.
+                            rewrite -H1; eauto.
+                 **** symmetry; apply: Pick_lemma.
+                      eauto.
+      + T.eqcd; case => e0 e1.
+        apply: propositional_extensionality; split.
+        * move=> X.
+          dependent destruction X.
+          Later.gather.
+          move=> ?; T.destruct_conjs.
+          constructor; eauto.
 
-      + Tac.ts_flex_rel.
-        * Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
-          ** Tac.tower_intro; apply: Sig.conn; first by [auto]; constructor.
-             move {ℰsp 𝒟ℰ 𝒟 ℰ}.
-             Later.gather; case; eauto.
-          ** move=> e0 e1 //= e0e1.
-             repeat split;
-             Tac.tower_intro; (apply: Sig.conn; first by [auto]); constructor; Later.gather;
-             move=> [ℱ0 [ℱ1 [[ℱ2 ℱ3] [[ℱ4 ℱ5] [ℱ6 ℱ7]]]]];
-             (case: (ℱ6 e0 e1); first by [exists R𝒟]);
-             move=> Q [ℋ0 [ℋ1 [ℋ2 ℋ3]]]; eauto; by rewrite -Q.
-        * T.eqcd; case=> e0 e1.
-          apply: propositional_extensionality; split.
-          ** move=> e0e1.
-             constructor; Later.gather => X; T.destruct_conjs;
-             match goal with
-             | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
-             end;
-             T.destruct_conjs; eauto.
-          ** move=> X.
-             dependent destruction X.
-             Later.gather.
-             move=> ?; T.destruct_conjs.
-             constructor; eauto.
-    - Later.gather.
-      by case => [? [? [? ?]]].
+        * move=> e0e1.
+          constructor;
+          Later.gather => X;
+          T.destruct_conjs;
+          match goal with
+          | H : Connective.prod_el _ _ _ |- _ => dependent destruction H
+          end;
+          T.destruct_conjs; eauto.
+
+
+    - Tac.ts_flex_rel.
+      + Tac.tower_intro.
+        apply: Sig.conn; eauto.
+        apply: Connective.has_prod.
+        * Tac.tower_intro.
+          apply: Sig.conn; eauto.
+          apply: Connective.has_later.
+          Later.gather; case => [[RA' [𝒟0 𝒟1]]].
+          move=> /Fam.family_choice => Fam.
+          replace RA' with RA in 𝒟1; eauto.
+          apply: Pick_lemma; eauto.
+        * move=> e0 e1 //= e0e1;
+          repeat split; Tac.tower_intro; apply: Sig.conn; eauto;
+          apply: Connective.has_later;
+          Later.gather; case => [[RA' [𝒟0 𝒟1]]]; case;
+          move=> /Fam.family_choice => Fam; move=> e0e1; specialize (Fam A1);
+          (destruct Fam as [RB' Fam]; first by [exists RA'; eauto]);
+          specialize (Fam e0 e1);
+          (destruct Fam as [H Fam]; first by [exists RA; eauto; split; [replace RA with RA'; eauto; symmetry; apply: Pick_lemma; eauto|eauto]]);
+          case: Fam => F1 [F2 [F3 F4]].
+          ** T.use F4; eauto.
+             rewrite /Tower.t; repeat f_equal.
+             symmetry; apply: (@Pick_lemma τ[i]); eauto.
+          ** T.use F4; eauto.
+             rewrite /Tower.t; repeat f_equal.
+             symmetry; apply: Pick_lemma; eauto.
+          ** T.use F2; eauto.
+             rewrite /Tower.t; repeat f_equal.
+             symmetry; apply: Pick_lemma; eauto.
+          ** T.use F2; eauto.
+             rewrite /Tower.t; repeat f_equal.
+             symmetry; apply: Pick_lemma; eauto.
+
+      + apply: binrel_extensionality => e0 e1; split.
+        * move=> H.
+          dependent destruction H.
+          constructor; eauto.
+          Later.gather; case=> [[RA' [𝒟0 𝒟1]]]; case.
+          move=> /Fam.family_choice => Fam; case=> H1 H2.
+          T.use H2.
+          apply: equal_f.
+          symmetry.
+          apply: Pick_lemma.
+          destruct (Fam A1).
+          ** exists RA'; eauto.
+          ** edestruct H as [Q [F1 [F2 [F3 F4]]]].
+             *** exists RA; split; eauto.
+                 replace RA with RA'; auto.
+                 symmetry; apply: Pick_lemma; auto.
+             *** T.use F4; repeat f_equal; eauto => ?.
+                 symmetry; apply: Pick_lemma; eauto.
+        * move=> H.
+          dependent destruction H.
+          constructor; eauto.
+          Later.gather; case=> [[RA' [𝒟0 𝒟1]]]; case.
+          move=> /Fam.family_choice => Fam; case=> H1 H2.
+          T.use H2; apply: equal_f.
+          symmetry.
+          apply: Pick_lemma.
+          destruct (Fam A1).
+          ** exists RA'; eauto.
+          ** edestruct H as [Q [F1 [F2 [F3 F4]]]].
+             *** exists RA; split; eauto.
+                 replace RA with RA'; auto.
+                 symmetry; apply: Pick_lemma; auto.
+             *** T.use F1; repeat f_equal.
+                 symmetry; apply: Pick_lemma; eauto.
   Qed.
-*)
 End Later.
 
 
