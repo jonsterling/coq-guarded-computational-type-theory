@@ -77,28 +77,3 @@ Module TS.
             → type_computational_at (A, R) }.
   End Law.
 End TS.
-
-
-Theorem rel_total : Later.Total rel.
-Proof.
-  rewrite /rel.
-  apply: Later.pow_total.
-  eauto.
-Qed.
-
-Theorem rel_inh : Later.Inh rel.
-Proof.
-  by rewrite /rel.
-Qed.
-
-Axiom rel_fam_total : Later.Total (Tm.t 0 → rel).
-
-Theorem rel_fam_inh : Later.Inh (Tm.t 0 → rel).
-Proof.
-  rewrite /rel.
-  split; auto.
-  move=> ? ?.
-  exact ⊤.
-Qed.
-
-Hint Resolve rel_total rel_inh rel_fam_total rel_fam_inh.

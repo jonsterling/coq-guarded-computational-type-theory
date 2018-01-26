@@ -116,8 +116,6 @@ Module Later.
       (∀ x : A, t κ (P x))
       → t κ (∀ x : A, P x).
 
-  Axiom time_constant_prod : ∀ A B, TimeConstant A → TimeConstant B → TimeConstant (A * B).
-  Axiom pow_total : ∀ A, TimeConstant A → Total (A → Ω).
   Axiom nat_total : Total nat.
 
   Theorem pow_inh : ∀ A, Inh (A → Ω).
@@ -131,7 +129,7 @@ Module Later.
       by exists 0.
   Qed.
 
-  Hint Resolve pow_total pow_inh nat_total nat_inh time_constant_prod.
+  Hint Resolve pow_inh nat_total nat_inh.
 
 
   Theorem commute_eq : ∀ κ (p q : Ω), (t κ p) = (t κ q) → t κ (p = q).

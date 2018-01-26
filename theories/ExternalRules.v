@@ -492,9 +492,10 @@ Module Later.
     apply: 𝒟; try by eassumption.
 
     move=> ? ? ? //=.
-    apply: Later.formationω.
+    apply: (Level.eq_ty_from_level (S i)).
+    apply: Later.formation.
     apply: Later.next.
-    eauto.
+    apply: Univ.formation_S.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} {k i A e0 e1} :
@@ -547,34 +548,40 @@ Module Later.
         * case: δ01 => _ ℱ.
           T.use ℱ; eauto.
       + move=> ? ? ? //=.
-        apply: IR.Later.formationω.
+        apply: (IR.Level.eq_ty_from_level (S i)).
+        apply: IR.Later.formation.
         apply: Later.next.
-        eauto.
+        apply: Univ.formation_S.
       + split; auto.
         apply: IR.Univ.open_inversionω.
         apply: 𝒟; auto.
   Qed.
 
 
-  Theorem induction `{Γ : ECtx.t Λ Ψ} k {A e0 e1} :
-    ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
+  Theorem induction `{Γ : ECtx.t Λ Ψ} k {i A e0 e1} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
     → ⟦ Λ ∣ Γ ≫ A ∋ μ{ e0 } ≐ μ{ e1 } ⟧.
   Proof.
-    move=> 𝒟 κs ? ℰ ? ? γ01 //=.
+    move=> 𝒟 ℰ κs ? ℱ ? ? γ01 //=.
     apply: (IR.Later.loeb_induction_closed (κs k)).
-    move=> //= ? ? [_ ℱ]; Term.simplify_subst.
+    - apply: IR.Univ.inversion.
+      apply: 𝒟; eauto.
+    - move=> //= ? ? [_ 𝒢]; Term.simplify_subst.
 
-    T.efwd 𝒟.
-    - T.use 𝒟; eauto.
-    - split; [T.use γ01 | T.use ℱ]; eauto.
-    - move=> //= ? ? [? ?].
-      Term.simplify_subst.
-      apply: ℰ; eauto.
-    - split; first by [assumption].
-      move=> //= ? ? ?.
-      apply: IR.Later.formationω.
-      apply: Later.next.
-      eauto.
+      T.efwd ℰ.
+      + T.use ℰ; eauto.
+      + split; [T.use γ01 | T.use 𝒢]; eauto.
+      + move=> //= ? ? [? ?].
+        Term.simplify_subst.
+        apply: ℱ; eauto.
+      + split; first by [assumption].
+        move=> //= ? ? ?.
+        apply: (IR.Level.eq_ty_from_level i).
+        apply: IR.Later.formation.
+        apply: Later.next.
+        apply: IR.Univ.inversion.
+        apply: 𝒟; eauto.
   Qed.
 End Later.
 
@@ -595,20 +602,21 @@ Module Examples.
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (BitStream k) ≐ (BitStream k) ⟧.
   Proof.
     apply: (Later.induction k).
-    apply: Prod.univ_eq.
-    - apply: Bool.univ_eq.
-    - apply: Later.univ_eq.
-
-      suff Q: @1%etm = (@0 .[^1])%etm; auto.
-      rewrite !Q {Q}.
-
-      suff Q : (▶[k] 𝕌[i])%etm = ((▶[k] 𝕌[i]).[^1])%etm; auto.
-      rewrite !Q {Q}.
-
-      apply: General.weakening.
-      + apply: General.hypothesis.
+    - apply: General.univ_formation; eauto.
+    - apply: Prod.univ_eq.
+      + apply: Bool.univ_eq.
       + apply: Later.univ_eq.
-        apply: Later.intro; apply: General.univ_formation; auto.
+
+        suff Q: @1%etm = (@0 .[^1])%etm; auto.
+        rewrite !Q {Q}.
+
+        suff Q : (▶[k] 𝕌[i])%etm = ((▶[k] 𝕌[i]).[^1])%etm; auto.
+        rewrite !Q {Q}.
+
+        apply: General.weakening.
+        * apply: General.hypothesis.
+        * apply: Later.univ_eq.
+          apply: Later.intro; apply: General.univ_formation; auto.
   Qed.
 
   Example BitSeq_wf `{Γ : ECtx.t Λ Ψ} {i} :
@@ -640,17 +648,20 @@ Module Examples.
     ⟦ Λ ∣ Γ ≫ BitStream k ∋ Ones ≐ Ones ⟧.
   Proof.
     apply: (Later.induction k).
-    apply: (General.replace_ty 0).
-    - apply: General.eq_symm.
-      apply: BitStream_unfold.
-    - apply: Prod.intro.
-      + by apply: Bool.tt_equality.
-      + by apply: General.hypothesis.
-      + by apply: (Bool.univ_eq 0).
-      + apply: (Later.univ_eq 0).
-        apply: Later.intro.
-        * by apply: BitStream_wf.
-        * by apply: General.univ_formation.
+    - apply: BitStream_wf.
+    - apply: (General.replace_ty 0).
+      + apply: General.eq_symm.
+        apply: BitStream_unfold.
+      + apply: Prod.intro.
+        * by apply: Bool.tt_equality.
+        * by apply: General.hypothesis.
+        * by apply: (Bool.univ_eq 0).
+        * apply: (Later.univ_eq 0).
+          apply: Later.intro.
+          ** by apply: BitStream_wf.
+          ** by apply: General.univ_formation.
+             Unshelve.
+             constructor.
   Qed.
 
   Example Ones_wf_infinite `{Γ : ECtx.t Λ Ψ} :

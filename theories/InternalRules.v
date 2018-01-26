@@ -989,35 +989,121 @@ Module Isect.
 End Isect.
 
 Module Later.
-  Theorem formationω {κ} {A B} :
-    ▷[κ] (τω ⊧ A ∼ B)
-    → τω ⊧ ▶[κ] A ∼ ▶[κ] B.
+  Inductive Pick (τ : cts) A es : Prop :=
+  | pick : (∀ R, τ (A, R) → R es) → Pick τ A es.
+
+  Lemma Pick_lemma {τ} {κ} {A} {R} :
+    TS.extensional τ
+    → ▷[κ] (τ (A, R))
+    → ▷[κ] (Pick τ A = R).
   Proof.
-    move=> /Later.yank_existential; case; auto.
-    move=> R H0.
-    suff: ▷[κ] (∃ n, τ[n] (A, R) ∧ τ[n] (B, R)).
-    - move=> /Later.yank_existential; case; auto.
-      move=> n H1.
-      Tac.prove; Later.gather; case; Tac.prove.
-    - Later.gather.
-      move=> [[n1 H1] [n2 H2]].
-      Tac.accum_lvl n.
-      exists n.
-      split; Tac.tower_mono.
+    move=> ext.
+    rewrite -Later.commute_imp.
+    apply: Later.next.
+    move=> AR.
+    apply: binrel_extensionality.
+    move=> x y; split.
+    - move=> pick.
+      dependent destruction pick.
+      apply: H; auto.
+    - move=> xy.
+      split => R'.
+      move=> AR'.
+      replace R' with R; auto.
+      apply: TS.is_extensional; eauto.
   Qed.
+
+  Lemma Pick_lemma2 {τ} {A} {R} :
+    TS.extensional τ
+    → τ (A, R)
+    → Pick τ A = R.
+  Proof.
+    move=> ext.
+    move=> AR.
+    apply: binrel_extensionality.
+    move=> x y; split.
+    - move=> pick.
+      dependent destruction pick.
+      apply: H; auto.
+    - move=> xy.
+      split => R'.
+      move=> AR'.
+      replace R' with R; auto.
+      apply: TS.is_extensional; eauto.
+  Qed.
+
+
+  Theorem formation {κ n} {A B} :
+    ▷[κ] (τ[n] ⊧ A ∼ B)
+    → τ[n] ⊧ ▶[κ] A ∼ ▶[κ] B.
+  Proof.
+    move => 𝒟.
+    unfold atomic_eq_ty in 𝒟.
+    pose R := Pick τ[n] A.
+    exists (fun es => ▷[κ] (R es)); split.
+
+    - Tac.ts_flex_rel.
+      rewrite /Tower.t -Clo.roll.
+      apply: Sig.conn; eauto.
+      eapply Connective.has_later.
+      Later.gather.
+      + move=> [R' [AR' BR']].
+        replace R' with R in AR', BR'.
+        * eauto.
+        * apply: Pick_lemma2; eauto.
+      + auto.
+    - rewrite /Tower.t -Clo.roll.
+      apply: Sig.conn; eauto.
+      apply: Connective.has_later.
+      Later.gather.
+      move=> [R' [AR' BR']].
+      replace R with R'; eauto.
+      symmetry; apply: Pick_lemma2; eauto.
+  Qed.
+
+  Lemma level_commute_eq_ty {A B} :
+    τω ⊧ A ∼ B
+    → ∃ n, τ[n] ⊧ A ∼ B.
+  Proof.
+    case => R [[n1 AR] [n2 BR]].
+    exists (n1 + n2).
+    exists R; split;
+    Tac.tower_mono.
+  Qed.
+
+  Lemma level_commute_eq_mem {A e0 e1} :
+    τω ⊧ A ∋ e0 ∼ e1
+    → ∃ n, τ[n] ⊧ A ∋ e0 ∼ e1.
+  Proof.
+    case => R [[n AR] e0e1].
+    exists n; exists R; auto.
+  Qed.
+
+
 
   Theorem intro {κ} {A e1 e2} :
     ▷[κ] (τω ⊧ A ∋ e1 ∼ e2)
     → τω ⊧ ▶[κ] A ∋ e1 ∼ e2.
   Proof.
-    move=> /Later.yank_existential.
-    case; eauto.
-    move=> R 𝒟.
-    rewrite Later.cart in 𝒟.
-    case: 𝒟 => [/Later.yank_existential 𝒟0 𝒟1].
-    case: 𝒟0; eauto.
-    move=> n 𝒟0.
-    Tac.prove.
+    move=> /(Later.map level_commute_eq_mem).
+    move=> /Later.yank_existential; case; auto => n 𝒟.
+    pose R := Pick τω A.
+    exists (fun es => ▷[κ] (R es)).
+    split.
+    - exists n; Tac.ts_flex_rel.
+      + rewrite /Tower.t -Clo.roll.
+        apply: Sig.conn; eauto.
+        apply: Connective.has_later.
+        Later.gather; case => [R' [AR' e0e1]].
+        replace R' with R in AR', e0e1; eauto.
+        apply: Pick_lemma2; eexists; eauto.
+      + auto.
+    - Later.gather.
+      case => [R' [AR' e0e1]].
+      replace R with R'; eauto.
+      symmetry.
+      apply: Pick_lemma2.
+      eexists; eauto.
   Qed.
 
   Theorem mem_univ_inversion {κ i} {A0 A1} :
@@ -1078,17 +1164,21 @@ Module Later.
         Later.gather => *; T.destruct_conjs;
         Spine.simplify; by [contradiction].
       + move {IHn}; suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
-        * move=> /Later.yank_existential; case; eauto.
-          move=> S H2; rewrite Later.cart in H2.
-          case: H2 => [H20 H21].
-          exists (fun e0e1 => ▷[κ0] (S e0e1)).
-          simpl in *.
-          split; rewrite -Clo.roll;
-          (apply: Sig.conn; first by [eauto]);
-          by [apply: Connective.has_later].
-        * Later.gather.
-          move=> [H1 [H2 H3]].
-          Spine.simplify.
+        * pose S := Pick τ[i] A0.
+          move=> 𝒟.
+          exists (fun es => ▷[κ0] (S es)); split; simpl.
+          ** rewrite -Clo.roll; apply: Sig.conn; eauto.
+             apply: Connective.has_later; eauto.
+             Later.gather; case => A0A1 [UiR0 [UiR0' [S' [A0S' A1S']]]].
+             replace S with S'; auto.
+             symmetry; apply: Pick_lemma2; auto.
+          ** rewrite -Clo.roll; apply: Sig.conn; eauto.
+             apply: Connective.has_later; eauto.
+             Later.gather; case => A0A1 [UiR0 [UiR0' [S' [A0S' A1S']]]].
+             replace S with S'; eauto.
+             symmetry; apply: Pick_lemma2; eauto.
+        * Later.gather; case => H1 [H2 H3].
+          Spine.simplify; simpl in *.
           case: H3 => [j [? [? R0spec]]].
           OpSem.destruct_evals.
           simpl in *; by [rewrite R0spec in H1].
@@ -1124,30 +1214,32 @@ Module Later.
   Qed.
 
 
-  Theorem loeb_induction_closed κ {A e0 e1} :
-    τω ⊧ ⋄ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
+  Theorem loeb_induction_closed κ i {A B e0 e1} :
+    τ[i] ⊧ A ∼ B
+    → τω ⊧ ⋄ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
     → τω ⊧ A ∋ 𝛍{ e0 } ∼ 𝛍{ e1 }.
   Proof.
-    move=> 𝒟.
+    move=> [R [AR _]] ℰ.
     apply: (@Later.loeb κ).
-    move=> /Later.yank_existential; case; auto; move=> R ℰ.
-    rewrite Later.cart in ℰ.
-    case: ℰ => /Later.yank_existential; case; auto => n ℰ1 ℰ2.
 
-    T.efwd 𝒟.
+    move=> ℱ.
+    T.efwd ℰ.
     - apply: General.mem_eq_conv_both.
       + move=> v; case: (fix_unfold e0 v) => _; apply.
       + move=> v; case: (fix_unfold e1 v) => _; apply.
-      + T.use 𝒟; f_equal; by Term.simplify_subst.
-
+      + T.use ℰ; f_equal; by Term.simplify_subst.
     - simpl; split; auto.
       exists (fun e0e1 => ▷[κ] (R e0e1)); split.
-      + exists n.
+      + exists i.
         Tac.prove.
         Later.gather.
         move=> [? ?].
           by rewrite Tm.subst_ret.
-      + by Later.gather; case.
+      + Later.gather; case => R' [AR' mue0mue1].
+        replace R with R'; auto.
+        apply: TS.is_extensional.
+        * exact AR'.
+        * eexists; eauto.
   Qed.
 
   Lemma fun_ty_inversion {i A B R} :
@@ -1174,23 +1266,122 @@ Module Later.
     move=> /Level.eq_mem_to_level [n𝒟 [R𝒟 [𝒟0 𝒟1]]].
     apply: (Level.eq_mem_from_level n𝒟).
     Tower.destruct_tower.
-    have := Later.map fun_ty_inversion H0.
-    move=> /Later.yank_existential; case; auto => RA.
-    move=> /Later.yank_existential; case; auto => RB.
-    repeat rewrite Later.cart.
-    case => H1 [H2 H3].
+(*    have := Later.map fun_ty_inversion H0.*)
 
-    eexists; split.
-    - Tac.tower_intro; apply: Sig.conn; auto; constructor.
-      + Tac.tower_intro; apply: Sig.conn; auto; constructor; eauto.
-      + move=> e0 e1 //= H4; repeat split; Tac.tower_intro; apply: Sig.conn; auto; constructor;
-        Later.gather; case => X1 [X2 [X3 [X4 [X5 X6]]]];
-        edestruct X4; T.destruct_conjs; eauto.
+    pose RA := Pick τ[n𝒟] A.
+    pose RB : Tm.t 0 → rel := fun (e : Tm.t 0) => Pick τ[n𝒟] (B ⫽ @Sub.inst0 _ Tm.syn_struct_term _ e)%tm.
+
+    exists (Connective.fun_el (fun es => ▷[κ0] (RA es)) (fun x => fun es => ▷[κ0] (RB x es))).
+    split.
+    - Tac.ts_flex_rel.
+      Tac.tower_intro; apply: Sig.conn; eauto.
+      + apply: Connective.has_arr.
+        * Tac.tower_intro; apply: Sig.conn; auto; constructor.
+          Later.gather; case => f0f1 H1.
+          replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in H1; auto.
+          Tower.destruct_tower.
+          replace R0 with RA in H1; eauto.
+          apply: Pick_lemma2; auto.
+        * simpl. match goal with
+          | |- ∀ e0 _ : Tm.t 0, _ → Clo.t (Spine.t n𝒟) (_, ?fuck _) ∧ _ ∧ _ ∧ _ =>
+            suff Q: fuck = (fun e es => ▷[κ0] (RB e es)); [ rewrite Q | reflexivity ]
+          end.
+
+          move=> e0 e1 e0e1; repeat split. replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟]; auto.
+          Tac.ts_flex_rel.
+          ** Tac.tower_intro; apply: Sig.conn; eauto.
+             apply: Connective.has_later; eauto.
+             Later.gather; case => X1 [X2 X3].
+             replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
+             Tower.destruct_tower.
+             specialize (H2 e0 e1).
+             replace (R1 e0) with (RB e0) in H2.
+             *** edestruct H2; eauto.
+                 replace R0 with RA; eauto.
+                 apply: Pick_lemma2.
+                 auto.
+             *** apply: Pick_lemma2; eauto.
+                 edestruct H2; eauto.
+                 replace R0 with RA; eauto.
+                 apply: Pick_lemma2; eauto.
+          ** eauto.
+
+          ** Tac.tower_intro; apply: Sig.conn; eauto.
+             apply: Connective.has_later; eauto.
+             Later.gather; case => X1 [X2 X3].
+             replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
+             Tower.destruct_tower.
+             specialize (H2 e0 e1).
+             replace (R1 e1) with (RB e1) in H2.
+             *** edestruct H2; eauto.
+                 **** replace R0 with RA; eauto.
+                      apply: Pick_lemma2.
+                      exact H1.
+                 **** edestruct H3; eauto.
+             *** apply: Pick_lemma2; eauto.
+                 edestruct H2; eauto.
+                 replace R0 with RA; eauto.
+                 apply: Pick_lemma2; eauto.
+                 edestruct H3.
+                 edestruct H5.
+                 eauto.
+
+          ** Tac.tower_intro; apply: Sig.conn; eauto.
+             apply: Connective.has_later; eauto.
+             Later.gather; case => X1 [X2 X3].
+             replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
+             Tower.destruct_tower.
+             specialize (H2 e0 e1).
+             replace (R1 e1) with (RB e1) in H2.
+             *** edestruct H2; eauto.
+                 replace R0 with RA; eauto.
+                 apply: Pick_lemma2.
+                 auto.
+                 destruct H3; eauto.
+                 destruct H4; eauto.
+             *** apply: Pick_lemma2; eauto.
+                 edestruct H2; eauto.
+                 replace R0 with RA; eauto.
+                 apply: Pick_lemma2; eauto.
+                 T.destruct_conjs; eauto.
+
+          ** Tac.tower_intro; apply: Sig.conn; eauto.
+             apply: Connective.has_later; eauto.
+             Later.gather; case => X1 [X2 X3].
+             replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
+             Tower.destruct_tower.
+             specialize (H2 e0 e1).
+             replace (R1 e0) with (RB e0) in H2.
+             *** edestruct H2; eauto.
+                 replace R0 with RA; eauto.
+                 apply: Pick_lemma2.
+                 auto.
+                 T.destruct_conjs.
+                 eauto.
+             *** apply: Pick_lemma2; eauto.
+                 edestruct H2; eauto.
+                 replace R0 with RA; eauto.
+                 apply: Pick_lemma2; eauto.
+      + eauto.
+
     - constructor => e0 e1 e0e1.
-      Later.gather; case => X1 [X2 [X3 [X4 [X5 X6]]]].
-      rewrite X5 in X1.
-      dependent destruction X1.
-      by apply: H0.
+      Later.gather; case => X1 [X2 X3].
+      replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
+      Tower.destruct_tower.
+      replace (RB e0) with (R1 e0).
+      + edestruct H2.
+        * replace R0 with RA; eauto.
+          apply: Pick_lemma2; eauto.
+        * T.destruct_conjs; eauto.
+          dependent destruction X1; eauto.
+          apply: H; eauto.
+          replace R0 with RA; eauto.
+          apply: Pick_lemma2; eauto.
+      + symmetry.
+        apply: Pick_lemma2; eauto.
+        edestruct H2; eauto.
+        replace R0 with RA; eauto.
+        apply: Pick_lemma2; eauto.
   Qed.
 
   Lemma existential_trickery {A} {P Q : A → Prop} :
@@ -1247,6 +1438,7 @@ Module Later.
       by apply: ℰ.
   Qed.
 
+  (*
   Theorem preserves_sigma i κ {A0 A1 B0 B1} :
     ▷[κ] (τ[i] ⊧ A0 ∼ A1)
     → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
@@ -1296,6 +1488,7 @@ Module Later.
     - Later.gather.
       by case => [? [? [? ?]]].
   Qed.
+*)
 End Later.
 
 
