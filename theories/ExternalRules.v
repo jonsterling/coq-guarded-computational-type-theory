@@ -3,7 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Generalizable All Variables.
 
-Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega.
+Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega Logic.FunctionalExtensionality.
 From gctt Require Import Axioms Var Term ExternalSyn Interp Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
@@ -585,6 +585,77 @@ Module Later.
   Qed.
 End Later.
 
+
+Module ExternalCanonicity.
+  Definition quote_bool (b : bool) {Λ} : ETm.t Λ 0 :=
+    match b with
+    | true => ETm.tt
+    | false => ETm.ff
+    end.
+
+  Notation "⌊ b ⌋𝔹" := (quote_bool b).
+
+  Theorem canonicity {e} :
+    ⟦ 0 ∣ ⋄ ≫ 𝟚 ∋ e ≐ e ⟧
+    → ∃ b : bool, ⟦ 0 ∣ 0 ⊢ e ≃ ⌊ b ⌋𝔹 ⟧.
+  Proof.
+    move=> 𝒟.
+    suff κs: Env.t 0; last by [move=> x; dependent destruction x].
+    suff: τω ⊧ 𝟚 ∋ ⟦ e ⟧ κs ∼ ⟦ e ⟧ κs.
+    - case=> R [[n ℰ0] ℰ1].
+      Tower.destruct_tower.
+      dependent destruction ℰ1.
+      dependent destruction H1.
+      + exists true; simpl.
+        move=> κs' //=.
+        replace κs' with κs.
+        * split.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm.
+             *** move=> H1.
+                 replace v with (@Tm.tt 0); eauto.
+                 by OpSem.evals_to_eq.
+             *** Term.simplify_subst.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm; eauto.
+             move=> //= H1.
+             replace v with (@Tm.tt 0); eauto.
+             dependent destruction H1.
+             dependent destruction eval_steps; eauto.
+             dependent destruction H1.
+        * apply: functional_extensionality => x.
+          dependent destruction x.
+      + exists false.
+        move=> κs' //=.
+        replace κs' with κs.
+        * split.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm.
+             *** move=> H1.
+                 replace v with (@Tm.ff 0); eauto.
+                 by OpSem.evals_to_eq.
+             *** Term.simplify_subst.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm; eauto.
+             move=> //= H1.
+             replace v with (@Tm.ff 0); eauto.
+             dependent destruction H1.
+             dependent destruction eval_steps; eauto.
+             dependent destruction H1.
+        * apply: functional_extensionality => x.
+          dependent destruction x.
+    - specialize (𝒟 κs); simpl in 𝒟.
+      suff: τω ⊧ ⋄ ≫ 𝟚 ∼ 𝟚 ∧ (∃ γ0 : @Sub.t Tm.t 0 0, atomic_eq_env τω ⋄%ictx γ0 γ0).
+      + case=> ℰ [γ0 γ00].
+        specialize (𝒟 I ℰ γ0 γ0 γ00).
+        T.use 𝒟.
+        Term.simplify_subst.
+      + split.
+        * move=> ? ? ? //=.
+          apply: (IR.Level.eq_ty_from_level 0).
+          apply: IR.Bool.formation.
+        * unshelve esplit.
+          ** move=> x.
+             dependent destruction x.
+          ** auto.
+  Qed.
+End ExternalCanonicity.
 
 Module Examples.
 
