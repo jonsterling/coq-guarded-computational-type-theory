@@ -595,6 +595,7 @@ Module ExternalCanonicity.
 
   Notation "⌊ b ⌋𝔹" := (quote_bool b).
 
+  (* TODO: improve this proof. *)
   Theorem canonicity {e} :
     ⟦ 0 ∣ ⋄ ≫ 𝟚 ∋ e ≐ e ⟧
     → ∃ b : bool, ⟦ 0 ∣ 0 ⊢ e ≃ ⌊ b ⌋𝔹 ⟧.
