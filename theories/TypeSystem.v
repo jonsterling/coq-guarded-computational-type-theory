@@ -1,5 +1,4 @@
-Require Import Unicode.Utf8.
-Require Import ssreflect.
+Require Import Unicode.Utf8 ssreflect Program.Equality.
 Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Import Notation Program OpSem Axioms.
@@ -76,4 +75,29 @@ Module TS.
             σ (A, R)
             → type_computational_at (A, R) }.
   End Law.
+
+  Inductive Pick (τ : cts) A es : Prop :=
+  | pick : (∀ R, τ (A, R) → R es) → Pick τ A es.
+
+  Module PickNotation.
+    Notation "τ @ A" := (Pick τ A) (at level 10).
+  End PickNotation.
+
+  Import PickNotation.
+
+  Lemma Pick_lemma {τ} `{TS.extensional τ} {A} {R} :
+    τ (A, R)
+    → τ @ A = R.
+  Proof.
+    move=> AR.
+    apply: binrel_extensionality => x y; split.
+    - move=> []; by apply.
+    - move=> xy; constructor=> R' AR'.
+      replace R' with R; auto.
+      apply: TS.is_extensional; eauto.
+  Qed.
+
+  Hint Resolve Pick_lemma.
 End TS.
+
+Export TS.PickNotation.

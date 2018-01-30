@@ -170,6 +170,9 @@ Module Tower.
     | H : t ?n _ |- _ =>
       rewrite /t in H; Clo.destruct_clo; try by [Spine.spine_contradiction];
       try (Clo.destruct_has; OpSem.destruct_evals)
+    | H : Clo.t (Spine.t ?i) _ |- _ =>
+      rewrite /t in H; Clo.destruct_clo; try by [Spine.spine_contradiction];
+      try (Clo.destruct_has; OpSem.destruct_evals)
     end.
 
 
