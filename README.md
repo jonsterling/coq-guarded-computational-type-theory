@@ -1,6 +1,6 @@
 # Hacking
 
-To build this Coq development, ensure that you have Coq 8.6 installed. I
+To build this Coq development, ensure that you have Coq 8.7 installed. I
 recommend that you install Coq in the standard way through
 [OPAM](https://opam.ocaml.org/), and my instructions are not guaranteed to work
 otherwise (they may work, but I have no way to double check).
