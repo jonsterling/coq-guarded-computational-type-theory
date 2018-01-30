@@ -114,7 +114,7 @@ VFILES:=theories/Notation.v\
   theories/Tower.v\
   theories/Sequent.v\
   theories/InternalRules.v\
-  theories/Expr.v\
+  theories/Expression.v\
   theories/Interp.v\
   theories/ExternalRules.v
 
