@@ -4,9 +4,12 @@ Set Bullet Behavior "Strict Subproofs".
 Generalizable All Variables.
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega Logic.FunctionalExtensionality.
-From gctt Require Import Axioms Var Program Expression Interp Tower Closure Sequent InternalRules.
-From gctt Require InternalRules.
-Module IR := InternalRules.
+From gctt Require Import Axioms Var Program Expression Interp Tower Closure Sequent.
+
+From gctt Require Theorems.
+Module Th := Theorems.
+
+Open Scope program_scope.
 
 Lemma cons_weak_simple {Λ κ} {κs : Env.t Λ} :
   κ ∷ κs ∘ (^1)%ren = κs.
@@ -22,9 +25,9 @@ Hint Rewrite <- @interp_ctx_clk_naturality @interp_tm_clk_naturality @interp_tm_
 Hint Unfold compose : syn_db.
 
 Local Hint Extern 40 => autorewrite with syn_db; Program.simplify_subst.
-Local Hint Extern 20 => IR.Univ.tac.
+Local Hint Extern 20 => Th.Univ.tac.
 
-Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm IR.General.open_mem_eq_refl_left IR.General.open_ty_eq_refl_left.
+Local Hint Resolve Th.General.ty_eq_refl_left Th.General.ty_eq_trans Th.General.ty_eq_symm Th.General.mem_eq_trans Th.General.mem_eq_symm Th.General.env_eq_refl_left Th.General.env_eq_symm Th.General.open_mem_eq_refl_left Th.General.open_ty_eq_refl_left.
 
 Module Conversion.
   Module Structural.
@@ -87,7 +90,7 @@ Module General.
     simplify_subst.
     apply: 𝒟.
     - by case: ℱ.
-    - IR.Univ.tac.
+    - Th.Univ.tac.
       apply: ℰ; eauto.
       by case: ℱ.
     - by case: γ01.
@@ -99,7 +102,7 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ M00 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
-    apply: IR.General.mem_eq_conv.
+    apply: Th.General.mem_eq_conv.
     - move=> ?; edestruct 𝒟; eassumption.
     - apply: ℰ; eauto.
   Qed.
@@ -110,14 +113,14 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A0 ∋ M0 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ? ? ? ? ?.
-    apply: IR.General.mem_eq_conv_ty.
+    apply: Th.General.mem_eq_conv_ty.
     - move=> ?; edestruct 𝒟; eauto.
     - apply: ℰ; eauto.
       move=> ? ? ?.
-      apply: IR.General.ty_eq_conv.
+      apply: Th.General.ty_eq_conv.
       + move=> ?; edestruct 𝒟; eassumption.
-      + apply: IR.General.ty_eq_symm.
-        apply: IR.General.ty_eq_conv.
+      + apply: Th.General.ty_eq_symm.
+        apply: Th.General.ty_eq_conv.
         * move=> ?; edestruct 𝒟; eassumption.
         * eauto.
   Qed.
@@ -127,10 +130,10 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ M1 ≐ M0 ⟧.
   Proof.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01.
-    apply: IR.General.mem_eq_symm.
-    apply: IR.General.replace_ty_in_mem_eq; eauto.
+    apply: Th.General.mem_eq_symm.
+    apply: Th.General.replace_ty_in_mem_eq; eauto.
     apply: 𝒟; eauto.
-    by apply: IR.General.env_eq_symm.
+    by apply: Th.General.env_eq_symm.
   Qed.
 
   Theorem eq_trans `{Γ : ECtx.t Λ Ψ} {A M0 M1 M2} :
@@ -139,10 +142,10 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M2 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
-    apply: IR.General.mem_eq_trans; auto.
+    apply: Th.General.mem_eq_trans; auto.
     - apply: 𝒟; eauto.
     - apply: ℰ; eauto.
-      apply: IR.General.env_eq_refl_left; eauto.
+      apply: Th.General.env_eq_refl_left; eauto.
   Qed.
 
   Theorem eq_refl_left `{Γ : ECtx.t Λ Ψ} {A M0 M1} :
@@ -162,14 +165,14 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ A1 ∋ M1 ≐ M2 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ _ ? ? ?.
-    apply: IR.General.replace_ty_in_mem_eq.
+    apply: Th.General.replace_ty_in_mem_eq.
     - apply: ℰ; [eauto | | eauto].
-      apply: IR.General.open_ty_eq_refl_left.
+      apply: Th.General.open_ty_eq_refl_left.
       + assumption.
-      + apply: IR.Univ.open_inversionω; eauto.
-    - apply: IR.Univ.inversionω.
+      + apply: Th.Univ.open_inversionω; eauto.
+    - apply: Th.Univ.inversionω.
       apply: 𝒟; eauto.
-      apply: IR.General.env_eq_refl_left; eauto.
+      apply: Th.General.env_eq_refl_left; eauto.
   Qed.
 
   Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} A' M0' M1' {A M0 M1} :
@@ -192,8 +195,8 @@ Module General.
     → ⟦ Λ ∣ Γ ≫ 𝕌[j] ∋ 𝕌[i] ≐ 𝕌[i] ⟧.
   Proof.
     move=> ? ? ? ? ? ? ? //=.
-    apply: IR.Univ.intro.
-    apply: IR.Univ.formation_lvl.
+    apply: Th.Univ.intro.
+    apply: Th.Univ.formation_lvl.
     assumption.
   Qed.
 End General.
@@ -203,7 +206,7 @@ Module Unit.
     ⟦ Λ ∣ Γ ≫ 𝟙 ∋ ★ ≐ ★ ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
-    apply: IR.Unit.ax_equality.
+    apply: Th.Unit.ax_equality.
   Qed.
 End Unit.
 
@@ -213,21 +216,21 @@ Module Bool.
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ 𝟚 ≐ 𝟚 ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
-    IR.Bool.tac.
+    Th.Bool.tac.
   Qed.
 
   Theorem tt_equality `{Γ : ECtx.t Λ Ψ} :
     ⟦ Λ ∣ Γ ≫ 𝟚 ∋ Expr.tt ≐ Expr.tt ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
-    IR.Bool.tac.
+    Th.Bool.tac.
   Qed.
 
   Theorem ff_equality `{Γ : ECtx.t Λ Ψ} :
     ⟦ Λ ∣ Γ ≫ 𝟚 ∋ Expr.ff ≐ Expr.ff ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
-    IR.Bool.tac.
+    Th.Bool.tac.
   Qed.
 End Bool.
 
@@ -239,7 +242,7 @@ Module Arr.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (A0 ⇒ B0) ≐ (A1 ⇒ B1) ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
-    apply: IR.Arr.univ_eq.
+    apply: Th.Arr.univ_eq.
     - by apply: 𝒟.
     - move=> ? ? //= [_ ℋ] //=.
       simplify_subst.
@@ -248,9 +251,9 @@ Module Arr.
       + split; [T.use γ01 | T.use ℋ]; eauto.
       + eauto.
       + split; first by assumption.
-        apply: IR.General.open_ty_eq_refl_left.
+        apply: Th.General.open_ty_eq_refl_left.
         * assumption.
-        * apply: IR.Univ.open_inversionω.
+        * apply: Th.Univ.open_inversionω.
           eauto.
   Qed.
 
@@ -261,33 +264,33 @@ Module Arr.
     → ⟦ Λ ∣ Γ ≫ (A ⇒ B) ∋ 𝛌{ f0 } ≐ 𝛌{f1} ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ κs 𝒢 ℋ γ0 γ1 γ01 //=.
-    apply: IR.Arr.intro.
+    apply: Th.Arr.intro.
     - move=> ? ? //= [_ ℐ] //=.
       simplify_subst.
       T.efwd 𝒟.
       + T.use 𝒟; eauto.
       + split; [T.use γ01 | T.use ℐ]; eauto.
-      + apply: IR.Univ.open_inversionω.
+      + apply: Th.Univ.open_inversionω.
         apply: ℱ; auto.
       + split; first by assumption.
-        apply: IR.Univ.open_inversionω.
+        apply: Th.Univ.open_inversionω.
         apply: ℰ; auto.
-    - apply: IR.Univ.inversion.
+    - apply: Th.Univ.inversion.
       apply: ℰ; auto.
-      apply: IR.General.env_eq_refl_left; eauto.
-    - apply: IR.Univ.open_inversion.
+      apply: Th.General.env_eq_refl_left; eauto.
+    - apply: Th.Univ.open_inversion.
       + move=> ? ? γ01' //=.
         simplify_subst.
         apply: ℱ; auto.
         * split; auto.
-          apply: IR.Univ.open_inversionω.
+          apply: Th.Univ.open_inversionω.
           eauto.
         * suff γ00 : τω ⊧ ⟦ Γ ⟧ κs ∋⋆ γ0 ∼ γ0.
           ** split; simpl.
              *** T.use γ00; eauto.
              *** case: γ01' => //= _ ℐ.
                  T.use ℐ; eauto.
-          ** apply: IR.General.env_eq_refl_left; eauto.
+          ** apply: Th.General.env_eq_refl_left; eauto.
   Qed.
 
   Theorem elim `{Γ : ECtx.t Λ Ψ} {i A B f0 f1 M0 M1} :
@@ -302,26 +305,26 @@ Module Arr.
     replace
       ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 M0⟧ κs)))%prog
       with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦M0⟧ κs) ⫽ γ0))%prog.
-    - apply: IR.Arr.elim.
-      + apply: IR.Univ.inversion.
+    - apply: Th.Arr.elim.
+      + apply: Th.Univ.inversion.
         apply: 𝒟; eauto.
-        apply: IR.General.env_eq_refl_left; eauto.
-      + apply: IR.Univ.open_inversion.
+        apply: Th.General.env_eq_refl_left; eauto.
+      + apply: Th.Univ.open_inversion.
         * move=> ? ? //= [_ 𝒥].
           T.efwd ℰ.
           ** T.use ℰ; auto.
           ** suff γ00 : τω ⊧ ⟦Γ⟧ κs ∋⋆ γ0 ∼ γ0.
              *** split; [T.use γ00 | T.use 𝒥]; eauto.
-             *** apply: IR.General.env_eq_refl_left; eauto.
+             *** apply: Th.General.env_eq_refl_left; eauto.
           ** eauto.
           ** split; auto.
-             apply: IR.Univ.open_inversionω.
+             apply: Th.Univ.open_inversionω.
              apply: 𝒟; auto.
       + apply: ℱ; auto.
-        apply: IR.Univ.open_inversionω.
+        apply: Th.Univ.open_inversionω.
         apply: univ_eq; eauto.
       + apply: 𝒢; auto.
-        apply: IR.Univ.open_inversionω.
+        apply: Th.Univ.open_inversionω.
         eauto.
     - simplify_subst.
       dependent induction x; auto.
@@ -335,7 +338,7 @@ Module Prod.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (A0 × B0) ≐ (A1 × B1) ⟧.
   Proof.
     move=> 𝒟 ℰ κs Γctx ℱ γ0 γ1 γ01 //=.
-    apply: IR.Prod.univ_eq.
+    apply: Th.Prod.univ_eq.
     - by apply: 𝒟.
     - move=> ? ? [_ 𝒢] //=.
       simplify_subst.
@@ -344,9 +347,9 @@ Module Prod.
       + split; [T.use γ01 | T.use 𝒢]; eauto.
       + eauto.
       + split; first by assumption.
-        apply: IR.General.open_ty_eq_refl_left.
+        apply: Th.General.open_ty_eq_refl_left.
         * assumption.
-        * apply: IR.Univ.open_inversionω.
+        * apply: Th.Univ.open_inversionω.
           eauto.
   Qed.
 
@@ -370,17 +373,17 @@ Module Prod.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
     suff 𝒥 : τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ A ⟧ κs.
-    - apply: IR.Prod.intro.
+    - apply: Th.Prod.intro.
       + apply: 𝒟; eauto.
       + T.efwd ℰ.
         * T.use ℰ.
           simplify_subst.
           dependent induction x; auto.
         * auto.
-        * apply: IR.General.open_ty_eq_refl_left; auto.
+        * apply: Th.General.open_ty_eq_refl_left; auto.
           replace (⟦ B ⫽ Sub.inst0 M00 ⟧ κs)%prog with ((⟦ B ⟧ κs) ⫽ Sub.inst0 (⟦ M00 ⟧ κs)%prog)%prog.
           ** apply: subst; auto.
-             apply: IR.Univ.open_inversionω.
+             apply: Th.Univ.open_inversionω.
              apply: 𝒢; auto.
           ** replace (⟦ B ⫽ Sub.inst0 M00 ⟧ κs)%prog with ((⟦ B ⫽ Sub.inst0 M00 ⟧ κs) ⫽ @Prog.var _)%prog.
              *** rewrite -interp_tm_subst_naturality /interp_subst //=.
@@ -389,20 +392,20 @@ Module Prod.
                  by dependent induction x.
              *** by rewrite Prog.subst_ret.
         * auto.
-      + apply: IR.General.ty_eq_refl_left.
-        apply: IR.Univ.inversion.
+      + apply: Th.General.ty_eq_refl_left.
+        apply: Th.Univ.inversion.
         apply: ℱ; eauto.
-      + move=> //= ? ? [_ /IR.Level.eq_mem_from_level ℐ].
-        apply: IR.Univ.inversion.
+      + move=> //= ? ? [_ /Th.Level.eq_mem_from_level ℐ].
+        apply: Th.Univ.inversion.
         repeat rewrite Prog.subst_coh.
         apply: 𝒢; auto.
         split; simpl.
-        * T.use (IR.General.env_eq_refl_left Γctx γ01).
+        * T.use (Th.General.env_eq_refl_left Γctx γ01).
           simplify_subst.
         * T.use ℐ.
           simplify_subst.
-    - apply: IR.General.open_ty_eq_refl_left; auto.
-      apply: IR.Univ.open_inversionω.
+    - apply: Th.General.open_ty_eq_refl_left; auto.
+      apply: Th.Univ.open_inversionω.
       apply: ℱ; auto.
   Qed.
 End Prod.
@@ -415,8 +418,8 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ⋂ A0 ≐ ⋂ A1 ⟧.
   Proof.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01 //=.
-    apply: IR.Univ.intro.
-    apply: IR.Isect.formation => κ.
+    apply: Th.Univ.intro.
+    apply: Th.Isect.formation => κ.
     T.efwd 𝒟; eauto;
     autorewrite with core;
     eauto.
@@ -428,15 +431,15 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ ⋂ A ∋ M0 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℱ κs ? ℰ ? ? ? //=.
-    apply: IR.Isect.intro.
-    - IR.Univ.tac.
+    apply: Th.Isect.intro.
+    - Th.Univ.tac.
       apply: univ_eq; eauto.
-      apply: IR.General.env_eq_refl_left; eauto.
+      apply: Th.General.env_eq_refl_left; eauto.
     - move=> κ.
       T.efwd 𝒟.
       + T.use 𝒟; eauto.
       + eauto.
-      + IR.Univ.tac.
+      + Th.Univ.tac.
         apply: ℱ; eauto.
       + eauto.
   Qed.
@@ -447,9 +450,9 @@ Module Isect.
   Proof.
     move=> 𝒟 κs ? ? γ0 γ1 γ01; simplify_eqs.
     replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _)%prog with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1)%prog.
-    - apply: IR.Univ.intro.
-      apply: IR.Isect.irrelevance.
-      apply: IR.Univ.inversion.
+    - apply: Th.Univ.intro.
+      apply: Th.Isect.irrelevance.
+      apply: Th.Univ.inversion.
       apply: 𝒟; eauto.
     - simplify_subst; eauto.
   Qed.
@@ -460,10 +463,10 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (⋂ (A0 × B0.[^1])) ≐ ((⋂ A1) × (⋂ B1.[^1])) ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
-    apply: IR.Univ.intro.
+    apply: Th.Univ.intro.
     simplify_subst.
     have R :=
-      @IR.Isect.cartesian
+      @Th.Isect.cartesian
         i
         (fun κ => (⟦ A0 ⟧ κ ∷ κs) ⫽ γ0)%prog
         (fun κ => (⟦ B0 ⟧ κ ∷ κs) ⫽ γ0)%prog
@@ -474,10 +477,10 @@ Module Isect.
       simplify_subst.
       by dependent induction x0.
     - move=> κ.
-      IR.Univ.tac.
+      Th.Univ.tac.
       apply: ℰ; auto.
     - move=> κ.
-      IR.Univ.tac.
+      Th.Univ.tac.
       apply: 𝒟; auto.
   Qed.
 End Isect.
@@ -488,14 +491,14 @@ Module Later.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ▶[k] A0 ≐ ▶[k] A1 ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ? ? //=.
-    apply: IR.Later.univ_eq.
+    apply: Th.Later.univ_eq.
     apply: 𝒟; try by eassumption.
 
     move=> ? ? ? //=.
-    apply: (Level.eq_ty_from_level (S i)).
-    apply: Later.formation.
+    apply: (Th.Level.eq_ty_from_level (S i)).
+    apply: Th.Later.formation.
     apply: Later.next.
-    apply: Univ.formation_S.
+    apply: Th.Univ.formation_S.
   Qed.
 
   Theorem intro `{Γ : ECtx.t Λ Ψ} {k i A M0 M1} :
@@ -504,11 +507,11 @@ Module Later.
     → ⟦ Λ ∣ Γ ≫ ▶[k] A ∋ M0 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ? //=.
-    apply: IR.Later.intro.
+    apply: Th.Later.intro.
     apply: Later.next.
     apply: 𝒟; auto.
 
-    IR.Univ.tac.
+    Th.Univ.tac.
     apply: ℰ; eauto.
   Qed.
 
@@ -517,9 +520,9 @@ Module Later.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ ⋂ ▶[#0] A ≐ ⋂ B ⟧.
   Proof.
     move=> 𝒟 ? ? ? ? ? ? //=.
-    apply: IR.Univ.intro.
-    apply: IR.Later.force.
-    IR.Univ.tac.
+    apply: Th.Univ.intro.
+    apply: Th.Later.force.
+    Th.Univ.tac.
     apply: 𝒟; eauto.
   Qed.
 
@@ -530,14 +533,14 @@ Module Later.
     → ⟦ Λ ∣ Γ ≫ (▶[k] A) ⇒ (▶[k] B) ∋ f0 ≐ f1 ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ κs 𝒢 ℋ γ0 γ1 γ01 //=.
-    apply: IR.Later.apply.
+    apply: Th.Later.apply.
     apply: ℱ; auto.
 
-    apply: IR.Univ.open_inversionω.
+    apply: Th.Univ.open_inversionω.
     move=> γ0' γ1' γ01' //=.
-    apply: IR.Later.univ_eq.
-    apply: IR.Later.pi_later_univ_eq.
-    - apply: IR.Later.intro; apply: Later.next.
+    apply: Th.Later.univ_eq.
+    apply: Th.Later.pi_later_univ_eq.
+    - apply: Th.Later.intro; apply: Later.next.
       apply: 𝒟; auto.
     - move=> δ0 δ1 δ01.
       simplify_subst.
@@ -548,12 +551,12 @@ Module Later.
         * case: δ01 => _ ℱ.
           T.use ℱ; eauto.
       + move=> ? ? ? //=.
-        apply: (IR.Level.eq_ty_from_level (S i)).
-        apply: IR.Later.formation.
+        apply: (Th.Level.eq_ty_from_level (S i)).
+        apply: Th.Later.formation.
         apply: Later.next.
-        apply: Univ.formation_S.
+        apply: Th.Univ.formation_S.
       + split; auto.
-        apply: IR.Univ.open_inversionω.
+        apply: Th.Univ.open_inversionω.
         apply: 𝒟; auto.
   Qed.
 
@@ -564,8 +567,8 @@ Module Later.
     → ⟦ Λ ∣ Γ ≫ A ∋ μ{ M0 } ≐ μ{ M1 } ⟧.
   Proof.
     move=> 𝒟 ℰ κs ? ℱ ? ? γ01 //=.
-    apply: (IR.Later.loeb_induction_closed (κs k)).
-    - apply: IR.Univ.inversion.
+    apply: (Th.Later.loeb_induction_closed (κs k)).
+    - apply: Th.Univ.inversion.
       apply: 𝒟; eauto.
     - move=> //= ? ? [_ 𝒢]; simplify_subst.
 
@@ -577,10 +580,10 @@ Module Later.
         apply: ℱ; eauto.
       + split; first by [assumption].
         move=> //= ? ? ?.
-        apply: (IR.Level.eq_ty_from_level i).
-        apply: IR.Later.formation.
+        apply: (Th.Level.eq_ty_from_level i).
+        apply: Th.Later.formation.
         apply: Later.next.
-        apply: IR.Univ.inversion.
+        apply: Th.Univ.inversion.
         apply: 𝒟; eauto.
   Qed.
 End Later.
@@ -649,8 +652,8 @@ Module Canonicity.
         simplify_subst.
       + split.
         * move=> ? ? ? //=.
-          apply: (IR.Level.eq_ty_from_level 0).
-          apply: IR.Bool.formation.
+          apply: (Th.Level.eq_ty_from_level 0).
+          apply: Th.Bool.formation.
         * unshelve esplit.
           ** move=> x.
              dependent destruction x.

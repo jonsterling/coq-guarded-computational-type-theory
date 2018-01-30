@@ -11,7 +11,7 @@ theories/OpSem.v
 theories/Closure.v
 theories/Tower.v
 theories/Sequent.v
-theories/InternalRules.v
+theories/Theorems.v
 theories/Expression.v
 theories/Interp.v
 theories/Rules.v
