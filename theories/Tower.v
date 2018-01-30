@@ -105,18 +105,18 @@ Module Spine.
     - constructor; contradiction.
     - constructor; Spine.simplify.
       + constructor.
-        * move=> e0 e1 e0e1.
+        * move=> M0 M1 M0M1.
           case: H => //= [j [? [? Rspec]]].
-          rewrite Rspec in e0e1.
+          rewrite Rspec in M0M1.
           rewrite Rspec.
-          case: e0e1 => [S [H1 H2]].
+          case: M0M1 => [S [H1 H2]].
           eauto.
-        * move=> e0 e1 e2 e0e1 e1e2.
+        * move=> M0 M1 M2 M0M1 M1M2.
           case: H => //= [j [? [? Rspec]]].
-          rewrite Rspec in e0e1 e1e2.
+          rewrite Rspec in M0M1 M1M2.
           rewrite Rspec.
-          case: e0e1 => //= [S [H1 H2]].
-          case: e1e2 => //= [S' [H1' H2']].
+          case: M0M1 => //= [S [H1 H2]].
+          case: M1M2 => //= [S' [H1' H2']].
           exists S; T.split; first by [eauto].
           replace S with S'; auto.
           apply: (TS.is_extensional _ _ _ H1' _ H2).

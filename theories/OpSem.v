@@ -16,39 +16,39 @@ Reserved Notation "M ↦⋆ M'" (at level 50).
 Inductive is_val : Prog.t 0 → Ω :=
 | val_bool : 𝟚 val
 | val_unit : 𝟙 val
-| val_prod : ∀ {e1 e2}, (e1 × e2) val
-| val_arr : ∀ {e1 e2}, (e1 ⇒ e2) val
-| val_ltr : ∀ {κ e}, ▶[κ] e val
-| val_isect : ∀ {e}, ⋂ e val
+| val_prod : ∀ {M1 M2}, (M1 × M2) val
+| val_arr : ∀ {M1 M2}, (M1 ⇒ M2) val
+| val_ltr : ∀ {κ M}, ▶[κ] M val
+| val_isect : ∀ {M}, ⋂ M val
 | val_univ : ∀ {i}, 𝕌[i] val
 | val_ax : ★ val
 | val_tt : Prog.tt val
 | val_ff : Prog.ff val
-| val_pair : ∀ {e1 e2}, ⟨e1, e2⟩ val
-| val_lam : ∀ {e}, 𝛌{ e } val
-where "v 'val'" := (is_val v%prog).
+| val_pair : ∀ {M1 M2}, ⟨M1, M2⟩ val
+| val_lam : ∀ {M}, 𝛌{ M } val
+where "V 'val'" := (is_val V%prog).
 
 Inductive step : Prog.t 0 → Prog.t 0 → Ω :=
 | step_fst_cong :
-    ∀ {e e'},
-      e ↦ e'
-      → (e.1) ↦ (e'.1)
+    ∀ {M M'},
+      M ↦ M'
+      → (M.1) ↦ (M'.1)
 
 | step_snd_cong :
-    ∀ {e e'},
-      e ↦ e'
-      → (e.2) ↦ (e'.2)
+    ∀ {M M'},
+      M ↦ M'
+      → (M.2) ↦ (M'.2)
 
 | step_app_cong :
-    ∀ {e1 e1' e2},
-      e1 ↦ e1'
-      → (e1 ⋅ e2) ↦ (e1' ⋅ e2)
+    ∀ {M1 M1' M2},
+      M1 ↦ M1'
+      → (M1 ⋅ M2) ↦ (M1' ⋅ M2)
 
-| step_fst_pair : ∀ {e1 e2}, ⟨e1,e2⟩.1 ↦ e1
-| step_snd_pair : ∀ {e1 e2}, ⟨e1,e2⟩.2 ↦ e2
-| step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ Sub.inst0 e2)
-| step_fix : ∀ e, 𝛍{e} ↦ (e ⫽ Sub.inst0 (𝛍{e}))
-where "e ↦ e'" := (step e%prog e'%prog).
+| step_fst_pair : ∀ {M1 M2}, ⟨M1,M2⟩.1 ↦ M1
+| step_snd_pair : ∀ {M1 M2}, ⟨M1,M2⟩.2 ↦ M2
+| step_app_lam : ∀ {M1 M2}, 𝛌{M1} ⋅ M2 ↦ (M1 ⫽ Sub.inst0 M2)
+| step_fix : ∀ M, 𝛍{M} ↦ (M ⫽ Sub.inst0 (𝛍{M}))
+where "M ↦ M'" := (step M%prog M'%prog).
 
 Hint Constructors is_val.
 Hint Constructors step.
@@ -56,7 +56,7 @@ Hint Constructors step.
 Inductive steps : Prog.t 0 → Prog.t 0 → Ω :=
 | steps_nil : ∀ {M}, M ↦⋆ M
 | steps_cons : ∀ {M1 M2 M3}, M1 ↦ M2 → M2 ↦⋆ M3 → M1 ↦⋆ M3
-where "e ↦⋆ e'" := (steps e%prog e'%prog).
+where "M ↦⋆ M'" := (steps M%prog M'%prog).
 
 Hint Constructors steps.
 
@@ -66,7 +66,7 @@ Record eval (M V : Prog.t 0) :=
   }.
 
 Hint Constructors eval.
-Notation "e ⇓ v" := (eval e%prog v%prog) (at level 50).
+Notation "M ⇓ V" := (eval M%prog V%prog) (at level 50).
 
 Ltac destruct_evals :=
   repeat
@@ -92,19 +92,19 @@ Ltac evals_to_eq :=
     end.
 
 
-Definition closed_approx (e1 e2 : Prog.t 0) : Ω :=
-  ∀ v, e1 ⇓ v → e2 ⇓ v.
+Definition closed_approx (M1 M2 : Prog.t 0) : Ω :=
+  ∀ V, M1 ⇓ V → M2 ⇓ V.
 
-Definition closed_equiv (e1 e2 : Prog.t 0) : Ω :=
-  ∀ v, e1 ⇓ v ↔ e2 ⇓ v.
+Definition closed_equiv (M1 M2 : Prog.t 0) : Ω :=
+  ∀ V, M1 ⇓ V ↔ M2 ⇓ V.
 
-Arguments closed_approx e1%prog e2%prog.
-Arguments closed_equiv e1%prog e2%prog.
+Arguments closed_approx M1%prog M2%prog.
+Arguments closed_equiv M1%prog M2%prog.
 
-Notation "e0 ≼₀ e1" := (closed_approx e0%prog e1%prog) (at level 30).
-Notation "e0 ≈₀ e1" := (closed_equiv e0%prog e1%prog) (at level 30).
+Notation "M0 ≼₀ M1" := (closed_approx M0%prog M1%prog) (at level 30).
+Notation "M0 ≈₀ M1" := (closed_equiv M0%prog M1%prog) (at level 30).
 
-Theorem closed_approx_refl : ∀ e, e ≼₀ e.
+Theorem closed_approx_refl : ∀ M, M ≼₀ M.
 Proof.
   by compute.
 Qed.
@@ -112,21 +112,21 @@ Qed.
 Hint Resolve closed_approx_refl.
 
 Theorem approx_invert :
-  ∀ e e' v,
-    e ⇓ v
-    → e ≼₀ e'
-    → e' ≼₀ e.
+  ∀ M M' V,
+    M ⇓ V
+    → M ≼₀ M'
+    → M' ≼₀ M.
 Proof.
-  move=> e e' v 𝒟 ℰ v' ℱ.
-  specialize (ℰ v 𝒟).
+  move=> M M' V 𝒟 ℰ V' ℱ.
+  specialize (ℰ V 𝒟).
   evals_to_eq.
   by T.destruct_eqs.
 Qed.
 
 Theorem fix_unfold :
-  ∀ f, 𝛍{f} ≈₀ (f ⫽ Sub.inst0 (𝛍{f}%prog)).
+  ∀ M, 𝛍{M} ≈₀ (M ⫽ Sub.inst0 (𝛍{M}%prog)).
 Proof.
-  move=> f v.
+  move=> M V.
   split.
   - move=> [𝒟1 𝒟2].
     split; auto.
@@ -139,11 +139,11 @@ Proof.
 Qed.
 
 Theorem app_lam :
-  ∀ e0 f e1,
-    (e0 ↦⋆ 𝛌{f})
-    → (f ⫽ Sub.inst0 e1) ≼₀ (e0 ⋅ e1).
+  ∀ M0 N M1,
+    (M0 ↦⋆ 𝛌{N})
+    → (N ⫽ Sub.inst0 M1) ≼₀ (M0 ⋅ M1).
 Proof.
-  move=> e0 e e1 Q.
+  move=> M0 N M1 Q.
   constructor.
   - dependent induction H.
     dependent induction Q.
@@ -154,10 +154,10 @@ Proof.
 Qed.
 
 Theorem fst_pair :
-  ∀ e0 e1,
-    e0 ≼₀ (⟨e0,e1⟩.1).
+  ∀ M0 M1,
+    M0 ≼₀ (⟨M0,M1⟩.1).
 Proof.
-  move=> e0 e1 v H.
+  move=> M0 M1 V H.
   dependent destruction H.
   constructor; auto.
   - econstructor.
@@ -166,10 +166,10 @@ Proof.
 Qed.
 
 Theorem snd_pair :
-  ∀ e0 e1,
-    e1 ≼₀ (⟨e0,e1⟩.2).
+  ∀ M0 M1,
+    M1 ≼₀ (⟨M0,M1⟩.2).
 Proof.
-  move=> e0 e1 v H.
+  move=> M0 M1 V H.
   dependent destruction H.
   constructor; auto.
   - econstructor.
@@ -180,12 +180,12 @@ Qed.
 
 
 Theorem fst_eval :
-  ∀ e e0 e1 v0,
-    e ⇓ ⟨e0,e1⟩
-    → e0 ⇓ v0
-    → e.1 ⇓ v0.
+  ∀ M M0 M1 v0,
+    M ⇓ ⟨M0,M1⟩
+    → M0 ⇓ v0
+    → M.1 ⇓ v0.
 Proof.
-  move=> e e0 e1 v0 H0 H1.
+  move=> M M0 M1 v0 H0 H1.
   dependent induction H0.
   dependent induction eval_steps0.
   - constructor; auto.
@@ -201,12 +201,12 @@ Proof.
 Qed.
 
 Theorem app_eval :
-  ∀ f f' e v,
-    (f ⇓ 𝛌{f'})
-    → f' ⫽ Sub.inst0 e ⇓ v
-    → (f ⋅ e) ⇓ v.
+  ∀ N N' M V,
+    (N ⇓ 𝛌{N'})
+    → N' ⫽ Sub.inst0 M ⇓ V
+    → (N ⋅ M) ⇓ V.
 Proof.
-  move=> f f' e v H0 H1.
+  move=> N N' M V H0 H1.
   dependent induction H0.
   dependent induction eval_steps0.
   - constructor; auto.
@@ -222,12 +222,12 @@ Proof.
 Qed.
 
 Theorem snd_eval :
-  ∀ e e0 e1 v,
-    e ⇓ ⟨e0,e1⟩
-    → e1 ⇓ v
-    → e.2 ⇓ v.
+  ∀ M M0 M1 V,
+    M ⇓ ⟨M0,M1⟩
+    → M1 ⇓ V
+    → M.2 ⇓ V.
 Proof.
-  move=> e e0 e1 v H0 H1.
+  move=> M M0 M1 V H0 H1.
   dependent induction H0.
   dependent induction eval_steps0.
   - constructor; auto.
@@ -243,11 +243,11 @@ Proof.
 Qed.
 
 Theorem fst_eval_inv :
-  ∀ e v1,
-    e.1 ⇓ v1
-    → ∃ e1 e2, e1 ⇓ v1 ∧ e ⇓ ⟨e1, e2⟩.
+  ∀ M v1,
+    M.1 ⇓ v1
+    → ∃ M1 M2, M1 ⇓ v1 ∧ M ⇓ ⟨M1, M2⟩.
 Proof.
-  move=> e e1 H.
+  move=> M M1 H.
   dependent induction H.
   dependent induction eval_steps0.
   - dependent destruction eval_val0.
@@ -259,15 +259,15 @@ Proof.
       econstructor; eauto.
       dependent destruction zzz.
       eauto.
-    + by exists e1, e2.
+    + by exists M1, M2.
 Qed.
 
 Theorem snd_eval_inv :
-  ∀ e v,
-    e.2 ⇓ v
-    → ∃ e1 e2, e2 ⇓ v ∧ e ⇓ ⟨e1,e2⟩.
+  ∀ M V,
+    M.2 ⇓ V
+    → ∃ M1 M2, M2 ⇓ V ∧ M ⇓ ⟨M1,M2⟩.
 Proof.
-  move=> e e1 H.
+  move=> M M1 H.
   dependent induction H.
   dependent induction eval_steps0.
   - dependent induction eval_val0.
@@ -279,15 +279,15 @@ Proof.
       econstructor; eauto.
       dependent destruction zzz.
       eauto.
-    + by exists e1, e2.
+    + by exists M1, M2.
 Qed.
 
 Theorem app_eval_inv :
-  ∀ f e v,
-    f ⋅ e ⇓ v
-    → ∃ f', (f ⇓ 𝛌{f'}) ∧ (f' ⫽ Sub.inst0 e) ⇓ v.
+  ∀ N M V,
+    N ⋅ M ⇓ V
+    → ∃ N', (N ⇓ 𝛌{N'}) ∧ (N' ⫽ Sub.inst0 M) ⇓ V.
 Proof.
-  move=> f e v H.
+  move=> N M V H.
   dependent induction H.
   dependent induction eval_steps0.
   - dependent induction eval_val0.
@@ -299,39 +299,39 @@ Proof.
         econstructor; eauto.
         by dependent induction H0.
       * auto.
-    + by exists e1.
+    + by exists M1.
 Qed.
 
 
 Theorem fst_cong_approx :
-  ∀ e0 e1,
-    e0 ≼₀ e1
-    → Prog.fst e0 ≼₀ Prog.fst e1.
+  ∀ M0 M1,
+    M0 ≼₀ M1
+    → Prog.fst M0 ≼₀ Prog.fst M1.
 Proof.
-  move=> e0 e1 e01 p1 ℰ.
+  move=> M0 M1 M01 p1 ℰ.
   have := fst_eval_inv ℰ.
-  move=> [e' [p2 [H0 H1]]].
+  move=> [M' [p2 [H0 H1]]].
   apply: fst_eval; eauto.
 Qed.
 
 Theorem snd_cong_approx :
-  ∀ e0 e1,
-    e0 ≼₀ e1
-    → Prog.snd e0 ≼₀ Prog.snd e1.
+  ∀ M0 M1,
+    M0 ≼₀ M1
+    → Prog.snd M0 ≼₀ Prog.snd M1.
 Proof.
-  move=> e0 e1 e01 p1 ℰ.
+  move=> M0 M1 M01 p1 ℰ.
   have := snd_eval_inv ℰ.
-  move=> [e' [p2 [H0 H1]]].
+  move=> [M' [p2 [H0 H1]]].
   apply: snd_eval; eauto.
 Qed.
 
 Theorem app_cong_approx :
-  ∀ f0 f1 e,
+  ∀ f0 f1 M,
     f0 ≼₀ f1
-    → (f0 ⋅ e) ≼₀ (f1 ⋅ e).
+    → (f0 ⋅ M) ≼₀ (f1 ⋅ M).
 Proof.
-  move=> f0 f1 e f01 v ℰ.
+  move=> N0 N1 M N01 V ℰ.
   have := app_eval_inv ℰ.
-  move=> [f' [? ?]].
+  move=> [N' [? ?]].
   apply: app_eval; eauto.
 Qed.

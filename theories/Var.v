@@ -42,7 +42,7 @@ Module Sub.
   Class syn_struct (𝒯 : Ctx → Type) : Type :=
     { var : ∀ {Ψ}, Var Ψ → 𝒯 Ψ;
       map : ∀ {Ψ1 Ψ2}, Ren.t Ψ1 Ψ2 → 𝒯 Ψ1 → 𝒯 Ψ2;
-      map_id : ∀ {Ψ} (e : 𝒯 Ψ), map id e = e
+      map_id : ∀ {Ψ} (M : 𝒯 Ψ), map id M = M
     }.
 
   Section Sub.
@@ -62,10 +62,10 @@ Module Sub.
         | Fin.FS _ y => map Fin.FS (σ y)
         end.
 
-    Program Definition inst0 {Ψ} (e : 𝒯 Ψ) : t (S Ψ) Ψ :=
+    Program Definition inst0 {Ψ} (M : 𝒯 Ψ) : t (S Ψ) Ψ :=
       fun x =>
         match x with
-        | Fin.F1 _ => e
+        | Fin.F1 _ => M
         | Fin.FS _ y => @var _ 𝔐 _ y
         end.
 

@@ -15,23 +15,23 @@ Definition empty : cts :=
 
 Record is_per (R : rel) :=
   { symmetric :
-      ∀ e0 e1,
-        R (e0, e1)
-        → R (e1, e0);
+      ∀ M0 M1,
+        R (M0, M1)
+        → R (M1, M0);
 
     transitive :
-      ∀ e0 e1 e2,
-        R (e0, e1)
-        → R (e1, e2)
-        → R (e0, e2)
+      ∀ M0 M1 M2,
+        R (M0, M1)
+        → R (M1, M2)
+        → R (M0, M2)
   }.
 
 
 Definition rel_computational (R : rel) :=
-  ∀ e0 e1 e2,
-    e0 ≼₀ e1
-    → R (e0, e2)
-    → R (e1, e2).
+  ∀ M0 M1 M2,
+    M0 ≼₀ M1
+    → R (M0, M2)
+    → R (M1, M2).
 
 Record is_cper (R : rel) :=
   { per : is_per R;

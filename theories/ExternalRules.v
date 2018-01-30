@@ -28,31 +28,31 @@ Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.
 
 Module Conversion.
   Module Structural.
-    Theorem symm {Λ Ψ e1 e2} :
-      ⟦ Λ ∣ Ψ ⊢ e1 ≃ e2 ⟧
-      → ⟦ Λ ∣ Ψ ⊢ e2 ≃ e1 ⟧.
+    Theorem symm {Λ Ψ M1 M2} :
+      ⟦ Λ ∣ Ψ ⊢ M1 ≃ M2 ⟧
+      → ⟦ Λ ∣ Ψ ⊢ M2 ≃ M1 ⟧.
     Proof.
-      move=> D κs γ v.
-      specialize (D κs γ v).
+      move=> D κs γ V.
+      specialize (D κs γ V).
       intuition.
     Qed.
 
-    Theorem trans {Λ Ψ e1 e2 e3} :
-      ⟦ Λ ∣ Ψ ⊢ e1 ≃ e2 ⟧
-      → ⟦ Λ ∣ Ψ ⊢ e2 ≃ e3 ⟧
-      → ⟦ Λ ∣ Ψ ⊢ e1 ≃ e3 ⟧.
+    Theorem trans {Λ Ψ M1 M2 M3} :
+      ⟦ Λ ∣ Ψ ⊢ M1 ≃ M2 ⟧
+      → ⟦ Λ ∣ Ψ ⊢ M2 ≃ M3 ⟧
+      → ⟦ Λ ∣ Ψ ⊢ M1 ≃ M3 ⟧.
     Proof.
-      move=> 𝒟 ℰ κs γ v.
-      specialize (𝒟 κs γ v).
-      specialize (ℰ κs γ v).
+      move=> 𝒟 ℰ κs γ V.
+      specialize (𝒟 κs γ V).
+      specialize (ℰ κs γ V).
       intuition.
     Qed.
   End Structural.
 
-  Theorem fst_of_pair {Λ Ψ e1 e2} :
-    ⟦ Λ ∣ Ψ ⊢ ⟨e1, e2⟩ .1 ≃ e1 ⟧.
+  Theorem fst_of_pair {Λ Ψ M1 M2} :
+    ⟦ Λ ∣ Ψ ⊢ ⟨M1, M2⟩ .1 ≃ M1 ⟧.
   Proof.
-    move=> κs γ v.
+    move=> κs γ V.
     split; move=> [𝒟1 𝒟2].
     - split; auto.
       dependent destruction 𝒟1.
@@ -77,10 +77,10 @@ Module General.
   Qed.
 
   (* TODO: fix notation ? *)
-  Theorem weakening `{Γ : ECtx.t Λ Ψ} i {A B e0 e1} :
-    ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
+  Theorem weakening `{Γ : ECtx.t Λ Ψ} i {A B M0 M1} :
+    ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M1 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ∙ B ≫ (A.[^1]) ∋ (e0.[^1]) ≐ (e1.[^1]) ⟧.
+    → ⟦ Λ ∣ Γ ∙ B ≫ (A.[^1]) ∋ (M0.[^1]) ≐ (M1.[^1]) ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01.
     repeat rewrite -interp_tm_var_ren_naturality.
@@ -93,10 +93,10 @@ Module General.
     - by case: γ01.
   Qed.
 
-  Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A e00} e01 {e1} :
-    ⟦ Λ ∣ Ψ ⊢ e00 ≃ e01 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e01 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e1 ⟧.
+  Theorem conv_mem `{Γ : ECtx.t Λ Ψ} {A M00} M01 {M1} :
+    ⟦ Λ ∣ Ψ ⊢ M00 ≃ M01 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ M01 ≐ M1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ M00 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
     apply: IR.General.mem_eq_conv.
@@ -104,10 +104,10 @@ Module General.
     - apply: ℰ; eauto.
   Qed.
 
-  Theorem conv_ty `{Γ : ECtx.t Λ Ψ} A1 {A0 e0 e1} :
+  Theorem conv_ty `{Γ : ECtx.t Λ Ψ} A1 {A0 M0 M1} :
     ⟦ Λ ∣ Ψ ⊢ A0 ≃ A1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A1 ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A0 ∋ e0 ≐ e1 ⟧.
+    → ⟦ Λ ∣ Γ ≫ A1 ∋ M0 ≐ M1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A0 ∋ M0 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ? ? ? ? ?.
     apply: IR.General.mem_eq_conv_ty.
@@ -122,9 +122,9 @@ Module General.
         * eauto.
   Qed.
 
-  Theorem eq_symm `{Γ : ECtx.t Λ Ψ} {A e0 e1} :
-    ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e1 ≐ e0 ⟧.
+  Theorem eq_symm `{Γ : ECtx.t Λ Ψ} {A M0 M1} :
+    ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ M1 ≐ M0 ⟧.
   Proof.
     move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01.
     apply: IR.General.mem_eq_symm.
@@ -133,10 +133,10 @@ Module General.
     by apply: IR.General.env_eq_symm.
   Qed.
 
-  Theorem eq_trans `{Γ : ECtx.t Λ Ψ} {A e0 e1 e2} :
-    ⟦ Λ ∣ Γ ≫ A ∋ e1 ≐ e2 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e2 ⟧.
+  Theorem eq_trans `{Γ : ECtx.t Λ Ψ} {A M0 M1 M2} :
+    ⟦ Λ ∣ Γ ≫ A ∋ M1 ≐ M2 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M2 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ?.
     apply: IR.General.mem_eq_trans; auto.
@@ -145,9 +145,9 @@ Module General.
       apply: IR.General.env_eq_refl_left; eauto.
   Qed.
 
-  Theorem eq_refl_left `{Γ : ECtx.t Λ Ψ} {A e0 e1} :
-    ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e0 ⟧.
+  Theorem eq_refl_left `{Γ : ECtx.t Λ Ψ} {A M0 M1} :
+    ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M0 ⟧.
   Proof.
     move=> 𝒟.
     apply: eq_trans.
@@ -156,10 +156,10 @@ Module General.
     - eassumption.
   Qed.
 
-  Theorem replace_ty `{Γ : ECtx.t Λ Ψ} i {A0 A1 e1 e2} :
+  Theorem replace_ty `{Γ : ECtx.t Λ Ψ} i {A0 A1 M1 M2} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A0 ∋ e1 ≐ e2 ⟧
-    → ⟦ Λ ∣ Γ ≫ A1 ∋ e1 ≐ e2 ⟧.
+    → ⟦ Λ ∣ Γ ≫ A0 ∋ M1 ≐ M2 ⟧
+    → ⟦ Λ ∣ Γ ≫ A1 ∋ M1 ≐ M2 ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ _ ? ? ?.
     apply: IR.General.replace_ty_in_mem_eq.
@@ -172,12 +172,12 @@ Module General.
       apply: IR.General.env_eq_refl_left; eauto.
   Qed.
 
-  Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} A' e0' e1' {A e0 e1} :
+  Theorem mem_conv_all `{Γ : ECtx.t Λ Ψ} A' M0' M1' {A M0 M1} :
     ⟦ Λ ∣ Ψ ⊢ A ≃ A' ⟧
-    → ⟦ Λ ∣ Ψ ⊢ e0 ≃ e0' ⟧
-    → ⟦ Λ ∣ Ψ ⊢ e1 ≃ e1' ⟧
-    → ⟦ Λ ∣ Γ ≫ A' ∋ e0' ≐ e1' ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧.
+    → ⟦ Λ ∣ Ψ ⊢ M0 ≃ M0' ⟧
+    → ⟦ Λ ∣ Ψ ⊢ M1 ≃ M1' ⟧
+    → ⟦ Λ ∣ Γ ≫ A' ∋ M0' ≐ M1' ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M1 ⟧.
   Proof.
     move=> *.
     apply: conv_ty; eauto.
@@ -290,18 +290,18 @@ Module Arr.
           ** apply: IR.General.env_eq_refl_left; eauto.
   Qed.
 
-  Theorem elim `{Γ : ECtx.t Λ Ψ} {i A B f0 f1 e0 e1} :
+  Theorem elim `{Γ : ECtx.t Λ Ψ} {i A B f0 f1 M0 M1} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
     → ⟦ Λ ∣ Γ ∙ A ≫ 𝕌[i] ∋ B ≐ B ⟧
     → ⟦ Λ ∣ Γ ≫ (A ⇒ B) ∋ f0 ≐ f1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ (B ⫽ Sub.inst0 e0) ∋ (f0 ⋅ e0) ≐ (f1 ⋅ e1) ⟧.
+    → ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M1 ⟧
+    → ⟦ Λ ∣ Γ ≫ (B ⫽ Sub.inst0 M0) ∋ (f0 ⋅ M0) ≐ (f1 ⋅ M1) ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs ℋ ℐ γ0 γ1 γ01.
     autorewrite with syn_db; simpl.
     replace
-      ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 e0⟧ κs)))%prog
-      with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦e0⟧ κs) ⫽ γ0))%prog.
+      ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 M0⟧ κs)))%prog
+      with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦M0⟧ κs) ⫽ γ0))%prog.
     - apply: IR.Arr.elim.
       + apply: IR.Univ.inversion.
         apply: 𝒟; eauto.
@@ -350,10 +350,10 @@ Module Prod.
           eauto.
   Qed.
 
-  Lemma subst `{Γ : Prectx Ψ} {A B0 B1 e0 e1} :
+  Lemma subst `{Γ : Prectx Ψ} {A B0 B1 M0 M1} :
     τω ⊧ Γ ∙ A ≫ B0 ∼ B1
-    → τω ⊧ Γ ≫ A ∋ e0 ∼ e1
-    → τω ⊧ Γ ≫ (B0 ⫽ Sub.inst0 e0) ∼ (B1 ⫽ Sub.inst0 e1).
+    → τω ⊧ Γ ≫ A ∋ M0 ∼ M1
+    → τω ⊧ Γ ≫ (B0 ⫽ Sub.inst0 M0) ∼ (B1 ⫽ Sub.inst0 M1).
   Proof.
     move=> 𝒟 ℰ γ0 γ1 γ01.
     simplify_subst.
@@ -361,12 +361,12 @@ Module Prod.
     split; eauto.
   Qed.
 
-  Theorem intro `{Γ : ECtx.t Λ Ψ} {i A B e00 e01 e10 e11} :
-    ⟦ Λ ∣ Γ ≫ A ∋ e00 ≐ e10 ⟧
-    → ⟦ Λ ∣ Γ ≫ B ⫽ Sub.inst0 e00 ∋ e01 ≐ e11 ⟧
+  Theorem intro `{Γ : ECtx.t Λ Ψ} {i A B M00 M01 M10 M11} :
+    ⟦ Λ ∣ Γ ≫ A ∋ M00 ≐ M10 ⟧
+    → ⟦ Λ ∣ Γ ≫ B ⫽ Sub.inst0 M00 ∋ M01 ≐ M11 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
     → ⟦ Λ ∣ Γ ∙ A ≫ 𝕌[i] ∋ B ≐ B ⟧
-    → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨e00, e01⟩ ≐ ⟨e10, e11⟩ ⟧.
+    → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨M00, M01⟩ ≐ ⟨M10, M11⟩ ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
     suff 𝒥 : τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ A ⟧ κs.
@@ -378,11 +378,11 @@ Module Prod.
           dependent induction x; auto.
         * auto.
         * apply: IR.General.open_ty_eq_refl_left; auto.
-          replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%prog with ((⟦ B ⟧ κs) ⫽ Sub.inst0 (⟦ e00 ⟧ κs)%prog)%prog.
+          replace (⟦ B ⫽ Sub.inst0 M00 ⟧ κs)%prog with ((⟦ B ⟧ κs) ⫽ Sub.inst0 (⟦ M00 ⟧ κs)%prog)%prog.
           ** apply: subst; auto.
              apply: IR.Univ.open_inversionω.
              apply: 𝒢; auto.
-          ** replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%prog with ((⟦ B ⫽ Sub.inst0 e00 ⟧ κs) ⫽ @Prog.var _)%prog.
+          ** replace (⟦ B ⫽ Sub.inst0 M00 ⟧ κs)%prog with ((⟦ B ⫽ Sub.inst0 M00 ⟧ κs) ⫽ @Prog.var _)%prog.
              *** rewrite -interp_tm_subst_naturality /interp_subst //=.
                  simplify_subst.
                  rewrite Prog.subst_ret.
@@ -422,10 +422,10 @@ Module Isect.
     eauto.
   Qed.
 
-  Theorem intro `{Γ : ECtx.t Λ Ψ} i {A e0 e1} :
-    ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ A ∋ (e0.⦃^1⦄) ≐ (e1.⦃^1⦄) ⟧
+  Theorem intro `{Γ : ECtx.t Λ Ψ} i {A M0 M1} :
+    ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ A ∋ (M0.⦃^1⦄) ≐ (M1.⦃^1⦄) ⟧
     → ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ≫ ⋂ A ∋ e0 ≐ e1 ⟧.
+    → ⟦ Λ ∣ Γ ≫ ⋂ A ∋ M0 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℱ κs ? ℰ ? ? ? //=.
     apply: IR.Isect.intro.
@@ -498,10 +498,10 @@ Module Later.
     apply: Univ.formation_S.
   Qed.
 
-  Theorem intro `{Γ : ECtx.t Λ Ψ} {k i A e0 e1} :
-    ⟦ Λ ∣ Γ ≫ A ∋ e0 ≐ e1 ⟧
+  Theorem intro `{Γ : ECtx.t Λ Ψ} {k i A M0 M1} :
+    ⟦ Λ ∣ Γ ≫ A ∋ M0 ≐ M1 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ≫ ▶[k] A ∋ e0 ≐ e1 ⟧.
+    → ⟦ Λ ∣ Γ ≫ ▶[k] A ∋ M0 ≐ M1 ⟧.
   Proof.
     move=> 𝒟 ℰ ? ? ? ? ? ? //=.
     apply: IR.Later.intro.
@@ -558,10 +558,10 @@ Module Later.
   Qed.
 
 
-  Theorem induction `{Γ : ECtx.t Λ Ψ} k {i A e0 e1} :
+  Theorem induction `{Γ : ECtx.t Λ Ψ} k {i A M0 M1} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ e0 ≐ e1 ⟧
-    → ⟦ Λ ∣ Γ ≫ A ∋ μ{ e0 } ≐ μ{ e1 } ⟧.
+    → ⟦ Λ ∣ Γ ∙ ▶[k] A ≫ A.[^1] ∋ M0 ≐ M1 ⟧
+    → ⟦ Λ ∣ Γ ≫ A ∋ μ{ M0 } ≐ μ{ M1 } ⟧.
   Proof.
     move=> 𝒟 ℰ κs ? ℱ ? ? γ01 //=.
     apply: (IR.Later.loeb_induction_closed (κs k)).
@@ -596,13 +596,13 @@ Module Canonicity.
   Notation "⌊ b ⌋𝔹" := (quote_bool b).
 
   (* TODO: improve this proof. *)
-  Theorem canonicity {e} :
-    ⟦ 0 ∣ ⋄ ≫ 𝟚 ∋ e ≐ e ⟧
-    → ∃ b : bool, ⟦ 0 ∣ 0 ⊢ e ≃ ⌊ b ⌋𝔹 ⟧.
+  Theorem canonicity {M} :
+    ⟦ 0 ∣ ⋄ ≫ 𝟚 ∋ M ≐ M ⟧
+    → ∃ b : bool, ⟦ 0 ∣ 0 ⊢ M ≃ ⌊ b ⌋𝔹 ⟧.
   Proof.
     move=> 𝒟.
     suff κs: Env.t 0; last by [move=> x; dependent destruction x].
-    suff: τω ⊧ 𝟚 ∋ ⟦ e ⟧ κs ∼ ⟦ e ⟧ κs.
+    suff: τω ⊧ 𝟚 ∋ ⟦ M ⟧ κs ∼ ⟦ M ⟧ κs.
     - case=> R [[n ℰ0] ℰ1].
       Tower.destruct_tower.
       dependent destruction ℰ1.
@@ -611,14 +611,14 @@ Module Canonicity.
         move=> κs' //=.
         replace κs' with κs.
         * split.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog.
+          ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog.
              *** move=> H1.
-                 replace v with (@Prog.tt 0); eauto.
+                 replace V with (@Prog.tt 0); eauto.
                  by OpSem.evals_to_eq.
              *** simplify_subst.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog; eauto.
+          ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog; eauto.
              move=> //= H1.
-             replace v with (@Prog.tt 0); eauto.
+             replace V with (@Prog.tt 0); eauto.
              dependent destruction H1.
              dependent destruction eval_steps; eauto.
              dependent destruction H1.
@@ -628,14 +628,14 @@ Module Canonicity.
         move=> κs' //=.
         replace κs' with κs.
         * split.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog.
+          ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog.
              *** move=> H1.
-                 replace v with (@Prog.ff 0); eauto.
+                 replace V with (@Prog.ff 0); eauto.
                  by OpSem.evals_to_eq.
              *** simplify_subst.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog; eauto.
+          ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog; eauto.
              move=> //= H1.
-             replace v with (@Prog.ff 0); eauto.
+             replace V with (@Prog.ff 0); eauto.
              dependent destruction H1.
              dependent destruction eval_steps; eauto.
              dependent destruction H1.

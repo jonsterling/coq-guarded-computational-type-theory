@@ -54,25 +54,25 @@ Module EProg.
     Notation "𝟙" := EProg.unit : etm_scope.
     Notation "𝟚" := EProg.bool : etm_scope.
     Notation "★" := EProg.ax : etm_scope.
-    Notation "e .1" := (EProg.fst e%etm) (at level 50) : etm_scope.
-    Notation "e .2" := (EProg.snd e%etm) (at level 50) : etm_scope.
+    Notation "M .1" := (EProg.fst M%etm) (at level 50) : etm_scope.
+    Notation "M .2" := (EProg.snd M%etm) (at level 50) : etm_scope.
     Infix "×" := EProg.prod : etm_scope.
     Infix "⇒" := EProg.arr : etm_scope.
     Notation "⋂ A" := (EProg.isect A%etm) (at level 50) : etm_scope.
     Notation "𝕌[ i ] " := (EProg.univ i%nat) : etm_scope.
-    Notation "⟨ e1 , e2 ⟩" := (EProg.pair e1%etm e2%etm) : etm_scope.
-    Notation "'μ{' e }" := (EProg.fix_ e%etm) (at level 50) : etm_scope.
-    Notation "'𝛌{' e }" := (EProg.lam e%etm) (at level 50) : etm_scope.
-    Notation "e1 ⋅ e2" := (EProg.app e1%etm e2%etm) (at level 50) : etm_scope.
+    Notation "⟨ M1 , M2 ⟩" := (EProg.pair M1%etm M2%etm) : etm_scope.
+    Notation "'μ{' M }" := (EProg.fix_ M%etm) (at level 50) : etm_scope.
+    Notation "'𝛌{' M }" := (EProg.lam M%etm) (at level 50) : etm_scope.
+    Notation "M1 ⋅ M2" := (EProg.app M1%etm M2%etm) (at level 50) : etm_scope.
   End Notation.
 
   Import Notation.
 
-  Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (e : t Λ1 Ψ1) : t Λ2 Ψ2 :=
-    match e with
+  Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (M : t Λ1 Ψ1) : t Λ2 Ψ2 :=
+    match M with
     | var i => var _ (ρΨ i)
-    | fst e => fst (map ρΛ ρΨ e)
-    | snd e => snd (map ρΛ ρΨ e)
+    | fst M => fst (map ρΛ ρΨ M)
+    | snd M => snd (map ρΛ ρΨ M)
     | unit => unit
     | bool => bool
     | ax => ax
@@ -80,13 +80,13 @@ Module EProg.
     | ff => ff
     | prod A B => prod (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
     | arr A B => arr (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
-    | pair e1 e2 => pair (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
+    | pair M1 M2 => pair (map ρΛ ρΨ M1) (map ρΛ ρΨ M2)
     | ltr k A => ltr (ρΛ k) (map ρΛ ρΨ A)
     | isect A => isect (map (Ren.cong ρΛ) ρΨ A)
     | univ i => univ i
-    | fix_ e => fix_ (map ρΛ (Ren.cong ρΨ) e)
-    | lam e => lam (map ρΛ (Ren.cong ρΨ) e)
-    | app e1 e2 => app (map ρΛ ρΨ e1) (map ρΛ ρΨ e2)
+    | fix_ M => fix_ (map ρΛ (Ren.cong ρΨ) M)
+    | lam M => lam (map ρΛ (Ren.cong ρΨ) M)
+    | app M1 M2 => app (map ρΛ ρΨ M1) (map ρΛ ρΨ M2)
     end.
 
   Definition mapv {Λ} `(ρΨ : Ren.t Ψ1 Ψ2) : t Λ Ψ1 → t Λ Ψ2 :=
@@ -96,16 +96,16 @@ Module EProg.
     map ρ (λ x, x).
 
   Module RenNotation.
-    Notation "e .[ ρ ]" := (mapv ρ%ren e) (at level 50) : etm_scope.
-    Notation "e .⦃ ρ ⦄" := (mapk ρ%ren e) (at level 50) : etm_scope.
-    Notation "e .⦃ ρΛ ⦄[ ρΨ ]" := (map ρΛ%ren ρΨ e) (at level 50) : etm_scope.
+    Notation "M .[ ρ ]" := (mapv ρ%ren M) (at level 50) : etm_scope.
+    Notation "M .⦃ ρ ⦄" := (mapk ρ%ren M) (at level 50) : etm_scope.
+    Notation "M .⦃ ρΛ ⦄[ ρΨ ]" := (map ρΛ%ren ρΨ M) (at level 50) : etm_scope.
   End RenNotation.
 
   Import RenNotation.
 
-  Lemma map_id `(e : t Λ Ψ) : map id id e = e.
+  Lemma map_id `(M : t Λ Ψ) : map id id M = M.
   Proof.
-    induction e; T.rewrites_with ltac:(try rewrite Ren.cong_id).
+    induction M; T.rewrites_with ltac:(try rewrite Ren.cong_id).
   Qed.
 
   Program Instance syn_struct_term {Λ} : Sub.syn_struct (t Λ) :=
@@ -120,11 +120,11 @@ Module EProg.
   Program Definition wk_sub `(σ : @Sub.t (t Λ) Ψ1 Ψ2) : @Sub.t (t (S Λ)) Ψ1 Ψ2 :=
     mapk (^1)%ren ∘ σ.
 
-  Fixpoint subst {Λ} `(σ : Sub.t Ψ1 Ψ2) (e : t Λ Ψ1) : t Λ Ψ2 :=
-    match e with
+  Fixpoint subst {Λ} `(σ : Sub.t Ψ1 Ψ2) (M : t Λ Ψ1) : t Λ Ψ2 :=
+    match M with
     | var i => σ i
-    | fst e => fst (subst σ e)
-    | snd e => snd (subst σ e)
+    | fst M => fst (subst σ M)
+    | snd M => snd (subst σ M)
     | unit => unit
     | bool => bool
     | ax => ax
@@ -132,17 +132,17 @@ Module EProg.
     | ff => ff
     | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
     | arr A B => arr (subst σ A) (subst (Sub.cong σ) B)
-    | pair e1 e2 => pair (subst σ e1) (subst σ e2)
+    | pair M1 M2 => pair (subst σ M1) (subst σ M2)
     | ltr k A => ltr k (subst σ A)
     | isect A => isect (subst (wk_sub σ) A)
     | univ i => univ i
-    | fix_ e => fix_ (subst (Sub.cong σ) e)
-    | lam e => lam (subst (Sub.cong σ) e)
-    | app e1 e2 => app (subst σ e1) (subst σ e2)
+    | fix_ M => fix_ (subst (Sub.cong σ) M)
+    | lam M => lam (subst (Sub.cong σ) M)
+    | app M1 M2 => app (subst σ M1) (subst σ M2)
     end.
 
   Module SubstNotation.
-    Notation "e ⫽ σ" := (subst σ%subst e%etm) (at level 20, left associativity) : etm_scope.
+    Notation "M ⫽ σ" := (subst σ%subst M%etm) (at level 20, left associativity) : etm_scope.
   End SubstNotation.
 
   Import SubstNotation.
@@ -183,14 +183,14 @@ Module EJdg.
   | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → EProg.t Λ Ψ → EProg.t Λ Ψ → EProg.t Λ Ψ → t Λ
   | conv : ∀ {Ψ}, EProg.t Λ Ψ → EProg.t Λ Ψ → t Λ.
 
-  Arguments eq_mem [Λ Ψ] Γ%ectx A%etm e1%etm e2%etm.
-  Arguments conv [Λ Ψ] e1%etm e2%etm.
+  Arguments eq_mem [Λ Ψ] Γ%ectx A%etm M1%etm M2%etm.
+  Arguments conv [Λ Ψ] M1%etm M2%etm.
 End EJdg.
 
 
 Delimit Scope ejdg_scope with ejdg.
 
-Notation "Λ ∣ Γ ≫ A ∋ e1 ≐ e2" := (@EJdg.eq_mem Λ _ Γ%ectx A%etm e1%etm e2%etm) (at level 10) : ejdg_scope.
-Notation "Λ ∣ Ψ ⊢ e1 ≃ e2" := (@EJdg.conv Λ Ψ e1%etm e2%etm) (at level 10) : ejdg_scope.
+Notation "Λ ∣ Γ ≫ A ∋ M1 ≐ M2" := (@EJdg.eq_mem Λ _ Γ%ectx A%etm M1%etm M2%etm) (at level 10) : ejdg_scope.
+Notation "Λ ∣ Ψ ⊢ M1 ≃ M2" := (@EJdg.conv Λ Ψ M1%etm M2%etm) (at level 10) : ejdg_scope.
 
 Notation "⌊ 𝒥 ⌋" := 𝒥%ejdg (only parsing).
