@@ -524,40 +524,97 @@ Module Later.
     apply: 𝒟; eauto.
   Qed.
 
-  Theorem apply `{Γ : ECtx.t Λ Ψ} i {k A B f0 f1} :
-    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
-    → ⟦ Λ ∣ Γ ∙ A ≫ ▶[k] 𝕌[i] ∋ B ≐ B ⟧
-    → ⟦ Λ ∣ Γ ≫ ▶[k] (A ⇒ B) ∋ f0 ≐ f1 ⟧
-    → ⟦ Λ ∣ Γ ≫ (▶[k] A) ⇒ (▶[k] B) ∋ f0 ≐ f1 ⟧.
+  Theorem preserves_sigma `{Γ : ECtx.t Λ Ψ} i κ {A0 B0 A1 B1} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ∙ A0 ≫ ▶[κ] 𝕌[i] ∋ B0 ≐ B1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (▶[κ] (A0 × B0)) ≐ ((▶[κ] A1) × (▶[κ] B1)) ⟧.
   Proof.
-    move=> 𝒟 ℰ ℱ κs 𝒢 ℋ γ0 γ1 γ01 //=.
-    apply: Th.Later.apply.
-    apply: ℱ; auto.
-
-    apply: Th.Univ.open_inversionω.
-    move=> γ0' γ1' γ01' //=.
-    apply: Th.Later.univ_eq.
-    apply: Th.Later.pi_later_univ_eq.
-    - apply: Th.Later.intro; apply: Later.next.
-      apply: 𝒟; auto.
-    - move=> δ0 δ1 δ01.
-      simplify_subst.
+    move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
+    apply: Th.Univ.intro.
+    apply: Th.Later.preserves_sigma; simpl in *.
+    - apply: Later.next.
+      T.efwd 𝒟; eauto.
+    - apply: Later.push_universal => γ0'.
+      apply: Later.push_universal => γ1'.
+      apply: Later.push_universal; case=> _ ℋ.
+      simpl in *.
+      specialize (𝒟 κs ℱ).
+      simpl in *.
       T.efwd ℰ.
-      + T.use ℰ; eauto.
+      + apply: (Later.map Th.Univ.inversion).
+        apply: Th.Later.mem_univ_inversion.
+        apply: Th.Later.univ_eq.
+        T.use ℰ; eauto.
       + split; simpl.
-        * T.use γ01'; eauto.
-        * case: δ01 => _ ℱ.
-          T.use ℱ; eauto.
+        * T.use γ01; eauto.
+        * apply: (Th.Level.eq_mem_from_level i).
+          T.use ℋ; eauto.
       + move=> ? ? ? //=.
         apply: (Th.Level.eq_ty_from_level (S i)).
         apply: Th.Later.formation.
         apply: Later.next.
         apply: Th.Univ.formation_S.
-      + split; auto.
-        apply: Th.Univ.open_inversionω.
-        apply: 𝒟; auto.
+      + split; eauto.
+        move=> γ0'' γ1'' γ01''.
+        suff: (τω ⊧ ((∥A0∥ κs) ⫽ γ0'') ∼ ((∥A1∥ κs) ⫽ γ0'')) ∧ (τω ⊧ ((∥A0∥ κs) ⫽ γ1'') ∼ ((∥A1∥ κs) ⫽ γ0'')).
+        * case=> H0 H1.
+          apply: Th.General.ty_eq_trans; eauto.
+        * split; apply: Th.Univ.inversionω.
+          ** T.efwd 𝒟.
+             *** eauto.
+             *** apply: Th.General.env_eq_refl_left; eauto.
+             *** eauto.
+          ** T.efwd 𝒟.
+             *** eauto.
+             *** apply: Th.General.env_eq_symm; eauto.
+             *** eauto.
   Qed.
 
+  Theorem preserves_pi `{Γ : ECtx.t Λ Ψ} i κ {A0 B0 A1 B1} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ∙ A0 ≫ ▶[κ] 𝕌[i] ∋ B0 ≐ B1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (▶[κ] (A0 ⇒ B0)) ≐ ((▶[κ] A1) ⇒ (▶[κ] B1)) ⟧.
+  Proof.
+    move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
+    apply: Th.Univ.intro.
+    apply: Th.Later.preserves_pi; simpl in *.
+    - apply: Later.next.
+      T.efwd 𝒟; eauto.
+    - apply: Later.push_universal => γ0'.
+      apply: Later.push_universal => γ1'.
+      apply: Later.push_universal; case=> _ ℋ.
+      simpl in *.
+      specialize (𝒟 κs ℱ).
+      simpl in *.
+      T.efwd ℰ.
+      + apply: (Later.map Th.Univ.inversion).
+        apply: Th.Later.mem_univ_inversion.
+        apply: Th.Later.univ_eq.
+        T.use ℰ; eauto.
+      + split; simpl.
+        * T.use γ01; eauto.
+        * apply: (Th.Level.eq_mem_from_level i).
+          T.use ℋ; eauto.
+      + move=> ? ? ? //=.
+        apply: (Th.Level.eq_ty_from_level (S i)).
+        apply: Th.Later.formation.
+        apply: Later.next.
+        apply: Th.Univ.formation_S.
+      + split; eauto.
+        move=> γ0'' γ1'' γ01''.
+        suff: (τω ⊧ ((∥A0∥ κs) ⫽ γ0'') ∼ ((∥A1∥ κs) ⫽ γ0'')) ∧ (τω ⊧ ((∥A0∥ κs) ⫽ γ1'') ∼ ((∥A1∥ κs) ⫽ γ0'')).
+        * case=> H0 H1.
+          apply: Th.General.ty_eq_trans; eauto.
+        * split; apply: Th.Univ.inversionω.
+          ** T.efwd 𝒟.
+             *** eauto.
+             *** apply: Th.General.env_eq_refl_left; eauto.
+             *** eauto.
+          ** T.efwd 𝒟.
+             *** eauto.
+             *** apply: Th.General.env_eq_symm; eauto.
+             *** eauto.
+  Qed.
 
   Theorem induction `{Γ : ECtx.t Λ Ψ} k {i A M0 M1} :
     ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ A ⟧
