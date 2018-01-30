@@ -3,7 +3,7 @@ From gctt Require Import Notation OrderTheory Axioms Var Program OpSem TypeSyste
 From gctt Require Tactic.
 Module T := Tactic.
 
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 Set Implicit Arguments.
 

@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logic.FunctionalExtensionality.
 
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Import Notation Var OrderTheory Axioms Program OpSem Closure Tower Sequent TypeSystem.

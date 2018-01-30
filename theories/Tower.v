@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8 Program.Equality Program.Tactics Setoids.Setoid omega.Omega.
 
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Import OrderTheory Axioms Program OpSem Closure TypeSystem.

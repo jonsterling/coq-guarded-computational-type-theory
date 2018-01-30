@@ -1,4 +1,4 @@
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 
@@ -18,8 +18,8 @@ Module Ren.
   Program Definition cong {Ψ1 Ψ2} (ρ : t Ψ1 Ψ2) : t (S Ψ1) (S Ψ2) :=
     fun x =>
       match x with
-      | Fin.F1 _ => Fin.F1
-      | Fin.FS _ y => Fin.FS (ρ y)
+      | Fin.F1 => Fin.F1
+      | Fin.FS y => Fin.FS (ρ y)
       end.
 
   Theorem cong_id {Ψ} : @cong Ψ Ψ (fun x => x) = id.
@@ -58,15 +58,15 @@ Module Sub.
     Program Definition cong {Ψ1 Ψ2} (σ : t Ψ1 Ψ2) : t (S Ψ1) (S Ψ2) :=
       fun x =>
         match x with
-        | Fin.F1 _ => var Fin.F1
-        | Fin.FS _ y => map Fin.FS (σ y)
+        | Fin.F1 => var Fin.F1
+        | Fin.FS y => map Fin.FS (σ y)
         end.
 
     Program Definition inst0 {Ψ} (M : 𝒯 Ψ) : t (S Ψ) Ψ :=
       fun x =>
         match x with
-        | Fin.F1 _ => M
-        | Fin.FS _ y => @var _ 𝔐 _ y
+        | Fin.F1 => M
+        | Fin.FS y => @var _ 𝔐 _ y
         end.
 
     Theorem cong_coh {Ψ1 Ψ2 Ψ3} (ρ : Ren.t Ψ1 Ψ2) (σ : Sub.t Ψ2 Ψ3) :
