@@ -4,7 +4,7 @@ Set Bullet Behavior "Strict Subproofs".
 Generalizable All Variables.
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega Logic.FunctionalExtensionality.
-From gctt Require Import Axioms Var Program ExternalSyn Interp Tower Closure Sequent InternalRules.
+From gctt Require Import Axioms Var Program Expression Interp Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
@@ -217,14 +217,14 @@ Module Bool.
   Qed.
 
   Theorem tt_equality `{Γ : ECtx.t Λ Ψ} :
-    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ EProg.tt ≐ EProg.tt ⟧.
+    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ Expr.tt ≐ Expr.tt ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
     IR.Bool.tac.
   Qed.
 
   Theorem ff_equality `{Γ : ECtx.t Λ Ψ} :
-    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ EProg.ff ≐ EProg.ff ⟧.
+    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ Expr.ff ≐ Expr.ff ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
     IR.Bool.tac.
@@ -587,10 +587,10 @@ End Later.
 
 
 Module Canonicity.
-  Definition quote_bool (b : bool) {Λ} : EProg.t Λ 0 :=
+  Definition quote_bool (b : bool) {Λ} : Expr.t Λ 0 :=
     match b with
-    | true => EProg.tt
-    | false => EProg.ff
+    | true => Expr.tt
+    | false => Expr.ff
     end.
 
   Notation "⌊ b ⌋𝔹" := (quote_bool b).
@@ -661,13 +661,13 @@ End Canonicity.
 Module Examples.
 
   (* Guarded stream of bits. *)
-  Example BitStream {Λ Ψ} (k : Var Λ) : EProg.t Λ Ψ :=
+  Example BitStream {Λ Ψ} (k : Var Λ) : Expr.t Λ Ψ :=
     μ{ 𝟚 × ▶[k] @1 }%etm.
 
   Arguments BitStream [Λ Ψ] k%eclk.
 
   (* Coinductive sequence of bits. *)
-  Example BitSeq {Λ Ψ} : EProg.t Λ Ψ :=
+  Example BitSeq {Λ Ψ} : Expr.t Λ Ψ :=
     (⋂ (BitStream #0))%etm.
 
   Example BitStream_wf `{Γ : ECtx.t Λ Ψ} i {k} :
@@ -698,8 +698,8 @@ Module Examples.
     apply: BitStream_wf.
   Qed.
 
-  Example Ones {Λ Ψ} : EProg.t Λ Ψ :=
-    μ{ ⟨EProg.tt, @0⟩ }%etm.
+  Example Ones {Λ Ψ} : Expr.t Λ Ψ :=
+    μ{ ⟨Expr.tt, @0⟩ }%etm.
 
 
   Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {i k} :
@@ -756,7 +756,7 @@ Module Examples.
           apply: Bool.univ_eq.
         * apply: Later.force.
           apply: BitSeq_wf.
-      + replace _ with (((⋂ ▶[#0] BitStream #0).[^1])%etm : EProg.t Λ (S Ψ)); auto.
+      + replace _ with (((⋂ ▶[#0] BitStream #0).[^1])%etm : Expr.t Λ (S Ψ)); auto.
         apply: Isect.cartesian.
         * apply: Bool.univ_eq.
         * apply: Later.univ_eq.

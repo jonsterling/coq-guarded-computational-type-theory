@@ -16,7 +16,7 @@ Delimit Scope etm_scope with etm.
 Delimit Scope esubst_scope with esubst.
 
 
-Module EProg.
+Module Expr.
   Inductive t (Λ Ψ : nat) :=
   | var : Var Ψ -> t Λ Ψ
   | fst : t Λ Ψ -> t Λ Ψ
@@ -47,23 +47,23 @@ Module EProg.
     Notation "#0" := Fin.F1 : eclk_scope.
     Notation "#1" := (Fin.FS Fin.F1) : eclk_scope.
 
-    Notation "@0" := (EProg.var _ Fin.F1) : etm_scope.
-    Notation "@1" := (EProg.var _ (Fin.FS Fin.F1)) : etm_scope.
+    Notation "@0" := (Expr.var _ Fin.F1) : etm_scope.
+    Notation "@1" := (Expr.var _ (Fin.FS Fin.F1)) : etm_scope.
 
-    Notation "▶[ k ] A" := (EProg.ltr k%eclk A%etm) (at level 50) : etm_scope.
-    Notation "𝟙" := EProg.unit : etm_scope.
-    Notation "𝟚" := EProg.bool : etm_scope.
-    Notation "★" := EProg.ax : etm_scope.
-    Notation "M .1" := (EProg.fst M%etm) (at level 50) : etm_scope.
-    Notation "M .2" := (EProg.snd M%etm) (at level 50) : etm_scope.
-    Infix "×" := EProg.prod : etm_scope.
-    Infix "⇒" := EProg.arr : etm_scope.
-    Notation "⋂ A" := (EProg.isect A%etm) (at level 50) : etm_scope.
-    Notation "𝕌[ i ] " := (EProg.univ i%nat) : etm_scope.
-    Notation "⟨ M1 , M2 ⟩" := (EProg.pair M1%etm M2%etm) : etm_scope.
-    Notation "'μ{' M }" := (EProg.fix_ M%etm) (at level 50) : etm_scope.
-    Notation "'𝛌{' M }" := (EProg.lam M%etm) (at level 50) : etm_scope.
-    Notation "M1 ⋅ M2" := (EProg.app M1%etm M2%etm) (at level 50) : etm_scope.
+    Notation "▶[ k ] A" := (Expr.ltr k%eclk A%etm) (at level 50) : etm_scope.
+    Notation "𝟙" := Expr.unit : etm_scope.
+    Notation "𝟚" := Expr.bool : etm_scope.
+    Notation "★" := Expr.ax : etm_scope.
+    Notation "M .1" := (Expr.fst M%etm) (at level 50) : etm_scope.
+    Notation "M .2" := (Expr.snd M%etm) (at level 50) : etm_scope.
+    Infix "×" := Expr.prod : etm_scope.
+    Infix "⇒" := Expr.arr : etm_scope.
+    Notation "⋂ A" := (Expr.isect A%etm) (at level 50) : etm_scope.
+    Notation "𝕌[ i ] " := (Expr.univ i%nat) : etm_scope.
+    Notation "⟨ M1 , M2 ⟩" := (Expr.pair M1%etm M2%etm) : etm_scope.
+    Notation "'μ{' M }" := (Expr.fix_ M%etm) (at level 50) : etm_scope.
+    Notation "'𝛌{' M }" := (Expr.lam M%etm) (at level 50) : etm_scope.
+    Notation "M1 ⋅ M2" := (Expr.app M1%etm M2%etm) (at level 50) : etm_scope.
   End Notation.
 
   Import Notation.
@@ -146,16 +146,16 @@ Module EProg.
   End SubstNotation.
 
   Import SubstNotation.
-End EProg.
+End Expr.
 
-Export EProg.Notation EProg.RenNotation EProg.SubstNotation.
+Export Expr.Notation Expr.RenNotation Expr.SubstNotation.
 
 Delimit Scope ectx_scope with ectx.
 
 Module ECtx.
   Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
   | nil : t Λ 0
-  | snoc : ∀ {Ψ}, t Λ Ψ → EProg.t Λ Ψ → t Λ (S Ψ).
+  | snoc : ∀ {Ψ}, t Λ Ψ → Expr.t Λ Ψ → t Λ (S Ψ).
 
   Arguments nil [Λ].
   Arguments snoc [Λ Ψ] Γ%ectx A%etm.
@@ -180,8 +180,8 @@ Notation "Γ .⦃ ρ ⦄" := (ECtx.map ρ%ren Γ%ectx) (at level 50) : ectx_scop
 
 Module EJdg.
   Inductive t Λ :=
-  | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → EProg.t Λ Ψ → EProg.t Λ Ψ → EProg.t Λ Ψ → t Λ
-  | conv : ∀ {Ψ}, EProg.t Λ Ψ → EProg.t Λ Ψ → t Λ.
+  | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → Expr.t Λ Ψ → Expr.t Λ Ψ → Expr.t Λ Ψ → t Λ
+  | conv : ∀ {Ψ}, Expr.t Λ Ψ → Expr.t Λ Ψ → t Λ.
 
   Arguments eq_mem [Λ Ψ] Γ%ectx A%etm M1%etm M2%etm.
   Arguments conv [Λ Ψ] M1%etm M2%etm.
