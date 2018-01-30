@@ -15,6 +15,7 @@ Reserved Notation "M ↦⋆ M'" (at level 50).
 
 Inductive is_val : Prog.t 0 → Ω :=
 | val_bool : 𝟚 val
+| val_void : 𝟘 val
 | val_unit : 𝟙 val
 | val_prod : ∀ {M1 M2}, (M1 × M2) val
 | val_arr : ∀ {M1 M2}, (M1 ⇒ M2) val

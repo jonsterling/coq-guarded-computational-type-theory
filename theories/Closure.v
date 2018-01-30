@@ -8,7 +8,9 @@ Set Bullet Behavior "Strict Subproofs".
 Set Implicit Arguments.
 
 Module Connective.
-  Inductive ctor := unit | bool | prod | arr | later | isect.
+  Inductive ctor := void | unit | bool | prod | arr | later | isect.
+
+  Inductive void_el : rel :=.
 
   Inductive unit_val : rel :=
   | ax : unit_val (Prog.ax, Prog.ax).
@@ -48,6 +50,7 @@ Module Connective.
   Import CExtNotation.
 
   Inductive has (τ : cts) : ctor → Prog.t 0 × rel → Ω :=
+  | has_void : has τ void (Prog.void, void_el)
   | has_unit : has τ unit (Prog.unit, [unit_val]⇓)
   | has_bool : has τ bool (Prog.bool, [bool_val]⇓)
   | has_prod :

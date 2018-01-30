@@ -21,6 +21,7 @@ Module Expr.
   | var : Var Ψ -> t Λ Ψ
   | fst : t Λ Ψ -> t Λ Ψ
   | snd : t Λ Ψ → t Λ Ψ
+  | void : t Λ Ψ
   | unit : t Λ Ψ
   | bool : t Λ Ψ
   | ax : t Λ Ψ
@@ -36,6 +37,7 @@ Module Expr.
   | fix_ : t Λ (S Ψ) → t Λ Ψ
   | app : t Λ Ψ → t Λ Ψ → t Λ Ψ.
 
+  Arguments void [Λ Ψ].
   Arguments unit [Λ Ψ].
   Arguments bool [Λ Ψ].
   Arguments ax [Λ Ψ].
@@ -51,6 +53,7 @@ Module Expr.
     Notation "@1" := (Expr.var _ (Fin.FS Fin.F1)) : etm_scope.
 
     Notation "▶[ k ] A" := (Expr.ltr k%eclk A%etm) (at level 50) : etm_scope.
+    Notation "𝟘" := Expr.unit : etm_scope.
     Notation "𝟙" := Expr.unit : etm_scope.
     Notation "𝟚" := Expr.bool : etm_scope.
     Notation "★" := Expr.ax : etm_scope.
@@ -73,6 +76,7 @@ Module Expr.
     | var _ i => var _ (ρΨ i)
     | fst M => fst (map ρΛ ρΨ M)
     | snd M => snd (map ρΛ ρΨ M)
+    | void => void
     | unit => unit
     | bool => bool
     | ax => ax
@@ -125,6 +129,7 @@ Module Expr.
     | var _ i => σ i
     | fst M => fst (subst σ M)
     | snd M => snd (subst σ M)
+    | void => void
     | unit => unit
     | bool => bool
     | ax => ax

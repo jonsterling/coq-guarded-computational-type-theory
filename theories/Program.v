@@ -17,6 +17,7 @@ Module Prog.
   | fst : t Ψ -> t Ψ
   | snd : t Ψ → t Ψ
   | app : t Ψ → t Ψ → t Ψ
+  | void : t Ψ
   | unit : t Ψ
   | bool : t Ψ
   | ax : t Ψ
@@ -31,6 +32,7 @@ Module Prog.
   | univ : nat -> t Ψ
   | fix_ : t (S Ψ) → t Ψ.
 
+  Arguments void [Ψ].
   Arguments unit [Ψ].
   Arguments bool [Ψ].
   Arguments ax [Ψ].
@@ -45,6 +47,7 @@ Module Prog.
     Notation "▶[ κ ] A" := (ltr κ A%prog) (at level 50) : prog_scope.
     Notation "'𝟚'" := bool : prog_scope.
     Notation "'𝟙'" := unit : prog_scope.
+    Notation "'𝟘'" := void : prog_scope.
     Notation "★" := ax : prog_scope.
     Notation "M .1" := (fst M%prog) (at level 50) : prog_scope.
     Notation "M .2" := (snd M%prog) (at level 50) : prog_scope.
@@ -68,6 +71,7 @@ Module Prog.
     | snd M => snd (map ρ M)
     | app M1 M2 => app (map ρ M1) (map ρ M2)
     | unit => unit
+    | void => void
     | bool => bool
     | ax => ax
     | tt => tt
@@ -116,6 +120,7 @@ Module Prog.
     | fst M => fst (subst σ M)
     | snd M => snd (subst σ M)
     | app M1 M2 => app (subst σ M1) (subst σ M2)
+    | void => void
     | unit => unit
     | bool => bool
     | ax => ax

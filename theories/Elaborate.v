@@ -30,6 +30,7 @@ Fixpoint elab_tm `(M : Expr.t Λ Ψ) (κs : Env.t Λ) : Prog.t Ψ :=
   | Expr.var _ i => Prog.var i
   | Expr.fst M => ∥M∥ κs .1
   | Expr.snd M => ∥M∥ κs .2
+  | Expr.void => 𝟘
   | Expr.unit => 𝟙
   | Expr.bool => 𝟚
   | Expr.ax => ★
