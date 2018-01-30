@@ -1307,6 +1307,69 @@ Module Later.
       by apply: ℰ.
   Qed.
 
+  Theorem preserves_pi i κ {A0 A1 B0 B1} :
+    ▷[κ] (τ[i] ⊧ A0 ∼ A1)
+    → ▷[κ] (τ[i] ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1)
+    → τ[i] ⊧ ▶[κ] (A0 ⇒ B0) ∼ ((▶[κ] A1) ⇒ (▶[κ] B1)).
+  Proof.
+    move=> 𝒟 ℰ.
+    exists (fun Ms => ▷[κ] (Connective.fun_el (τ[i] @ A0) (fun x => τ[i] @ (B1 ⫽ Sub.inst0 x)%prog) Ms)).
+    split.
+
+    - Tac.tower_intro; apply: Sig.conn; eauto.
+      constructor; rewrite !Clo.roll.
+      Later.gather; case=> 𝒟 ℰ.
+      Tac.tower_intro; apply: Sig.conn; eauto.
+      constructor; rewrite !Clo.roll.
+      + case: 𝒟 => ? [𝒟0 ?].
+        T.use 𝒟0; rewrite /Tower.t; repeat f_equal; eauto.
+      + move=> M0 M1 M0M1.
+        case: (Fam.family_choice 𝒟 ℰ) => RB ℱ.
+        case: (ℱ M0 M1).
+        * exists (τ[i] @ A0); split; eauto.
+          case: 𝒟 => ? [𝒟0 ?]; T.use 𝒟0.
+          repeat f_equal; eauto.
+        * move=> ℱ0 [ℱ1 [ℱ2 [ℱ3 ℱ4]]].
+          repeat split; [T.use ℱ1 | T.use ℱ1 | T.use ℱ3 | T.use ℱ3];
+          rewrite /Tower.t; repeat f_equal; eauto.
+
+    - Tac.ts_choose_rel (Connective.fun_el (fun Ms => ▷[κ] (τ[i] @ A0 Ms)) (fun x => fun Ms => ▷[κ] (τ[i] @ (B1 ⫽ Sub.inst0 x)%prog Ms))).
+      + Tac.tower_intro; apply: Sig.conn; eauto.
+        rewrite !Clo.roll; constructor.
+        * Tac.tower_intro; apply: Sig.conn; eauto.
+          rewrite !Clo.roll; constructor.
+          Later.gather; case=> [[RA [𝒟0 𝒟1]]] _.
+          T.use 𝒟1; rewrite /Tower.t; repeat f_equal; eauto.
+        * move=> M0 M1 M0M1; repeat split;
+        Tac.tower_intro; (apply: Sig.conn; first by [simpl; eauto]);
+        apply: Connective.has_later; Later.gather; case=> 𝒟 [/(Fam.family_choice 𝒟)] => ℰ ℱ;
+        rewrite !Clo.roll; case: ℰ => R ℰ; specialize (ℰ M0 M1);
+        (destruct ℰ as [H1 [H2 [H3 [H4 H5]]]];
+          first by
+              [ exists (τ[i] @ A0); split; case 𝒟=> RA [𝒟0 𝒟1];
+                [ T.use 𝒟0; repeat f_equal; eauto
+                | T.use ℱ; apply: equal_f; apply: (TS.is_extensional τ[i]); simpl; T.use 𝒟1; repeat f_equal; eauto
+                ]
+              ]);
+        [T.use H5 | T.use H5 | T.use H3 | T.use H3];
+        rewrite /Tower.t; repeat f_equal; eauto.
+      + apply: binrel_extensionality => M0 M1; split.
+        * move=> ℱ; split=> N0 N1 N0N1.
+          Later.gather; case=> X0 [X1 X2].
+          dependent destruction X2.
+          dependent destruction H0.
+          eauto.
+        * move=> X.
+          dependent destruction X.
+          have: ▷[ κ] (∀ N0 N1, (τ[ i] @ A0) (N0, N1) → (τ[ i] @ (B1 ⫽ Sub.inst0 N0)%prog) ((M0 ⋅ N0)%prog, (M1 ⋅ N1)%prog)).
+          ** apply: Later.push_universal => N0.
+             apply: Later.push_universal => N1.
+             specialize (H N0 N1).
+             by rewrite Later.commute_imp.
+          ** move {H} => H.
+             Later.gather; case=> ? [? ?].
+             split; eauto.
+  Qed.
 
   Theorem preserves_sigma i κ {A0 A1 B0 B1} :
     ▷[κ] (τ[i] ⊧ A0 ∼ A1)
