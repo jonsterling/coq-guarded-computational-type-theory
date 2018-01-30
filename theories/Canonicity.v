@@ -21,7 +21,7 @@ Theorem canonicity {M} :
 Proof.
   move=> 𝒟.
   suff κs: Env.t 0; last by [move=> x; dependent destruction x].
-  suff: τω ⊧ 𝟚 ∋ ⟦ M ⟧ κs ∼ ⟦ M ⟧ κs.
+  suff: τω ⊧ 𝟚 ∋ ∥ M ∥ κs ∼ ∥ M ∥ κs.
   - case=> R [[n ℰ0] ℰ1].
     Tower.destruct_tower.
     dependent destruction ℰ1.
@@ -30,12 +30,12 @@ Proof.
       move=> κs' //=.
       replace κs' with κs.
       * split.
-        ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog.
+        ** replace ((∥ M ∥ κs) ⫽ γ)%prog with (∥ M ∥ κs)%prog.
            *** move=> H1.
                replace V with (@Prog.tt 0); eauto.
                  by OpSem.evals_to_eq.
            *** simplify_subst.
-        ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog; eauto.
+        ** replace ((∥ M ∥ κs) ⫽ γ)%prog with (∥ M ∥ κs)%prog; eauto.
            move=> //= H1.
            replace V with (@Prog.tt 0); eauto.
            dependent destruction H1.
@@ -48,12 +48,12 @@ Proof.
       move=> κs' //=.
       replace κs' with κs.
       * split.
-        ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog.
+        ** replace ((∥ M ∥ κs) ⫽ γ)%prog with (∥ M ∥ κs)%prog.
            *** move=> H1.
                replace V with (@Prog.ff 0); eauto.
                  by OpSem.evals_to_eq.
            *** simplify_subst.
-        ** replace ((⟦ M ⟧ κs) ⫽ γ)%prog with (⟦ M ⟧ κs)%prog; eauto.
+        ** replace ((∥ M ∥ κs) ⫽ γ)%prog with (∥ M ∥ κs)%prog; eauto.
            move=> //= H1.
            replace V with (@Prog.ff 0); eauto.
            dependent destruction H1.

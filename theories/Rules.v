@@ -283,7 +283,7 @@ Module Arr.
         * split; auto.
           apply: Th.Univ.open_inversionω.
           eauto.
-        * suff γ00 : τω ⊧ ⟦ Γ ⟧ κs ∋⋆ γ0 ∼ γ0.
+        * suff γ00 : τω ⊧ ∥Γ∥ κs ∋⋆ γ0 ∼ γ0.
           ** split; simpl.
              *** T.use γ00; eauto.
              *** case: γ01' => //= _ ℐ.
@@ -301,8 +301,8 @@ Module Arr.
     move=> 𝒟 ℰ ℱ 𝒢 κs ℋ ℐ γ0 γ1 γ01.
     autorewrite with syn_db; simpl.
     replace
-      ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 M0⟧ κs)))%prog
-      with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦M0⟧ κs) ⫽ γ0))%prog.
+      ((∥B∥ κs) ⫽ (γ0 ◎ (∥Sub.inst0 M0∥ κs)))%prog
+      with ((∥B∥ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((∥M0∥ κs) ⫽ γ0))%prog.
     - apply: Th.Arr.elim.
       + apply: Th.Univ.inversion.
         apply: 𝒟; eauto.
@@ -311,7 +311,7 @@ Module Arr.
         * move=> ? ? //= [_ 𝒥].
           T.efwd ℰ.
           ** T.use ℰ; auto.
-          ** suff γ00 : τω ⊧ ⟦Γ⟧ κs ∋⋆ γ0 ∼ γ0.
+          ** suff γ00 : τω ⊧ ∥Γ∥ κs ∋⋆ γ0 ∼ γ0.
              *** split; [T.use γ00 | T.use 𝒥]; eauto.
              *** apply: Th.General.env_eq_refl_left; eauto.
           ** eauto.
@@ -370,7 +370,7 @@ Module Prod.
     → ⟦ Λ ∣ Γ ≫ A × B ∋ ⟨M00, M01⟩ ≐ ⟨M10, M11⟩ ⟧.
   Proof.
     move=> 𝒟 ℰ ℱ 𝒢 κs Γctx ℋ γ0 γ1 γ01 //=.
-    suff 𝒥 : τω ⊧ ⟦ Γ ⟧ κs ≫ ⟦ A ⟧ κs ∼ ⟦ A ⟧ κs.
+    suff 𝒥 : τω ⊧ ∥Γ∥ κs ≫ ∥A∥ κs ∼ ∥A∥ κs.
     - apply: Th.Prod.intro.
       + apply: 𝒟; eauto.
       + T.efwd ℰ.
@@ -379,11 +379,11 @@ Module Prod.
           dependent induction x; auto.
         * auto.
         * apply: Th.General.open_ty_eq_refl_left; auto.
-          replace (⟦ B ⫽ Sub.inst0 M00 ⟧ κs)%prog with ((⟦ B ⟧ κs) ⫽ Sub.inst0 (⟦ M00 ⟧ κs)%prog)%prog.
+          replace (∥B ⫽ Sub.inst0 M00∥ κs)%prog with ((∥B∥ κs) ⫽ Sub.inst0 (∥M00∥ κs)%prog)%prog.
           ** apply: subst; auto.
              apply: Th.Univ.open_inversionω.
              apply: 𝒢; auto.
-          ** replace (⟦ B ⫽ Sub.inst0 M00 ⟧ κs)%prog with ((⟦ B ⫽ Sub.inst0 M00 ⟧ κs) ⫽ @Prog.var _)%prog.
+          ** replace (∥B ⫽ Sub.inst0 M00∥ κs)%prog with ((∥B ⫽ Sub.inst0 M00∥ κs) ⫽ @Prog.var _)%prog.
              *** rewrite -elab_tm_subst_naturality /elab_subst //=.
                  simplify_subst.
                  rewrite Prog.subst_ret.
@@ -447,7 +447,7 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ ⋂ (A.⦃^1⦄) ⟧.
   Proof.
     move=> 𝒟 κs ? ? γ0 γ1 γ01; simplify_eqs.
-    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _)%prog with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1)%prog.
+    replace (λ κ:𝕂, (∥_.⦃_⦄∥ _) ⫽ _)%prog with (λ κ:𝕂, (∥A∥ κs) ⫽ γ1)%prog.
     - apply: Th.Univ.intro.
       apply: Th.Isect.irrelevance.
       apply: Th.Univ.inversion.
@@ -466,10 +466,10 @@ Module Isect.
     have R :=
       @Th.Isect.cartesian
         i
-        (fun κ => (⟦ A0 ⟧ κ ∷ κs) ⫽ γ0)%prog
-        (fun κ => (⟦ B0 ⟧ κ ∷ κs) ⫽ γ0)%prog
-        (fun κ => (⟦ A1 ⟧ κ ∷ κs) ⫽ γ1)%prog
-        (fun κ => (⟦ B1 ⟧ κ ∷ κs) ⫽ γ1)%prog.
+        (fun κ => (∥A0∥ κ ∷ κs) ⫽ γ0)%prog
+        (fun κ => (∥B0∥ κ ∷ κs) ⫽ γ0)%prog
+        (fun κ => (∥A1∥ κ ∷ κs) ⫽ γ1)%prog
+        (fun κ => (∥B1∥ κ ∷ κs) ⫽ γ1)%prog.
     T.efwd R.
     - T.use R; repeat f_equal; eauto.
       simplify_subst.
