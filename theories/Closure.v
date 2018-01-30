@@ -1,5 +1,5 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import Notation OrderTheory Axioms Var Term OpSem TypeSystem.
+From gctt Require Import Notation OrderTheory Axioms Var Program OpSem TypeSystem.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -11,26 +11,26 @@ Module Connective.
   Inductive ctor := unit | bool | prod | arr | later | isect.
 
   Inductive unit_val : rel :=
-  | ax : unit_val (Tm.ax, Tm.ax).
+  | ax : unit_val (Prog.ax, Prog.ax).
 
   Inductive bool_val : rel :=
-  | tt : bool_val (Tm.tt, Tm.tt)
-  | ff : bool_val (Tm.ff, Tm.ff).
+  | tt : bool_val (Prog.tt, Prog.tt)
+  | ff : bool_val (Prog.ff, Prog.ff).
 
-  Inductive prod_el (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
+  Inductive prod_el (R0 : rel) (R1 : Prog.t 0 → rel) : rel :=
   | proj :
       ∀ e0 e1,
-        R0 (Tm.fst e0, Tm.fst e1)
-        → R1 (Tm.fst e0) (Tm.snd e0, Tm.snd e1)
+        R0 (Prog.fst e0, Prog.fst e1)
+        → R1 (Prog.fst e0) (Prog.snd e0, Prog.snd e1)
         → prod_el R0 R1 (e0, e1).
 
   (* negative definition of pi type *)
-  Inductive fun_el (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
+  Inductive fun_el (R0 : rel) (R1 : Prog.t 0 → rel) : rel :=
   | app :
       ∀ f0 f1,
         (∀ e0 e1,
             R0 (e0, e1)
-            → R1 e0 ((f0 ⋅ e0)%tm, (f1 ⋅ e1)%tm))
+            → R1 e0 ((f0 ⋅ e0)%prog, (f1 ⋅ e1)%prog))
         → fun_el R0 R1 (f0, f1).
 
   Inductive cext (R : rel) : rel :=
@@ -47,38 +47,38 @@ Module Connective.
 
   Import CExtNotation.
 
-  Inductive has (τ : cts) : ctor → Tm.t 0 × rel → Ω :=
-  | has_unit : has τ unit (Tm.unit, [unit_val]⇓)
-  | has_bool : has τ bool (Tm.bool, [bool_val]⇓)
+  Inductive has (τ : cts) : ctor → Prog.t 0 × rel → Ω :=
+  | has_unit : has τ unit (Prog.unit, [unit_val]⇓)
+  | has_bool : has τ bool (Prog.bool, [bool_val]⇓)
   | has_prod :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
         → (∀ e0 e1,
               R0 (e0, e1)
-              → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
-                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e0))
-        → has τ prod (Tm.prod A0 A1, prod_el R0 R1)
+              → τ ((A1 ⫽ Sub.inst0 e0)%prog, R1 e0)
+                ∧ τ ((A1 ⫽ Sub.inst0 e0)%prog, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%prog, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%prog, R1 e0))
+        → has τ prod (Prog.prod A0 A1, prod_el R0 R1)
   | has_arr :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
         → (∀ e0 e1,
               R0 (e0, e1)
-              → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
-                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e0))
-        → has τ arr (Tm.arr A0 A1, fun_el R0 R1)
+              → τ ((A1 ⫽ Sub.inst0 e0)%prog, R1 e0)
+                ∧ τ ((A1 ⫽ Sub.inst0 e0)%prog, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%prog, R1 e1)
+                ∧ τ ((A1 ⫽ Sub.inst0 e1)%prog, R1 e0))
+        → has τ arr (Prog.arr A0 A1, fun_el R0 R1)
 
   | has_later :
       ∀ κ B R,
         ▷[κ] (τ (B, R))
-        → has τ later (Tm.ltr κ B, fun e0e1 => ▷[κ] (R e0e1))
+        → has τ later (Prog.ltr κ B, fun e0e1 => ▷[κ] (R e0e1))
   | has_isect :
       ∀ B S,
         (∀ κ, τ (B κ, S κ))
-        → has τ isect (Tm.isect B, fun e0e1 => ∀ κ, S κ e0e1).
+        → has τ isect (Prog.isect B, fun e0e1 => ∀ κ, S κ e0e1).
 
   Hint Constructors has cext prod_el bool_val unit_val.
 
@@ -116,7 +116,7 @@ Module Sig.
   (* For each refinement cts σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/rels. *)
-  Inductive t (σ τ : cts) : (Tm.t 0 × rel) → Ω :=
+  Inductive t (σ τ : cts) : (Prog.t 0 × rel) → Ω :=
   | init :
       ∀ X,
         σ X
@@ -242,7 +242,7 @@ Module Clo.
   Theorem connective_not_universe {τ i ι A' A R} {P : Ω} :
     Connective.has τ ι (A', R)
     → A ⇓ A'
-    → A ⇓ Tm.univ i
+    → A ⇓ Prog.univ i
     → P.
   Proof.
     move=> has eval1 eval2.
@@ -280,21 +280,21 @@ Module Clo.
         * dependent destruction e0e1.
           constructor.
           ** replace R2 with R0; eauto.
-          ** replace (R3 (e0 .1)%tm) with (R1 (e0 .1)%tm); eauto.
-             destruct (H0 (e0.1)%tm (e1.1)%tm) as [H01 [H02 [H03 H04]]]; auto.
+          ** replace (R3 (e0 .1)%prog) with (R1 (e0 .1)%prog); eauto.
+             destruct (H0 (e0.1)%prog (e1.1)%prog) as [H01 [H02 [H03 H04]]]; auto.
              replace R2 with R0 in H3; eauto.
-             destruct (H3 (e0.1)%tm (e1.1)%tm); eauto.
+             destruct (H3 (e0.1)%prog (e1.1)%prog); eauto.
         * dependent destruction e0e1.
           constructor.
           ** replace R0 with R2; auto.
              symmetry; eauto.
-          ** replace (R1 (e0.1)%tm) with (R3 (e0.1)%tm); eauto.
-             destruct (H0 (e0.1)%tm (e1.1)%tm) as [H01 [H02 [H03 H04]]]; eauto.
+          ** replace (R1 (e0.1)%prog) with (R3 (e0.1)%prog); eauto.
+             destruct (H0 (e0.1)%prog (e1.1)%prog) as [H01 [H02 [H03 H04]]]; eauto.
              *** replace R0 with R2; eauto.
                  symmetry; eauto.
              *** symmetry.
                  apply: H01; eauto.
-                 destruct (H3 (e0.1)%tm (e1.1)%tm); eauto.
+                 destruct (H3 (e0.1)%prog (e1.1)%prog); eauto.
       + T.eqcd; case => f0 f1; apply: propositional_extensionality; split => f0f1.
         * dependent destruction f0f1.
           constructor => e0 e1 e0e1.
@@ -401,7 +401,7 @@ Module Clo.
                  constructor.
                  **** apply: symmetric; auto.
                       apply: per; by destruct H.
-                 **** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm);
+                 **** replace (R1 (e1.1)%prog) with (R1 (e0.1)%prog);
                       edestruct H0; T.destruct_conjs; eauto.
                       ***** apply: symmetric; auto.
                             by apply: per.
@@ -417,12 +417,12 @@ Module Clo.
                       edestruct H0; eauto.
                       T.destruct_conjs.
                       by apply: per.
-                 **** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm) in H4.
+                 **** replace (R1 (e1.1)%prog) with (R1 (e0.1)%prog) in H4.
                       ***** apply: transitive; eauto.
-                            edestruct (H0 (e0.1)%tm); eauto.
+                            edestruct (H0 (e0.1)%prog); eauto.
                             T.destruct_conjs.
                             by apply: per.
-                      ***** edestruct (H0 (e0.1)%tm); eauto.
+                      ***** edestruct (H0 (e0.1)%prog); eauto.
                             T.destruct_conjs.
                             apply: (TS.is_extensional (t σ)); eauto.
 
@@ -432,12 +432,12 @@ Module Clo.
              constructor.
              *** apply: crel; first by [auto]; last by eauto.
                  by apply: fst_cong_approx.
-             *** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm).
+             *** replace (R1 (e1.1)%prog) with (R1 (e0.1)%prog).
                  **** apply: crel; last by eauto.
                       ***** edestruct H0; eauto; T.destruct_conjs; eauto.
                       ***** by apply: snd_cong_approx.
-                 **** edestruct (H0 (e1.1)%tm (e0.1)%tm); eauto.
-                      ***** suff H4: R0 ((e0.1)%tm, (e0.1)%tm).
+                 **** edestruct (H0 (e1.1)%prog (e0.1)%prog); eauto.
+                      ***** suff H4: R0 ((e0.1)%prog, (e0.1)%prog).
                             ****** apply: crel; [auto|apply: fst_cong_approx e0e1|eauto].
                             ****** apply: transitive; first by [apply: per].
                             ******* eauto.

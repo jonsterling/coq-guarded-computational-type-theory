@@ -2,18 +2,18 @@ Require Import Unicode.Utf8 Program.
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Axioms Term Var.
+From gctt Require Import Notation Axioms Program Var.
 From gctt Require Tactic.
 Module T := Tactic.
 
 
 Set Implicit Arguments.
 
-Reserved Notation "e 'val'" (at level 50).
-Reserved Notation "e ↦ e'" (at level 50).
-Reserved Notation "e ↦⋆ e'" (at level 50).
+Reserved Notation "M 'val'" (at level 50).
+Reserved Notation "M ↦ M'" (at level 50).
+Reserved Notation "M ↦⋆ M'" (at level 50).
 
-Inductive is_val : Tm.t 0 → Ω :=
+Inductive is_val : Prog.t 0 → Ω :=
 | val_bool : 𝟚 val
 | val_unit : 𝟙 val
 | val_prod : ∀ {e1 e2}, (e1 × e2) val
@@ -22,13 +22,13 @@ Inductive is_val : Tm.t 0 → Ω :=
 | val_isect : ∀ {e}, ⋂ e val
 | val_univ : ∀ {i}, 𝕌[i] val
 | val_ax : ★ val
-| val_tt : Tm.tt val
-| val_ff : Tm.ff val
+| val_tt : Prog.tt val
+| val_ff : Prog.ff val
 | val_pair : ∀ {e1 e2}, ⟨e1, e2⟩ val
 | val_lam : ∀ {e}, 𝛌{ e } val
-where "v 'val'" := (is_val v%tm).
+where "v 'val'" := (is_val v%prog).
 
-Inductive step : Tm.t 0 → Tm.t 0 → Ω :=
+Inductive step : Prog.t 0 → Prog.t 0 → Ω :=
 | step_fst_cong :
     ∀ {e e'},
       e ↦ e'
@@ -48,25 +48,25 @@ Inductive step : Tm.t 0 → Tm.t 0 → Ω :=
 | step_snd_pair : ∀ {e1 e2}, ⟨e1,e2⟩.2 ↦ e2
 | step_app_lam : ∀ {e1 e2}, 𝛌{e1} ⋅ e2 ↦ (e1 ⫽ Sub.inst0 e2)
 | step_fix : ∀ e, 𝛍{e} ↦ (e ⫽ Sub.inst0 (𝛍{e}))
-where "e ↦ e'" := (step e%tm e'%tm).
+where "e ↦ e'" := (step e%prog e'%prog).
 
 Hint Constructors is_val.
 Hint Constructors step.
 
-Inductive steps : Tm.t 0 → Tm.t 0 → Ω :=
-| steps_nil : ∀ {e}, e ↦⋆ e
-| steps_cons : ∀ {e1 e2 e3}, e1 ↦ e2 → e2 ↦⋆ e3 → e1 ↦⋆ e3
-where "e ↦⋆ e'" := (steps e%tm e'%tm).
+Inductive steps : Prog.t 0 → Prog.t 0 → Ω :=
+| steps_nil : ∀ {M}, M ↦⋆ M
+| steps_cons : ∀ {M1 M2 M3}, M1 ↦ M2 → M2 ↦⋆ M3 → M1 ↦⋆ M3
+where "e ↦⋆ e'" := (steps e%prog e'%prog).
 
 Hint Constructors steps.
 
-Record eval (e v : Tm.t 0) :=
-  { eval_steps : e ↦⋆ v;
-    eval_val : v val
+Record eval (M V : Prog.t 0) :=
+  { eval_steps : M ↦⋆ V;
+    eval_val : V val
   }.
 
 Hint Constructors eval.
-Notation "e ⇓ v" := (eval e%tm v%tm) (at level 50).
+Notation "e ⇓ v" := (eval e%prog v%prog) (at level 50).
 
 Ltac destruct_evals :=
   repeat
@@ -92,17 +92,17 @@ Ltac evals_to_eq :=
     end.
 
 
-Definition closed_approx (e1 e2 : Tm.t 0) : Ω :=
+Definition closed_approx (e1 e2 : Prog.t 0) : Ω :=
   ∀ v, e1 ⇓ v → e2 ⇓ v.
 
-Definition closed_equiv (e1 e2 : Tm.t 0) : Ω :=
+Definition closed_equiv (e1 e2 : Prog.t 0) : Ω :=
   ∀ v, e1 ⇓ v ↔ e2 ⇓ v.
 
-Arguments closed_approx e1%tm e2%tm.
-Arguments closed_equiv e1%tm e2%tm.
+Arguments closed_approx e1%prog e2%prog.
+Arguments closed_equiv e1%prog e2%prog.
 
-Notation "e0 ≼₀ e1" := (closed_approx e0%tm e1%tm) (at level 30).
-Notation "e0 ≈₀ e1" := (closed_equiv e0%tm e1%tm) (at level 30).
+Notation "e0 ≼₀ e1" := (closed_approx e0%prog e1%prog) (at level 30).
+Notation "e0 ≈₀ e1" := (closed_equiv e0%prog e1%prog) (at level 30).
 
 Theorem closed_approx_refl : ∀ e, e ≼₀ e.
 Proof.
@@ -124,7 +124,7 @@ Proof.
 Qed.
 
 Theorem fix_unfold :
-  ∀ f, 𝛍{f} ≈₀ (f ⫽ Sub.inst0 (𝛍{f}%tm)).
+  ∀ f, 𝛍{f} ≈₀ (f ⫽ Sub.inst0 (𝛍{f}%prog)).
 Proof.
   move=> f v.
   split.
@@ -306,7 +306,7 @@ Qed.
 Theorem fst_cong_approx :
   ∀ e0 e1,
     e0 ≼₀ e1
-    → Tm.fst e0 ≼₀ Tm.fst e1.
+    → Prog.fst e0 ≼₀ Prog.fst e1.
 Proof.
   move=> e0 e1 e01 p1 ℰ.
   have := fst_eval_inv ℰ.
@@ -317,7 +317,7 @@ Qed.
 Theorem snd_cong_approx :
   ∀ e0 e1,
     e0 ≼₀ e1
-    → Tm.snd e0 ≼₀ Tm.snd e1.
+    → Prog.snd e0 ≼₀ Prog.snd e1.
 Proof.
   move=> e0 e1 e01 p1 ℰ.
   have := snd_eval_inv ℰ.

@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Program.Basics Vect
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Term Axioms Var Sequent Tower.
+From gctt Require Import Notation Program Axioms Var Sequent Tower.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -16,7 +16,7 @@ Delimit Scope etm_scope with etm.
 Delimit Scope esubst_scope with esubst.
 
 
-Module ETm.
+Module EProg.
   Inductive t (Λ Ψ : nat) :=
   | var : Var Ψ -> t Λ Ψ
   | fst : t Λ Ψ -> t Λ Ψ
@@ -47,23 +47,23 @@ Module ETm.
     Notation "#0" := Fin.F1 : eclk_scope.
     Notation "#1" := (Fin.FS Fin.F1) : eclk_scope.
 
-    Notation "@0" := (ETm.var _ Fin.F1) : etm_scope.
-    Notation "@1" := (ETm.var _ (Fin.FS Fin.F1)) : etm_scope.
+    Notation "@0" := (EProg.var _ Fin.F1) : etm_scope.
+    Notation "@1" := (EProg.var _ (Fin.FS Fin.F1)) : etm_scope.
 
-    Notation "▶[ k ] A" := (ETm.ltr k%eclk A%etm) (at level 50) : etm_scope.
-    Notation "𝟙" := ETm.unit : etm_scope.
-    Notation "𝟚" := ETm.bool : etm_scope.
-    Notation "★" := ETm.ax : etm_scope.
-    Notation "e .1" := (ETm.fst e%etm) (at level 50) : etm_scope.
-    Notation "e .2" := (ETm.snd e%etm) (at level 50) : etm_scope.
-    Infix "×" := ETm.prod : etm_scope.
-    Infix "⇒" := ETm.arr : etm_scope.
-    Notation "⋂ A" := (ETm.isect A%etm) (at level 50) : etm_scope.
-    Notation "𝕌[ i ] " := (ETm.univ i%nat) : etm_scope.
-    Notation "⟨ e1 , e2 ⟩" := (ETm.pair e1%etm e2%etm) : etm_scope.
-    Notation "'μ{' e }" := (ETm.fix_ e%etm) (at level 50) : etm_scope.
-    Notation "'𝛌{' e }" := (ETm.lam e%etm) (at level 50) : etm_scope.
-    Notation "e1 ⋅ e2" := (ETm.app e1%etm e2%etm) (at level 50) : etm_scope.
+    Notation "▶[ k ] A" := (EProg.ltr k%eclk A%etm) (at level 50) : etm_scope.
+    Notation "𝟙" := EProg.unit : etm_scope.
+    Notation "𝟚" := EProg.bool : etm_scope.
+    Notation "★" := EProg.ax : etm_scope.
+    Notation "e .1" := (EProg.fst e%etm) (at level 50) : etm_scope.
+    Notation "e .2" := (EProg.snd e%etm) (at level 50) : etm_scope.
+    Infix "×" := EProg.prod : etm_scope.
+    Infix "⇒" := EProg.arr : etm_scope.
+    Notation "⋂ A" := (EProg.isect A%etm) (at level 50) : etm_scope.
+    Notation "𝕌[ i ] " := (EProg.univ i%nat) : etm_scope.
+    Notation "⟨ e1 , e2 ⟩" := (EProg.pair e1%etm e2%etm) : etm_scope.
+    Notation "'μ{' e }" := (EProg.fix_ e%etm) (at level 50) : etm_scope.
+    Notation "'𝛌{' e }" := (EProg.lam e%etm) (at level 50) : etm_scope.
+    Notation "e1 ⋅ e2" := (EProg.app e1%etm e2%etm) (at level 50) : etm_scope.
   End Notation.
 
   Import Notation.
@@ -146,16 +146,16 @@ Module ETm.
   End SubstNotation.
 
   Import SubstNotation.
-End ETm.
+End EProg.
 
-Export ETm.Notation ETm.RenNotation ETm.SubstNotation.
+Export EProg.Notation EProg.RenNotation EProg.SubstNotation.
 
 Delimit Scope ectx_scope with ectx.
 
 Module ECtx.
   Inductive t (Λ : Var.Ctx) : Var.Ctx → Type :=
   | nil : t Λ 0
-  | snoc : ∀ {Ψ}, t Λ Ψ → ETm.t Λ Ψ → t Λ (S Ψ).
+  | snoc : ∀ {Ψ}, t Λ Ψ → EProg.t Λ Ψ → t Λ (S Ψ).
 
   Arguments nil [Λ].
   Arguments snoc [Λ Ψ] Γ%ectx A%etm.
@@ -180,8 +180,8 @@ Notation "Γ .⦃ ρ ⦄" := (ECtx.map ρ%ren Γ%ectx) (at level 50) : ectx_scop
 
 Module EJdg.
   Inductive t Λ :=
-  | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ
-  | conv : ∀ {Ψ}, ETm.t Λ Ψ → ETm.t Λ Ψ → t Λ.
+  | eq_mem : ∀ {Ψ}, ECtx.t Λ Ψ → EProg.t Λ Ψ → EProg.t Λ Ψ → EProg.t Λ Ψ → t Λ
+  | conv : ∀ {Ψ}, EProg.t Λ Ψ → EProg.t Λ Ψ → t Λ.
 
   Arguments eq_mem [Λ Ψ] Γ%ectx A%etm e1%etm e2%etm.
   Arguments conv [Λ Ψ] e1%etm e2%etm.

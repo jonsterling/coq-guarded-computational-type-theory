@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logi
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Var OrderTheory Axioms Term OpSem Closure Tower Sequent TypeSystem.
+From gctt Require Import Notation Var OrderTheory Axioms Program OpSem Closure Tower Sequent TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -56,9 +56,9 @@ Module Tac.
     | |- _ ⊧ _ ∼ _ => esplit; split
     | |- _ ⊧ _ ∋ _ ∼ _ => esplit; split
     | |- τ[_] _ => tower_intro
-    | |- Sig.t _ _ (Tm.univ _, _) => apply: Sig.init
+    | |- Sig.t _ _ (Prog.univ _, _) => apply: Sig.init
     | |- Sig.t _ _ (_, _) => apply: Sig.conn
-    | |- Spine.t _ (Tm.univ _, _) => Spine.simplify; repeat T.split; [idtac | eauto | reflexivity] ; eauto
+    | |- Spine.t _ (Prog.univ _, _) => Spine.simplify; repeat T.split; [idtac | eauto | reflexivity] ; eauto
     | |- Connective.cext _ _ => repeat econstructor
     | |- Connective.has _ _ _ => econstructor
     | |- _ ⇓ _ => prove_eval
@@ -482,8 +482,8 @@ Module Univ.
   Qed.
 
   Theorem spine_inversion {n i R} :
-    τ[n] (Tm.univ i, R)
-    → Spine.t n (Tm.univ i, R).
+    τ[n] (Prog.univ i, R)
+    → Spine.t n (Prog.univ i, R).
   Proof.
     move=> ?.
     by Tower.destruct_tower.
@@ -516,13 +516,13 @@ End Unit.
 
 Module Bool.
   Theorem tt_equality :
-    τω ⊧ 𝟚 ∋ Tm.tt ∼ Tm.tt.
+    τω ⊧ 𝟚 ∋ Prog.tt ∼ Prog.tt.
   Proof.
     unshelve Tac.prove; constructor.
   Qed.
 
   Theorem ff_equality :
-    τω ⊧ 𝟚 ∋ Tm.ff ∼ Tm.ff.
+    τω ⊧ 𝟚 ∋ Prog.ff ∼ Prog.ff.
   Proof.
     unshelve Tac.prove; constructor.
   Qed.
@@ -544,7 +544,7 @@ End Bool.
 
 Module Fam.
 
-  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Extern 40 => Program.simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
 
 
@@ -552,14 +552,14 @@ Module Fam.
   Theorem family_choice {τ A0 A1 B0 B1} `{TS.cper_valued τ} `{TS.extensional τ} :
     τ ⊧ A0 ∼ A1
     → τ ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1
-    → ∃ (R : Tm.t 0 → rel),
+    → ∃ (R : Prog.t 0 → rel),
       ∀ e0 e1,
         τ ⊧ A0 ∋ e0 ∼ e1
         → R e0 = R e1
-          ∧ τ ((B0 ⫽ Sub.inst0 e0)%tm, R e0)
-          ∧ τ ((B1 ⫽ Sub.inst0 e1)%tm, R e0)
-          ∧ τ ((B0 ⫽ Sub.inst0 e1)%tm, R e0)
-          ∧ τ ((B1 ⫽ Sub.inst0 e0)%tm, R e0).
+          ∧ τ ((B0 ⫽ Sub.inst0 e0)%prog, R e0)
+          ∧ τ ((B1 ⫽ Sub.inst0 e1)%prog, R e0)
+          ∧ τ ((B0 ⫽ Sub.inst0 e1)%prog, R e0)
+          ∧ τ ((B1 ⫽ Sub.inst0 e0)%prog, R e0).
   Proof.
     move=> 𝒟 ℰ.
     set R := (fun e =>
@@ -702,7 +702,7 @@ Module Arr.
              *** by apply: OpSem.app_lam.
              *** edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [𝒟0 𝒟1]]; eauto.
                  **** simpl; split; auto.
-                      Term.simplify_subst.
+                      simplify_subst.
                       exists Rℰ; split; eauto.
                       eexists; eauto.
                  **** replace (Rℱ e0) with R𝒟.
@@ -751,7 +751,7 @@ End Arr.
 
 
 Module Prod.
-  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Extern 40 => simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
 
 
@@ -828,7 +828,7 @@ Module Prod.
              *** apply: symmetric; auto.
                  apply: per; apply: TS.is_cper_valued; eexists; eauto.
         * case: ℰ => Rℰ [ℰ0 ℰ1].
-          replace (R𝒢 (⟨e00,e01⟩.1)%tm) with Rℰ; auto.
+          replace (R𝒢 (⟨e00,e01⟩.1)%prog) with Rℰ; auto.
           ** apply: crel.
              *** apply: TS.is_cper_valued; eexists; eauto.
              *** apply: OpSem.snd_pair.
@@ -838,12 +838,12 @@ Module Prod.
                  **** apply: OpSem.snd_pair.
                  **** apply: symmetric; auto.
                       apply: per; apply: TS.is_cper_valued; eexists; eauto.
-          ** edestruct (𝒢 e00(⟨e10,e11⟩.1)%tm).
+          ** edestruct (𝒢 e00(⟨e10,e11⟩.1)%prog).
              *** apply: General.mem_eq_conv_both.
                  **** auto.
                  **** apply: OpSem.fst_pair.
                  **** apply: Level.mem_eq_at_lvl_of_typehood; first (exists R𝒟); eauto.
-             *** edestruct (𝒢 (⟨e00,e01⟩.1)%tm (⟨e10,e11⟩.1)%tm).
+             *** edestruct (𝒢 (⟨e00,e01⟩.1)%prog (⟨e10,e11⟩.1)%prog).
                  **** apply: General.mem_eq_conv_both.
                       ***** apply: OpSem.fst_pair.
                       ***** apply: OpSem.fst_pair.
@@ -859,7 +859,7 @@ Module Prod.
 End Prod.
 
 Module TowerChoice.
-  Lemma ty_eq {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
+  Lemma ty_eq {n : nat} {A1 A2 : 𝕂 → Prog.t 0} :
     (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
     → ∃ S, ∀ κ, τ[n] (A1 κ, S κ) ∧ τ[n] (A2 κ, S κ).
   Proof.
@@ -871,7 +871,7 @@ Module TowerChoice.
     T.destruct_conjs; eauto.
   Qed.
 
-  Lemma mem_eq {n : nat} {A : 𝕂 → Tm.t 0} {e0 e1} :
+  Lemma mem_eq {n : nat} {A : 𝕂 → Prog.t 0} {e0 e1} :
     (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (e0, e1))
     → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (e0, e1).
   Proof.
@@ -947,7 +947,7 @@ Module Isect.
       apply: Sig.conn; auto.
       apply: (@Connective.has_prod _ _ _ _ (fun _ => _)).
       + eauto.
-      + move=> ? ? ?; repeat T.split; Term.simplify_subst; eauto.
+      + move=> ? ? ?; repeat T.split; Program.simplify_subst; eauto.
 
     - Tac.ts_flex_rel.
       + Tac.tower_intro.
@@ -960,9 +960,9 @@ Module Isect.
           T.specialize_hyps; T.destruct_conjs; Tac.prove.
         * move=> e0 e1 //= e0e1;
           repeat T.split; auto;
-          Tac.tower_intro; Term.simplify_subst;
+          Tac.tower_intro; Program.simplify_subst;
           Tac.prove; T.specialize_hyps;
-          T.destruct_conjs; Term.simplify_subst; eauto.
+          T.destruct_conjs; Program.simplify_subst; eauto.
 
       + T.eqcd; case => e0 e1.
         apply: propositional_extensionality; (split => H; first constructor) => κ;
@@ -1206,14 +1206,14 @@ Module Later.
     - apply: General.mem_eq_conv_both.
       + move=> v; case: (fix_unfold e0 v) => _; apply.
       + move=> v; case: (fix_unfold e1 v) => _; apply.
-      + T.use ℰ; f_equal; by Term.simplify_subst.
+      + T.use ℰ; f_equal; by Program.simplify_subst.
     - simpl; split; auto.
       exists (fun e0e1 => ▷[κ] (R e0e1)); split.
       + exists i.
         Tac.prove.
         Later.gather.
         move=> [? ?].
-          by rewrite Tm.subst_ret.
+          by rewrite Prog.subst_ret.
       + Later.gather; case => R' [AR' mue0mue1].
         replace R with R'; auto.
         apply: TS.is_extensional.
@@ -1222,15 +1222,15 @@ Module Later.
   Qed.
 
   Lemma fun_ty_inversion {i A B R} :
-    τ[i] ((A ⇒ B)%tm, R)
-    → ∃ (RA : rel) (RB : Tm.t 0 → rel),
+    τ[i] ((A ⇒ B)%prog, R)
+    → ∃ (RA : rel) (RB : Prog.t 0 → rel),
       τ[i] (A, RA)
-      ∧ (∀ e0 e1 : Tm.t 0,
+      ∧ (∀ e0 e1 : Prog.t 0,
             RA (e0, e1)
-            → τ[i] ((B ⫽ Sub.inst0 e0)%tm, RB e0)
-              ∧ τ[i] ((B ⫽ Sub.inst0 e0)%tm, RB e1)
-              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%tm, RB e1)
-              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%tm, RB e0))
+            → τ[i] ((B ⫽ Sub.inst0 e0)%prog, RB e0)
+              ∧ τ[i] ((B ⫽ Sub.inst0 e0)%prog, RB e1)
+              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%prog, RB e1)
+              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%prog, RB e0))
       ∧ R = Connective.fun_el RA RB.
   Proof.
     move=> 𝒟.
@@ -1247,7 +1247,7 @@ Module Later.
     Tower.destruct_tower.
 
     pose RA := Pick τ[n𝒟] A.
-    pose RB : Tm.t 0 → rel := fun (e : Tm.t 0) => Pick τ[n𝒟] (B ⫽ @Sub.inst0 _ Tm.syn_struct_term _ e)%tm.
+    pose RB : Prog.t 0 → rel := fun (e : Prog.t 0) => Pick τ[n𝒟] (B ⫽ @Sub.inst0 _ Prog.syn_struct_term _ e)%prog.
 
     exists (Connective.fun_el (fun es => ▷[κ0] (RA es)) (fun x => fun es => ▷[κ0] (RB x es))).
     split.
@@ -1261,7 +1261,7 @@ Module Later.
           replace R0 with RA in H1; eauto.
           apply: Pick_lemma; auto.
         * simpl. match goal with
-          | |- ∀ e0 _ : Tm.t 0, _ → Clo.t (Spine.t n𝒟) (_, ?fuck _) ∧ _ ∧ _ ∧ _ =>
+          | |- ∀ e0 _ : Prog.t 0, _ → Clo.t (Spine.t n𝒟) (_, ?fuck _) ∧ _ ∧ _ ∧ _ =>
             suff Q: fuck = (fun e es => ▷[κ0] (RB e es)); [ rewrite Q | reflexivity ]
           end.
 
@@ -1425,7 +1425,7 @@ Module Later.
     move=> 𝒟 ℰ.
 
     pose RA := Pick τ[i] A0.
-    pose RB : Tm.t 0 → rel := fun (e : Tm.t 0) => Pick τ[i] (B0 ⫽ @Sub.inst0 _ Tm.syn_struct_term _ e)%tm.
+    pose RB : Prog.t 0 → rel := fun (e : Prog.t 0) => Pick τ[i] (B0 ⫽ @Sub.inst0 _ Prog.syn_struct_term _ e)%prog.
 
     exists (Connective.prod_el (fun es => ▷[κ] (RA es)) (fun x => fun es => ▷[κ] (RB x es))).
     split.
@@ -1552,10 +1552,10 @@ End Later.
 
 
 Module Canonicity.
-  Definition quote_bool (b : bool) : Tm.t 0 :=
+  Definition quote_bool (b : bool) : Prog.t 0 :=
     match b with
-    | true => Tm.tt
-    | false => Tm.ff
+    | true => Prog.tt
+    | false => Prog.ff
     end.
 
   Notation "⌊ b ⌋𝔹" := (quote_bool b).

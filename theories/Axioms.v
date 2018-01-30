@@ -92,10 +92,7 @@ Module Later.
     end.
 
   Axiom Total : Type → Ω.
-
-  (* A type is "time constant" when it does not vary in the time-assignment part of the worlds.
-     It may vary in clock *names*. *)
-  Axiom TimeConstant : Type → Ω.
+  Axiom nat_total : Total nat.
 
   Definition Inh (A : Type) : Ω := ∃ x : A, ⊤.
 
@@ -115,8 +112,6 @@ Module Later.
     ∀ A P κ,
       (∀ x : A, t κ (P x))
       → t κ (∀ x : A, P x).
-
-  Axiom nat_total : Total nat.
 
   Theorem pow_inh : ∀ A, Inh (A → Ω).
   Proof.

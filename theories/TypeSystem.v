@@ -2,13 +2,13 @@ Require Import Unicode.Utf8.
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Term OpSem Axioms.
+From gctt Require Import Notation Program OpSem Axioms.
 
 (* candidate relation *)
-Definition rel := Tm.t 0 × Tm.t 0 → Ω.
+Definition rel := Prog.t 0 × Prog.t 0 → Ω.
 
 (* candidate type system *)
-Definition cts := Tm.t 0 × rel → Ω.
+Definition cts := Prog.t 0 × rel → Ω.
 
 Definition empty : cts :=
   fun _ => ⊥.
@@ -46,7 +46,7 @@ Module TS.
       { is_universe_system :
           ∀ X,
             σ X
-            → ∃ i, π₁ X ⇓ Tm.univ i }.
+            → ∃ i, π₁ X ⇓ Prog.univ i }.
 
     Definition extensional_at X :=
       ∀ R',
@@ -65,7 +65,7 @@ Module TS.
             σ (A, R)
             → is_cper R }.
 
-    Definition type_computational_at (X : Tm.t 0 × rel) :=
+    Definition type_computational_at (X : Prog.t 0 × rel) :=
       ∀ A,
         π₁ X ≼₀ A
         → σ (A, π₂ X).

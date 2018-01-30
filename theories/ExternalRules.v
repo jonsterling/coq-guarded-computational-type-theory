@@ -4,7 +4,7 @@ Set Bullet Behavior "Strict Subproofs".
 Generalizable All Variables.
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega Logic.FunctionalExtensionality.
-From gctt Require Import Axioms Var Term ExternalSyn Interp Tower Closure Sequent InternalRules.
+From gctt Require Import Axioms Var Program ExternalSyn Interp Tower Closure Sequent InternalRules.
 From gctt Require InternalRules.
 Module IR := InternalRules.
 
@@ -21,7 +21,7 @@ Hint Rewrite @cons_weak_simple : syn_db.
 Hint Rewrite <- @interp_ctx_clk_naturality @interp_tm_clk_naturality @interp_tm_var_naturality @interp_tm_var_ren_naturality @interp_tm_ren_naturality @interp_tm_subst_naturality : syn_db.
 Hint Unfold compose : syn_db.
 
-Local Hint Extern 40 => autorewrite with syn_db; Term.simplify_subst.
+Local Hint Extern 40 => autorewrite with syn_db; Program.simplify_subst.
 Local Hint Extern 20 => IR.Univ.tac.
 
 Local Hint Resolve IR.General.ty_eq_refl_left IR.General.ty_eq_trans IR.General.ty_eq_symm IR.General.mem_eq_trans IR.General.mem_eq_symm IR.General.env_eq_refl_left IR.General.env_eq_symm IR.General.open_mem_eq_refl_left IR.General.open_ty_eq_refl_left.
@@ -84,7 +84,7 @@ Module General.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01.
     repeat rewrite -interp_tm_var_ren_naturality.
-    Term.simplify_subst.
+    simplify_subst.
     apply: 𝒟.
     - by case: ℱ.
     - IR.Univ.tac.
@@ -217,14 +217,14 @@ Module Bool.
   Qed.
 
   Theorem tt_equality `{Γ : ECtx.t Λ Ψ} :
-    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ ETm.tt ≐ ETm.tt ⟧.
+    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ EProg.tt ≐ EProg.tt ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
     IR.Bool.tac.
   Qed.
 
   Theorem ff_equality `{Γ : ECtx.t Λ Ψ} :
-    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ ETm.ff ≐ ETm.ff ⟧.
+    ⟦ Λ ∣ Γ ≫ 𝟚 ∋ EProg.ff ≐ EProg.ff ⟧.
   Proof.
     move=> ? ? ? ? ? ?.
     IR.Bool.tac.
@@ -242,7 +242,7 @@ Module Arr.
     apply: IR.Arr.univ_eq.
     - by apply: 𝒟.
     - move=> ? ? //= [_ ℋ] //=.
-      Term.simplify_subst.
+      simplify_subst.
       T.efwd ℰ.
       + T.use ℰ; eauto.
       + split; [T.use γ01 | T.use ℋ]; eauto.
@@ -263,7 +263,7 @@ Module Arr.
     move=> 𝒟 ℰ ℱ κs 𝒢 ℋ γ0 γ1 γ01 //=.
     apply: IR.Arr.intro.
     - move=> ? ? //= [_ ℐ] //=.
-      Term.simplify_subst.
+      simplify_subst.
       T.efwd 𝒟.
       + T.use 𝒟; eauto.
       + split; [T.use γ01 | T.use ℐ]; eauto.
@@ -277,7 +277,7 @@ Module Arr.
       apply: IR.General.env_eq_refl_left; eauto.
     - apply: IR.Univ.open_inversion.
       + move=> ? ? γ01' //=.
-        Term.simplify_subst.
+        simplify_subst.
         apply: ℱ; auto.
         * split; auto.
           apply: IR.Univ.open_inversionω.
@@ -300,8 +300,8 @@ Module Arr.
     move=> 𝒟 ℰ ℱ 𝒢 κs ℋ ℐ γ0 γ1 γ01.
     autorewrite with syn_db; simpl.
     replace
-      ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 e0⟧ κs)))%tm
-      with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦e0⟧ κs) ⫽ γ0))%tm.
+      ((⟦B⟧ κs) ⫽ (γ0 ◎ (⟦Sub.inst0 e0⟧ κs)))%prog
+      with ((⟦B⟧ κs) ⫽ Sub.cong γ0 ⫽ Sub.inst0 ((⟦e0⟧ κs) ⫽ γ0))%prog.
     - apply: IR.Arr.elim.
       + apply: IR.Univ.inversion.
         apply: 𝒟; eauto.
@@ -323,7 +323,7 @@ Module Arr.
       + apply: 𝒢; auto.
         apply: IR.Univ.open_inversionω.
         eauto.
-    - Term.simplify_subst.
+    - simplify_subst.
       dependent induction x; auto.
   Qed.
 End Arr.
@@ -338,7 +338,7 @@ Module Prod.
     apply: IR.Prod.univ_eq.
     - by apply: 𝒟.
     - move=> ? ? [_ 𝒢] //=.
-      Term.simplify_subst.
+      simplify_subst.
       T.efwd ℰ.
       + T.use ℰ; eauto.
       + split; [T.use γ01 | T.use 𝒢]; eauto.
@@ -356,7 +356,7 @@ Module Prod.
     → τω ⊧ Γ ≫ (B0 ⫽ Sub.inst0 e0) ∼ (B1 ⫽ Sub.inst0 e1).
   Proof.
     move=> 𝒟 ℰ γ0 γ1 γ01.
-    Term.simplify_subst.
+    simplify_subst.
     apply: 𝒟.
     split; eauto.
   Qed.
@@ -374,33 +374,33 @@ Module Prod.
       + apply: 𝒟; eauto.
       + T.efwd ℰ.
         * T.use ℰ.
-          Term.simplify_subst.
+          simplify_subst.
           dependent induction x; auto.
         * auto.
         * apply: IR.General.open_ty_eq_refl_left; auto.
-          replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%tm with ((⟦ B ⟧ κs) ⫽ Sub.inst0 (⟦ e00 ⟧ κs)%tm)%tm.
+          replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%prog with ((⟦ B ⟧ κs) ⫽ Sub.inst0 (⟦ e00 ⟧ κs)%prog)%prog.
           ** apply: subst; auto.
              apply: IR.Univ.open_inversionω.
              apply: 𝒢; auto.
-          ** replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%tm with ((⟦ B ⫽ Sub.inst0 e00 ⟧ κs) ⫽ @Tm.var _)%tm.
+          ** replace (⟦ B ⫽ Sub.inst0 e00 ⟧ κs)%prog with ((⟦ B ⫽ Sub.inst0 e00 ⟧ κs) ⫽ @Prog.var _)%prog.
              *** rewrite -interp_tm_subst_naturality /interp_subst //=.
                  simplify_subst.
-                 rewrite Tm.subst_ret.
+                 rewrite Prog.subst_ret.
                  by dependent induction x.
-             *** by rewrite Tm.subst_ret.
+             *** by rewrite Prog.subst_ret.
         * auto.
       + apply: IR.General.ty_eq_refl_left.
         apply: IR.Univ.inversion.
         apply: ℱ; eauto.
       + move=> //= ? ? [_ /IR.Level.eq_mem_from_level ℐ].
         apply: IR.Univ.inversion.
-        repeat rewrite Tm.subst_coh.
+        repeat rewrite Prog.subst_coh.
         apply: 𝒢; auto.
         split; simpl.
         * T.use (IR.General.env_eq_refl_left Γctx γ01).
-          Term.simplify_subst.
+          simplify_subst.
         * T.use ℐ.
-          Term.simplify_subst.
+          simplify_subst.
     - apply: IR.General.open_ty_eq_refl_left; auto.
       apply: IR.Univ.open_inversionω.
       apply: ℱ; auto.
@@ -446,12 +446,12 @@ Module Isect.
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ A ≐ ⋂ (A.⦃^1⦄) ⟧.
   Proof.
     move=> 𝒟 κs ? ? γ0 γ1 γ01; simplify_eqs.
-    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _)%tm with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1)%tm.
+    replace (λ κ:𝕂, (⟦_.⦃_⦄ ⟧ _) ⫽ _)%prog with (λ κ:𝕂, (⟦A⟧ κs) ⫽ γ1)%prog.
     - apply: IR.Univ.intro.
       apply: IR.Isect.irrelevance.
       apply: IR.Univ.inversion.
       apply: 𝒟; eauto.
-    - Term.simplify_subst; eauto.
+    - simplify_subst; eauto.
   Qed.
 
   Theorem cartesian `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
@@ -461,17 +461,17 @@ Module Isect.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
     apply: IR.Univ.intro.
-    Term.simplify_subst.
+    simplify_subst.
     have R :=
       @IR.Isect.cartesian
         i
-        (fun κ => (⟦ A0 ⟧ κ ∷ κs) ⫽ γ0)%tm
-        (fun κ => (⟦ B0 ⟧ κ ∷ κs) ⫽ γ0)%tm
-        (fun κ => (⟦ A1 ⟧ κ ∷ κs) ⫽ γ1)%tm
-        (fun κ => (⟦ B1 ⟧ κ ∷ κs) ⫽ γ1)%tm.
+        (fun κ => (⟦ A0 ⟧ κ ∷ κs) ⫽ γ0)%prog
+        (fun κ => (⟦ B0 ⟧ κ ∷ κs) ⫽ γ0)%prog
+        (fun κ => (⟦ A1 ⟧ κ ∷ κs) ⫽ γ1)%prog
+        (fun κ => (⟦ B1 ⟧ κ ∷ κs) ⫽ γ1)%prog.
     T.efwd R.
     - T.use R; repeat f_equal; eauto.
-      Term.simplify_subst.
+      simplify_subst.
       by dependent induction x0.
     - move=> κ.
       IR.Univ.tac.
@@ -540,7 +540,7 @@ Module Later.
     - apply: IR.Later.intro; apply: Later.next.
       apply: 𝒟; auto.
     - move=> δ0 δ1 δ01.
-      Term.simplify_subst.
+      simplify_subst.
       T.efwd ℰ.
       + T.use ℰ; eauto.
       + split; simpl.
@@ -567,13 +567,13 @@ Module Later.
     apply: (IR.Later.loeb_induction_closed (κs k)).
     - apply: IR.Univ.inversion.
       apply: 𝒟; eauto.
-    - move=> //= ? ? [_ 𝒢]; Term.simplify_subst.
+    - move=> //= ? ? [_ 𝒢]; simplify_subst.
 
       T.efwd ℰ.
       + T.use ℰ; eauto.
       + split; [T.use γ01 | T.use 𝒢]; eauto.
       + move=> //= ? ? [? ?].
-        Term.simplify_subst.
+        simplify_subst.
         apply: ℱ; eauto.
       + split; first by [assumption].
         move=> //= ? ? ?.
@@ -586,11 +586,11 @@ Module Later.
 End Later.
 
 
-Module ExternalCanonicity.
-  Definition quote_bool (b : bool) {Λ} : ETm.t Λ 0 :=
+Module Canonicity.
+  Definition quote_bool (b : bool) {Λ} : EProg.t Λ 0 :=
     match b with
-    | true => ETm.tt
-    | false => ETm.ff
+    | true => EProg.tt
+    | false => EProg.ff
     end.
 
   Notation "⌊ b ⌋𝔹" := (quote_bool b).
@@ -611,14 +611,14 @@ Module ExternalCanonicity.
         move=> κs' //=.
         replace κs' with κs.
         * split.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog.
              *** move=> H1.
-                 replace v with (@Tm.tt 0); eauto.
+                 replace v with (@Prog.tt 0); eauto.
                  by OpSem.evals_to_eq.
-             *** Term.simplify_subst.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm; eauto.
+             *** simplify_subst.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog; eauto.
              move=> //= H1.
-             replace v with (@Tm.tt 0); eauto.
+             replace v with (@Prog.tt 0); eauto.
              dependent destruction H1.
              dependent destruction eval_steps; eauto.
              dependent destruction H1.
@@ -628,25 +628,25 @@ Module ExternalCanonicity.
         move=> κs' //=.
         replace κs' with κs.
         * split.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog.
              *** move=> H1.
-                 replace v with (@Tm.ff 0); eauto.
+                 replace v with (@Prog.ff 0); eauto.
                  by OpSem.evals_to_eq.
-             *** Term.simplify_subst.
-          ** replace ((⟦ e ⟧ κs) ⫽ γ)%tm with (⟦ e ⟧ κs)%tm; eauto.
+             *** simplify_subst.
+          ** replace ((⟦ e ⟧ κs) ⫽ γ)%prog with (⟦ e ⟧ κs)%prog; eauto.
              move=> //= H1.
-             replace v with (@Tm.ff 0); eauto.
+             replace v with (@Prog.ff 0); eauto.
              dependent destruction H1.
              dependent destruction eval_steps; eauto.
              dependent destruction H1.
         * apply: functional_extensionality => x.
           dependent destruction x.
     - specialize (𝒟 κs); simpl in 𝒟.
-      suff: τω ⊧ ⋄ ≫ 𝟚 ∼ 𝟚 ∧ (∃ γ0 : @Sub.t Tm.t 0 0, atomic_eq_env τω ⋄%ictx γ0 γ0).
+      suff: τω ⊧ ⋄ ≫ 𝟚 ∼ 𝟚 ∧ (∃ γ0 : @Sub.t Prog.t 0 0, atomic_eq_env τω ⋄%ictx γ0 γ0).
       + case=> ℰ [γ0 γ00].
         specialize (𝒟 I ℰ γ0 γ0 γ00).
         T.use 𝒟.
-        Term.simplify_subst.
+        simplify_subst.
       + split.
         * move=> ? ? ? //=.
           apply: (IR.Level.eq_ty_from_level 0).
@@ -656,18 +656,18 @@ Module ExternalCanonicity.
              dependent destruction x.
           ** auto.
   Qed.
-End ExternalCanonicity.
+End Canonicity.
 
 Module Examples.
 
   (* Guarded stream of bits. *)
-  Example BitStream {Λ Ψ} (k : Var Λ) : ETm.t Λ Ψ :=
+  Example BitStream {Λ Ψ} (k : Var Λ) : EProg.t Λ Ψ :=
     μ{ 𝟚 × ▶[k] @1 }%etm.
 
   Arguments BitStream [Λ Ψ] k%eclk.
 
   (* Coinductive sequence of bits. *)
-  Example BitSeq {Λ Ψ} : ETm.t Λ Ψ :=
+  Example BitSeq {Λ Ψ} : EProg.t Λ Ψ :=
     (⋂ (BitStream #0))%etm.
 
   Example BitStream_wf `{Γ : ECtx.t Λ Ψ} i {k} :
@@ -698,8 +698,8 @@ Module Examples.
     apply: BitStream_wf.
   Qed.
 
-  Example Ones {Λ Ψ} : ETm.t Λ Ψ :=
-    μ{ ⟨ETm.tt, @0⟩ }%etm.
+  Example Ones {Λ Ψ} : EProg.t Λ Ψ :=
+    μ{ ⟨EProg.tt, @0⟩ }%etm.
 
 
   Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {i k} :
@@ -756,7 +756,7 @@ Module Examples.
           apply: Bool.univ_eq.
         * apply: Later.force.
           apply: BitSeq_wf.
-      + replace _ with (((⋂ ▶[#0] BitStream #0).[^1])%etm : ETm.t Λ (S Ψ)); auto.
+      + replace _ with (((⋂ ▶[#0] BitStream #0).[^1])%etm : EProg.t Λ (S Ψ)); auto.
         apply: Isect.cartesian.
         * apply: Bool.univ_eq.
         * apply: Later.univ_eq.
