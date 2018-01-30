@@ -116,6 +116,7 @@ VFILES:=theories/Notation.v\
   theories/Theorems.v\
   theories/Expression.v\
   theories/Interp.v\
+  theories/Canonicity.v\
   theories/Rules.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
