@@ -4,7 +4,7 @@ Set Bullet Behavior "Strict Subproofs".
 Generalizable All Variables.
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega Logic.FunctionalExtensionality.
-From gctt Require Import Axioms Var Program Expression Interp Tower Closure Sequent.
+From gctt Require Import Axioms Var Program Expression Elaborate Tower Closure Sequent.
 
 From gctt Require Theorems.
 Module Th := Theorems.
@@ -21,7 +21,7 @@ Qed.
 
 
 Hint Rewrite @cons_weak_simple : syn_db.
-Hint Rewrite <- @interp_ctx_clk_naturality @interp_tm_clk_naturality @interp_tm_var_naturality @interp_tm_var_ren_naturality @interp_tm_ren_naturality @interp_tm_subst_naturality : syn_db.
+Hint Rewrite <- @elab_ctx_clk_naturality @elab_tm_clk_naturality @elab_tm_var_naturality @elab_tm_var_ren_naturality @elab_tm_ren_naturality @elab_tm_subst_naturality : syn_db.
 Hint Unfold compose : syn_db.
 
 Local Hint Extern 40 => autorewrite with syn_db; Program.simplify_subst.
@@ -84,7 +84,7 @@ Module General.
     → ⟦ Λ ∣ Γ ∙ B ≫ (A.[^1]) ∋ (M0.[^1]) ≐ (M1.[^1]) ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01.
-    repeat rewrite -interp_tm_var_ren_naturality.
+    repeat rewrite -elab_tm_var_ren_naturality.
     simplify_subst.
     apply: 𝒟.
     - by case: ℱ.
@@ -384,7 +384,7 @@ Module Prod.
              apply: Th.Univ.open_inversionω.
              apply: 𝒢; auto.
           ** replace (⟦ B ⫽ Sub.inst0 M00 ⟧ κs)%prog with ((⟦ B ⫽ Sub.inst0 M00 ⟧ κs) ⫽ @Prog.var _)%prog.
-             *** rewrite -interp_tm_subst_naturality /interp_subst //=.
+             *** rewrite -elab_tm_subst_naturality /elab_subst //=.
                  simplify_subst.
                  rewrite Prog.subst_ret.
                  by dependent induction x.

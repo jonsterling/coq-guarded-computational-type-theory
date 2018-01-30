@@ -2,7 +2,7 @@ From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality.
-From gctt Require Import Var Program Expression Interp Sequent Tower.
+From gctt Require Import Var Program Expression Elaborate Sequent Tower.
 From gctt Require Theorems.
 Module Th := Theorems.
 

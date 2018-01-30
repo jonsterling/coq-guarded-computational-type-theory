@@ -115,7 +115,7 @@ VFILES:=theories/Notation.v\
   theories/Sequent.v\
   theories/Theorems.v\
   theories/Expression.v\
-  theories/Interp.v\
+  theories/Elaborate.v\
   theories/Canonicity.v\
   theories/Rules.v
 
