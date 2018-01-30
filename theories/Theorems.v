@@ -1324,7 +1324,6 @@ Module Later.
       + Tac.tower_intro; apply: Sig.conn; eauto.
         apply: Connective.has_later.
         Later.gather; case=> 𝒟 _.
-(*        move=> /(Fam.family_choice 𝒟); case=> RB ℰ.*)
         rewrite !Clo.roll.
         case: 𝒟 => RA [𝒟0 𝒟1].
         T.use 𝒟1; rewrite /Tower.t; repeat f_equal; eauto.
