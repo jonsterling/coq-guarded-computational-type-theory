@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8 Program.Equality Program.Tactics Program.Basics Vectors.Fin omega.Omega.
 
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Import Notation Program Axioms Var Sequent Tower.
@@ -70,7 +70,7 @@ Module Expr.
 
   Fixpoint map `(ρΛ : Ren.t Λ1 Λ2) `(ρΨ : Ren.t Ψ1 Ψ2) (M : t Λ1 Ψ1) : t Λ2 Ψ2 :=
     match M with
-    | var i => var _ (ρΨ i)
+    | var _ i => var _ (ρΨ i)
     | fst M => fst (map ρΛ ρΨ M)
     | snd M => snd (map ρΛ ρΨ M)
     | unit => unit
@@ -122,7 +122,7 @@ Module Expr.
 
   Fixpoint subst {Λ} `(σ : Sub.t Ψ1 Ψ2) (M : t Λ Ψ1) : t Λ Ψ2 :=
     match M with
-    | var i => σ i
+    | var _ i => σ i
     | fst M => fst (subst σ M)
     | snd M => snd (subst σ M)
     | unit => unit

@@ -1,7 +1,7 @@
 Require Import Unicode.Utf8 Program.Tactics Logic.FunctionalExtensionality.
 From gctt Require Import Notation.
 
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 Set Implicit Arguments.
 

@@ -3,7 +3,7 @@ Require Import Coq.Program.Tactics.
 Require Import Coq.Setoids.Setoid.
 Require Import Classes.SetoidClass.
 Require Import Classes.Morphisms.
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 
 Set Bullet Behavior "Strict Subproofs".
 

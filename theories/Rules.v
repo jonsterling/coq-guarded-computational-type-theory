@@ -1,4 +1,4 @@
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 Generalizable All Variables.

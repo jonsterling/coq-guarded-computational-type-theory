@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8 Program.Equality Program.Tactics Program.Basics Vectors.Fin omega.Omega.
 
-From mathcomp Require Import ssreflect.
+Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 From gctt Require Import Notation Program Axioms Var Sequent Tower Expression.
@@ -16,8 +16,8 @@ Module Env.
   Program Definition cons {Λ} (κ : 𝕂) (σ : t Λ) : t (S Λ) :=
     λ x,
       match x with
-      | Fin.F1 _ => κ
-      | Fin.FS _ x => σ x
+      | Fin.F1 => κ
+      | Fin.FS x => σ x
       end.
 End Env.
 
@@ -27,7 +27,7 @@ Reserved Notation "∥ M ∥ κs" (at level 50).
 
 Fixpoint elab_tm `(M : Expr.t Λ Ψ) (κs : Env.t Λ) : Prog.t Ψ :=
   match M with
-  | Expr.var i => Prog.var i
+  | Expr.var _ i => Prog.var i
   | Expr.fst M => ∥M∥ κs .1
   | Expr.snd M => ∥M∥ κs .2
   | Expr.unit => 𝟙
