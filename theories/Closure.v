@@ -1,5 +1,5 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import Notation OrderTheory Axioms Var Term OpSem TypeSystem.
+From gctt Require Import Notation OrderTheory Axioms Var Program OpSem TypeSystem.
 From gctt Require Tactic.
 Module T := Tactic.
 
@@ -11,35 +11,35 @@ Module Connective.
   Inductive ctor := unit | bool | prod | arr | later | isect.
 
   Inductive unit_val : rel :=
-  | ax : unit_val (Tm.ax, Tm.ax).
+  | ax : unit_val (Prog.ax, Prog.ax).
 
   Inductive bool_val : rel :=
-  | tt : bool_val (Tm.tt, Tm.tt)
-  | ff : bool_val (Tm.ff, Tm.ff).
+  | tt : bool_val (Prog.tt, Prog.tt)
+  | ff : bool_val (Prog.ff, Prog.ff).
 
-  Inductive prod_el (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
+  Inductive prod_el (R0 : rel) (R1 : Prog.t 0 → rel) : rel :=
   | proj :
-      ∀ e0 e1,
-        R0 (Tm.fst e0, Tm.fst e1)
-        → R1 (Tm.fst e0) (Tm.snd e0, Tm.snd e1)
-        → prod_el R0 R1 (e0, e1).
+      ∀ M0 M1,
+        R0 (Prog.fst M0, Prog.fst M1)
+        → R1 (Prog.fst M0) (Prog.snd M0, Prog.snd M1)
+        → prod_el R0 R1 (M0, M1).
 
   (* negative definition of pi type *)
-  Inductive fun_el (R0 : rel) (R1 : Tm.t 0 → rel) : rel :=
+  Inductive fun_el (R0 : rel) (R1 : Prog.t 0 → rel) : rel :=
   | app :
       ∀ f0 f1,
-        (∀ e0 e1,
-            R0 (e0, e1)
-            → R1 e0 ((f0 ⋅ e0)%tm, (f1 ⋅ e1)%tm))
+        (∀ M0 M1,
+            R0 (M0, M1)
+            → R1 M0 ((f0 ⋅ M0)%prog, (f1 ⋅ M1)%prog))
         → fun_el R0 R1 (f0, f1).
 
   Inductive cext (R : rel) : rel :=
   | mk_cext :
-      ∀ e0 e1 v0 v1,
-        e0 ⇓ v0
-        → e1 ⇓ v1
+      ∀ M0 M1 v0 v1,
+        M0 ⇓ v0
+        → M1 ⇓ v1
         → R (v0, v1)
-        → cext R (e0, e1).
+        → cext R (M0, M1).
 
   Module CExtNotation.
     Notation "[ R ]⇓" := (cext R).
@@ -47,38 +47,38 @@ Module Connective.
 
   Import CExtNotation.
 
-  Inductive has (τ : cts) : ctor → Tm.t 0 × rel → Ω :=
-  | has_unit : has τ unit (Tm.unit, [unit_val]⇓)
-  | has_bool : has τ bool (Tm.bool, [bool_val]⇓)
+  Inductive has (τ : cts) : ctor → Prog.t 0 × rel → Ω :=
+  | has_unit : has τ unit (Prog.unit, [unit_val]⇓)
+  | has_bool : has τ bool (Prog.bool, [bool_val]⇓)
   | has_prod :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
-        → (∀ e0 e1,
-              R0 (e0, e1)
-              → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
-                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e0))
-        → has τ prod (Tm.prod A0 A1, prod_el R0 R1)
+        → (∀ M0 M1,
+              R0 (M0, M1)
+              → τ ((A1 ⫽ Sub.inst0 M0)%prog, R1 M0)
+                ∧ τ ((A1 ⫽ Sub.inst0 M0)%prog, R1 M1)
+                ∧ τ ((A1 ⫽ Sub.inst0 M1)%prog, R1 M1)
+                ∧ τ ((A1 ⫽ Sub.inst0 M1)%prog, R1 M0))
+        → has τ prod (Prog.prod A0 A1, prod_el R0 R1)
   | has_arr :
       ∀ A0 A1 R0 R1,
         τ (A0, R0)
-        → (∀ e0 e1,
-              R0 (e0, e1)
-              → τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e0)
-                ∧ τ ((A1 ⫽ Sub.inst0 e0)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e1)
-                ∧ τ ((A1 ⫽ Sub.inst0 e1)%tm, R1 e0))
-        → has τ arr (Tm.arr A0 A1, fun_el R0 R1)
+        → (∀ M0 M1,
+              R0 (M0, M1)
+              → τ ((A1 ⫽ Sub.inst0 M0)%prog, R1 M0)
+                ∧ τ ((A1 ⫽ Sub.inst0 M0)%prog, R1 M1)
+                ∧ τ ((A1 ⫽ Sub.inst0 M1)%prog, R1 M1)
+                ∧ τ ((A1 ⫽ Sub.inst0 M1)%prog, R1 M0))
+        → has τ arr (Prog.arr A0 A1, fun_el R0 R1)
 
   | has_later :
       ∀ κ B R,
         ▷[κ] (τ (B, R))
-        → has τ later (Tm.ltr κ B, fun e0e1 => ▷[κ] (R e0e1))
+        → has τ later (Prog.ltr κ B, fun M0M1 => ▷[κ] (R M0M1))
   | has_isect :
       ∀ B S,
         (∀ κ, τ (B κ, S κ))
-        → has τ isect (Tm.isect B, fun e0e1 => ∀ κ, S κ e0e1).
+        → has τ isect (Prog.isect B, fun M0M1 => ∀ κ, S κ M0M1).
 
   Hint Constructors has cext prod_el bool_val unit_val.
 
@@ -91,12 +91,12 @@ Module Connective.
 
     constructor.
     + auto.
-    + move=> e0 e1 e0e1.
+    + move=> M0 M1 M0M1.
       edestruct H0; eauto.
       T.destruct_conjs.
       repeat split; eauto.
     + constructor; eauto.
-      move=> e0 e1 e0e1.
+      move=> M0 M1 M0M1.
       edestruct H0; eauto;
       T.destruct_conjs;
       repeat split; eauto.
@@ -116,7 +116,7 @@ Module Sig.
   (* For each refinement cts σ, we define a monotone map on
        refinement matrices which adds the appropriate
        types/rels. *)
-  Inductive t (σ τ : cts) : (Tm.t 0 × rel) → Ω :=
+  Inductive t (σ τ : cts) : (Prog.t 0 × rel) → Ω :=
   | init :
       ∀ X,
         σ X
@@ -160,10 +160,10 @@ Module Clo.
     move=> sub has.
     dependent destruction has; eauto.
     - constructor; eauto.
-      move=> e0 e1 e01.
+      move=> M0 M1 M01.
       edestruct H0; T.destruct_conjs; repeat split; eauto.
     - constructor; eauto.
-      move=> e0 e1 e01.
+      move=> M0 M1 M01.
       edestruct H0; T.destruct_conjs; repeat split; eauto.
     - constructor.
       Later.gather; eauto.
@@ -242,7 +242,7 @@ Module Clo.
   Theorem connective_not_universe {τ i ι A' A R} {P : Ω} :
     Connective.has τ ι (A', R)
     → A ⇓ A'
-    → A ⇓ Tm.univ i
+    → A ⇓ Prog.univ i
     → P.
   Proof.
     move=> has eval1 eval2.
@@ -276,29 +276,29 @@ Module Clo.
       destruct_clo; try by [cleanup];
       destruct_has; cleanup.
 
-      + T.eqcd; case => e0 e1; apply: propositional_extensionality; split => e0e1.
-        * dependent destruction e0e1.
+      + T.eqcd; case => M0 M1; apply: propositional_extensionality; split => M0M1.
+        * dependent destruction M0M1.
           constructor.
           ** replace R2 with R0; eauto.
-          ** replace (R3 (e0 .1)%tm) with (R1 (e0 .1)%tm); eauto.
-             destruct (H0 (e0.1)%tm (e1.1)%tm) as [H01 [H02 [H03 H04]]]; auto.
+          ** replace (R3 (M0 .1)%prog) with (R1 (M0 .1)%prog); eauto.
+             destruct (H0 (M0.1)%prog (M1.1)%prog) as [H01 [H02 [H03 H04]]]; auto.
              replace R2 with R0 in H3; eauto.
-             destruct (H3 (e0.1)%tm (e1.1)%tm); eauto.
-        * dependent destruction e0e1.
+             destruct (H3 (M0.1)%prog (M1.1)%prog); eauto.
+        * dependent destruction M0M1.
           constructor.
           ** replace R0 with R2; auto.
              symmetry; eauto.
-          ** replace (R1 (e0.1)%tm) with (R3 (e0.1)%tm); eauto.
-             destruct (H0 (e0.1)%tm (e1.1)%tm) as [H01 [H02 [H03 H04]]]; eauto.
+          ** replace (R1 (M0.1)%prog) with (R3 (M0.1)%prog); eauto.
+             destruct (H0 (M0.1)%prog (M1.1)%prog) as [H01 [H02 [H03 H04]]]; eauto.
              *** replace R0 with R2; eauto.
                  symmetry; eauto.
              *** symmetry.
                  apply: H01; eauto.
-                 destruct (H3 (e0.1)%tm (e1.1)%tm); eauto.
+                 destruct (H3 (M0.1)%prog (M1.1)%prog); eauto.
       + T.eqcd; case => f0 f1; apply: propositional_extensionality; split => f0f1.
         * dependent destruction f0f1.
-          constructor => e0 e1 e0e1.
-          replace (R3 e0) with (R1 e0).
+          constructor => M0 M1 M0M1.
+          replace (R3 M0) with (R1 M0).
           ** apply: H1.
              replace R0 with R2; auto.
              symmetry.
@@ -308,8 +308,8 @@ Module Clo.
                  symmetry; apply: H; eauto.
              *** edestruct H3; eauto.
         * dependent destruction f0f1.
-          constructor => e0 e1 e0e1.
-          replace (R1 e0) with (R3 e0).
+          constructor => M0 M1 M0M1.
+          replace (R1 M0) with (R3 M0).
           ** apply: H1.
              replace R2 with R0; auto.
           ** edestruct H0; eauto.
@@ -331,10 +331,10 @@ Module Clo.
   Proof.
     move=> [ihSm ihTr].
     constructor.
-    - move=> e0 e1 H1.
+    - move=> M0 M1 H1.
       dependent destruction H1.
       econstructor; eauto.
-    - move=> e0 e1 e2 H1 H2.
+    - move=> M0 M1 M2 H1 H2.
       dependent destruction H1.
       dependent destruction H2.
       OpSem.evals_to_eq.
@@ -345,7 +345,7 @@ Module Clo.
   Theorem unit_val_per : is_per Connective.unit_val.
   Proof.
     constructor.
-    - move=> e0 e1 H1.
+    - move=> M0 M1 H1.
       by dependent destruction H1.
     - move=> ? ? ? H1 H2.
       by [dependent destruction H1;
@@ -355,7 +355,7 @@ Module Clo.
   Theorem bool_val_per : is_per Connective.bool_val.
   Proof.
     constructor.
-    - move=> e0 e1 H1.
+    - move=> M0 M1 H1.
       by dependent destruction H1.
     - move=> ? ? ? H1 H2.
       by [dependent destruction H1;
@@ -365,7 +365,7 @@ Module Clo.
   Theorem cext_computational {R} :
     rel_computational [R]⇓.
   Proof.
-    move=> e0 e1 e2 e01 cext.
+    move=> M0 M1 M2 M01 cext.
     Connective.destruct_cext.
     econstructor; eauto.
   Qed.
@@ -396,20 +396,20 @@ Module Clo.
       + destruct_has; simpl in *; try by [constructor; eauto]; cleanup.
         * constructor.
           ** constructor.
-             *** move=> e0 e1 e01.
-                 dependent destruction e01.
+             *** move=> M0 M1 M01.
+                 dependent destruction M01.
                  constructor.
                  **** apply: symmetric; auto.
                       apply: per; by destruct H.
-                 **** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm);
+                 **** replace (R1 (M1.1)%prog) with (R1 (M0.1)%prog);
                       edestruct H0; T.destruct_conjs; eauto.
                       ***** apply: symmetric; auto.
                             by apply: per.
                       ***** apply: (TS.is_extensional (t σ)); eauto.
 
-             *** move=> e0 e1 e2 e01 e12.
-                 dependent destruction e01.
-                 dependent destruction e12.
+             *** move=> M0 M1 M2 M01 M12.
+                 dependent destruction M01.
+                 dependent destruction M12.
                  destruct H.
                  constructor.
 
@@ -417,28 +417,28 @@ Module Clo.
                       edestruct H0; eauto.
                       T.destruct_conjs.
                       by apply: per.
-                 **** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm) in H4.
+                 **** replace (R1 (M1.1)%prog) with (R1 (M0.1)%prog) in H4.
                       ***** apply: transitive; eauto.
-                            edestruct (H0 (e0.1)%tm); eauto.
+                            edestruct (H0 (M0.1)%prog); eauto.
                             T.destruct_conjs.
                             by apply: per.
-                      ***** edestruct (H0 (e0.1)%tm); eauto.
+                      ***** edestruct (H0 (M0.1)%prog); eauto.
                             T.destruct_conjs.
                             apply: (TS.is_extensional (t σ)); eauto.
 
-          ** move=> e0 e1 e2 e0e1 el.
+          ** move=> M0 M1 M2 M0M1 el.
              dependent destruction el.
              destruct H.
              constructor.
              *** apply: crel; first by [auto]; last by eauto.
                  by apply: fst_cong_approx.
-             *** replace (R1 (e1.1)%tm) with (R1 (e0.1)%tm).
+             *** replace (R1 (M1.1)%prog) with (R1 (M0.1)%prog).
                  **** apply: crel; last by eauto.
                       ***** edestruct H0; eauto; T.destruct_conjs; eauto.
                       ***** by apply: snd_cong_approx.
-                 **** edestruct (H0 (e1.1)%tm (e0.1)%tm); eauto.
-                      ***** suff H4: R0 ((e0.1)%tm, (e0.1)%tm).
-                            ****** apply: crel; [auto|apply: fst_cong_approx e0e1|eauto].
+                 **** edestruct (H0 (M1.1)%prog (M0.1)%prog); eauto.
+                      ***** suff H4: R0 ((M0.1)%prog, (M0.1)%prog).
+                            ****** apply: crel; [auto|apply: fst_cong_approx M0M1|eauto].
                             ****** apply: transitive; first by [apply: per].
                             ******* eauto.
                             ******* apply: symmetric; first by [apply: per]; eauto.
@@ -451,12 +451,12 @@ Module Clo.
           ** constructor.
              *** move=> f0 f1 f01.
                  dependent destruction f01.
-                 constructor=> e0 e1 e01.
+                 constructor=> M0 M1 M01.
                  destruct H.
                  apply: symmetric; auto.
                  **** edestruct H0; T.destruct_conjs; eauto.
                       by apply: per.
-                 **** replace (R1 e0) with (R1 e1).
+                 **** replace (R1 M0) with (R1 M1).
                       ***** apply: H2; auto.
                             apply: symmetric; auto.
                             apply: per; auto.
@@ -466,14 +466,14 @@ Module Clo.
              *** move=> f0 f1 f2 f01 f12.
                  dependent destruction f01.
                  dependent destruction f12.
-                 constructor=> e0 e1 e01.
+                 constructor=> M0 M1 M01.
                  apply: transitive.
                  **** edestruct H0; eauto.
                       T.destruct_conjs.
                       by apply: per.
                  **** apply: H2.
                       eauto.
-                 **** replace (R1 e0) with (R1 e1).
+                 **** replace (R1 M0) with (R1 M1).
                       ***** apply: H3; eauto.
                             apply: transitive; first by [apply: per]; eauto.
                             apply: symmetric; first by [apply: per]; eauto.
@@ -483,7 +483,7 @@ Module Clo.
           ** move=> f0 f1 f2 f01 H2.
              dependent destruction H2.
              constructor.
-             move=> e0 e1 e0e1.
+             move=> M0 M1 M0M1.
              apply: crel.
              *** edestruct H0; eauto; T.destruct_conjs; eauto.
              *** apply: app_cong_approx; exact f01.
@@ -491,14 +491,14 @@ Module Clo.
 
         * constructor.
           ** constructor.
-             *** move=> e0 e1 H1.
+             *** move=> M0 M1 H1.
                  Later.gather.
-                 move=> //= [[ihR0 ?] e0e1].
+                 move=> //= [[ihR0 ?] M0M1].
                  apply: symmetric; eauto; apply: per; eauto.
 
-             *** move=> e0 e1 e2 H1 H2.
+             *** move=> M0 M1 M2 H1 H2.
                  Later.gather.
-                 move=> //= [[? ?] [e0e1 e1e2]].
+                 move=> //= [[? ?] [M0M1 M1M2]].
                  apply: transitive; eauto.
                  by apply: per.
           ** move=> ? ? ? ? ?.
@@ -537,11 +537,11 @@ Module Clo.
       destruct_has => ? //= ?;
       rewrite -roll; apply: Sig.conn; eauto.
       + constructor; eauto.
-        move=> e0 e1 e01; destruct (H1 e0 e1); eauto.
+        move=> M0 M1 M01; destruct (H1 M0 M1); eauto.
         T.destruct_conjs.
         repeat split; eauto.
       + constructor; eauto.
-        move=> e0 e1 e01; destruct (H1 e0 e1);
+        move=> M0 M1 M01; destruct (H1 M0 M1);
         T.destruct_conjs;
         repeat split; eauto.
       + constructor.

@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Setoids.Setoid omeg
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory Axioms Term OpSem Closure TypeSystem.
+From gctt Require Import OrderTheory Axioms Program OpSem Closure TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -18,7 +18,7 @@ Module Spine.
     | S n =>
       fun X =>
         ∃ (j : nat) (p : j ≤ n),
-          fst X ⇓ Tm.univ j
+          fst X ⇓ Prog.univ j
           ∧ snd X = fun es =>
                       ∃ S, Clo.t (@t j _) (fst es, S) ∧ Clo.t (@t j _) (snd es, S)
     end.
@@ -28,7 +28,7 @@ Module Spine.
       t (S n) =
       fun X =>
         ∃ (j : nat) (p : j ≤ n),
-          fst X ⇓ Tm.univ j
+          fst X ⇓ Prog.univ j
           ∧ snd X =
             fun es =>
               ∃ S, Clo.t (t j) (fst es, S) ∧ Clo.t (t j) (snd es, S).
@@ -105,18 +105,18 @@ Module Spine.
     - constructor; contradiction.
     - constructor; Spine.simplify.
       + constructor.
-        * move=> e0 e1 e0e1.
+        * move=> M0 M1 M0M1.
           case: H => //= [j [? [? Rspec]]].
-          rewrite Rspec in e0e1.
+          rewrite Rspec in M0M1.
           rewrite Rspec.
-          case: e0e1 => [S [H1 H2]].
+          case: M0M1 => [S [H1 H2]].
           eauto.
-        * move=> e0 e1 e2 e0e1 e1e2.
+        * move=> M0 M1 M2 M0M1 M1M2.
           case: H => //= [j [? [? Rspec]]].
-          rewrite Rspec in e0e1 e1e2.
+          rewrite Rspec in M0M1 M1M2.
           rewrite Rspec.
-          case: e0e1 => //= [S [H1 H2]].
-          case: e1e2 => //= [S' [H1' H2']].
+          case: M0M1 => //= [S [H1 H2]].
+          case: M1M2 => //= [S' [H1' H2']].
           exists S; T.split; first by [eauto].
           replace S with S'; auto.
           apply: (TS.is_extensional _ _ _ H1' _ H2).
@@ -136,7 +136,7 @@ Module Spine.
 
   Ltac spine_contradiction :=
     lazymatch goal with
-    | H : Spine.t _ (Tm.univ _, _) |- _ => fail "This is a universe!"
+    | H : Spine.t _ (Prog.univ _, _) |- _ => fail "This is a universe!"
     | H : Spine.t ?n (_, _) |- _ =>
       induction n; Spine.simplify;
       [contradiction | T.destruct_conjs; OpSem.destruct_evals]

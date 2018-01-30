@@ -3,7 +3,7 @@ Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logi
 From mathcomp Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Var OrderTheory Axioms Term OpSem Closure Tower Sequent TypeSystem.
+From gctt Require Import Notation Var OrderTheory Axioms Program OpSem Closure Tower Sequent TypeSystem.
 From gctt Require Tactic.
 
 Module T := Tactic.
@@ -56,9 +56,9 @@ Module Tac.
     | |- _ ⊧ _ ∼ _ => esplit; split
     | |- _ ⊧ _ ∋ _ ∼ _ => esplit; split
     | |- τ[_] _ => tower_intro
-    | |- Sig.t _ _ (Tm.univ _, _) => apply: Sig.init
+    | |- Sig.t _ _ (Prog.univ _, _) => apply: Sig.init
     | |- Sig.t _ _ (_, _) => apply: Sig.conn
-    | |- Spine.t _ (Tm.univ _, _) => Spine.simplify; repeat T.split; [idtac | eauto | reflexivity] ; eauto
+    | |- Spine.t _ (Prog.univ _, _) => Spine.simplify; repeat T.split; [idtac | eauto | reflexivity] ; eauto
     | |- Connective.cext _ _ => repeat econstructor
     | |- Connective.has _ _ _ => econstructor
     | |- _ ⇓ _ => prove_eval
@@ -100,22 +100,22 @@ Module Level.
     (apply: Tower.monotonicity; last by [eauto]); omega.
   Qed.
 
-  Theorem eq_mem_from_level n {A e1 e2} :
-    τ[n] ⊧ A ∋ e1 ∼ e2
-    → τω ⊧ A ∋ e1 ∼ e2.
+  Theorem eq_mem_from_level n {A M1 M2} :
+    τ[n] ⊧ A ∋ M1 ∼ M2
+    → τω ⊧ A ∋ M1 ∼ M2.
   Proof.
-    move=> [R [TA e1e2]].
+    move=> [R [TA M1M2]].
     eexists.
     split.
     + eexists; eauto.
     + eauto.
   Qed.
 
-  Theorem eq_mem_to_level {A e1 e2} :
-    τω ⊧ A ∋ e1 ∼ e2
-    → ∃ n, τ[n] ⊧ A ∋ e1 ∼ e2.
+  Theorem eq_mem_to_level {A M1 M2} :
+    τω ⊧ A ∋ M1 ∼ M2
+    → ∃ n, τ[n] ⊧ A ∋ M1 ∼ M2.
   Proof.
-    move=> [R [[n𝒟 𝒟] e1e2]].
+    move=> [R [[n𝒟 𝒟] M1M2]].
     exists n𝒟, R.
     T.split.
     - Tac.tower_mono.
@@ -136,10 +136,10 @@ Module Level.
       eauto.
   Qed.
 
-  Lemma mem_eq_at_lvl_of_typehood {m n A B e0 e1} :
-    τ[n] ⊧ A ∋ e0 ∼ e1
+  Lemma mem_eq_at_lvl_of_typehood {m n A B M0 M1} :
+    τ[n] ⊧ A ∋ M0 ∼ M1
     → τ[m] ⊧ A ∼ B
-    → τ[m] ⊧ A ∋ e0 ∼ e1.
+    → τ[m] ⊧ A ∋ M0 ∼ M1.
   Proof.
     move=> [R [𝒟0 𝒟1]] [S [ℰ0 ℰ1]].
     exists S; split; first by assumption.
@@ -152,10 +152,10 @@ End Level.
 
 
 Module General.
-  Theorem replace_ty_in_mem_eq {τ A0 A1 e1 e2} `{TS.extensional τ} :
-    τ ⊧ A0 ∋ e1 ∼ e2
+  Theorem replace_ty_in_mem_eq {τ A0 A1 M1 M2} `{TS.extensional τ} :
+    τ ⊧ A0 ∋ M1 ∼ M2
     → τ ⊧ A0 ∼ A1
-    → τ ⊧ A1 ∋ e1 ∼ e2.
+    → τ ⊧ A1 ∋ M1 ∼ M2.
   Proof.
     move=> [R1 [? ?]] [R2 [? ?]].
     exists R2; split; auto.
@@ -191,19 +191,19 @@ Module General.
     - auto.
   Qed.
 
-  Theorem mem_eq_conv_ty {τ A0 A1 e0 e1} `{TS.type_computational τ} :
+  Theorem mem_eq_conv_ty {τ A0 A1 M0 M1} `{TS.type_computational τ} :
     A0 ≼₀ A1
-    → τ ⊧ A0 ∋ e0 ∼ e1
-    → τ ⊧ A1 ∋ e0 ∼ e1.
+    → τ ⊧ A0 ∋ M0 ∼ M1
+    → τ ⊧ A1 ∋ M0 ∼ M1.
   Proof.
-    move=> A01 [R [𝒟 e01]].
+    move=> A01 [R [𝒟 M01]].
     exists R; split; auto.
     apply: TS.is_type_computational; eauto.
   Qed.
 
-  Theorem mem_eq_symm {τ A e0 e1} `{TS.cper_valued τ} :
-    τ ⊧ A ∋ e0 ∼ e1
-    → τ ⊧ A ∋ e1 ∼ e0.
+  Theorem mem_eq_symm {τ A M0 M1} `{TS.cper_valued τ} :
+    τ ⊧ A ∋ M0 ∼ M1
+    → τ ⊧ A ∋ M1 ∼ M0.
   Proof.
     move=> [R [𝒟 ℰ]].
     exists R; split; auto.
@@ -213,23 +213,23 @@ Module General.
     eauto.
   Qed.
 
-  Theorem mem_eq_conv {τ A e00 e01 e1} `{TS.cper_valued τ} :
-    e00 ≼₀ e01
-    → τ ⊧ A ∋ e00 ∼ e1
-    → τ ⊧ A ∋ e01 ∼ e1.
+  Theorem mem_eq_conv {τ A M00 M01 M1} `{TS.cper_valued τ} :
+    M00 ≼₀ M01
+    → τ ⊧ A ∋ M00 ∼ M1
+    → τ ⊧ A ∋ M01 ∼ M1.
   Proof.
-    move=> e00e01 [R [ℰ e00e1]].
+    move=> M00M01 [R [ℰ M00M1]].
     exists R; split; auto.
     apply: crel; eauto.
     apply: TS.is_cper_valued; eauto.
   Qed.
 
 
-  Theorem mem_eq_conv_both {τ A e00 e01 e10 e11} `{TS.cper_valued τ} :
-    e00 ≼₀ e01
-    → e10 ≼₀ e11
-    → τ ⊧ A ∋ e00 ∼ e10
-    → τ ⊧ A ∋ e01 ∼ e11.
+  Theorem mem_eq_conv_both {τ A M00 M01 M10 M11} `{TS.cper_valued τ} :
+    M00 ≼₀ M01
+    → M10 ≼₀ M11
+    → τ ⊧ A ∋ M00 ∼ M10
+    → τ ⊧ A ∋ M01 ∼ M11.
   Proof.
     move=> ? ? ?.
     apply: mem_eq_conv; eauto.
@@ -250,25 +250,25 @@ Module General.
       symmetry; apply: TS.is_extensional; eauto.
   Qed.
 
-  Theorem mem_eq_trans {τ A e0 e1 e2} `{TS.cper_valued τ} `{TS.extensional τ} :
-    τ ⊧ A ∋ e1 ∼ e2
-    → τ ⊧ A ∋ e0 ∼ e1
-    → τ ⊧ A ∋ e0 ∼ e2.
+  Theorem mem_eq_trans {τ A M0 M1 M2} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ A ∋ M1 ∼ M2
+    → τ ⊧ A ∋ M0 ∼ M1
+    → τ ⊧ A ∋ M0 ∼ M2.
   Proof.
     Tac.prove.
     apply: transitive; eauto.
     - apply: per.
       apply: TS.is_cper_valued; eauto.
     - match goal with
-      | H : ?R1 (e1, e2) |- ?R2 (e1, e2) =>
+      | H : ?R1 (M1, M2) |- ?R2 (M1, M2) =>
         replace R2 with R1; auto
       end.
       apply: TS.is_extensional; eauto.
   Qed.
 
-  Theorem mem_eq_refl_left {τ A e0 e1} `{TS.cper_valued τ} `{TS.extensional τ} :
-    τ ⊧ A ∋ e0 ∼ e1
-    → τ ⊧ A ∋ e0 ∼ e0.
+  Theorem mem_eq_refl_left {τ A M0 M1} `{TS.cper_valued τ} `{TS.extensional τ} :
+    τ ⊧ A ∋ M0 ∼ M1
+    → τ ⊧ A ∋ M0 ∼ M0.
   Proof.
     move=> 𝒟.
     apply: mem_eq_trans; eauto.
@@ -367,11 +367,11 @@ Module General.
   Qed.
 
 
-  Theorem open_mem_eq_refl_left {Ψ} {Γ : Prectx Ψ} {τ A A' e0 e1} `{TS.cper_valued τ} `{TS.extensional τ} :
+  Theorem open_mem_eq_refl_left {Ψ} {Γ : Prectx Ψ} {τ A A' M0 M1} `{TS.cper_valued τ} `{TS.extensional τ} :
     τ ⊧ Γ ctx
     → τ ⊧ Γ ≫ A ∼ A'
-    → τ ⊧ Γ ≫ A ∋ e0 ∼ e1
-    → τ ⊧ Γ ≫ A ∋ e0 ∼ e0.
+    → τ ⊧ Γ ≫ A ∋ M0 ∼ M1
+    → τ ⊧ Γ ≫ A ∋ M0 ∼ M0.
   Proof.
     move=> 𝒟 ℰ ℱ γ0 γ1 γ01.
     apply: mem_eq_trans; auto.
@@ -482,8 +482,8 @@ Module Univ.
   Qed.
 
   Theorem spine_inversion {n i R} :
-    τ[n] (Tm.univ i, R)
-    → Spine.t n (Tm.univ i, R).
+    τ[n] (Prog.univ i, R)
+    → Spine.t n (Prog.univ i, R).
   Proof.
     move=> ?.
     by Tower.destruct_tower.
@@ -516,13 +516,13 @@ End Unit.
 
 Module Bool.
   Theorem tt_equality :
-    τω ⊧ 𝟚 ∋ Tm.tt ∼ Tm.tt.
+    τω ⊧ 𝟚 ∋ Prog.tt ∼ Prog.tt.
   Proof.
     unshelve Tac.prove; constructor.
   Qed.
 
   Theorem ff_equality :
-    τω ⊧ 𝟚 ∋ Tm.ff ∼ Tm.ff.
+    τω ⊧ 𝟚 ∋ Prog.ff ∼ Prog.ff.
   Proof.
     unshelve Tac.prove; constructor.
   Qed.
@@ -544,7 +544,7 @@ End Bool.
 
 Module Fam.
 
-  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Extern 40 => Program.simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
 
 
@@ -552,56 +552,56 @@ Module Fam.
   Theorem family_choice {τ A0 A1 B0 B1} `{TS.cper_valued τ} `{TS.extensional τ} :
     τ ⊧ A0 ∼ A1
     → τ ⊧ ⋄ ∙ A0 ≫ B0 ∼ B1
-    → ∃ (R : Tm.t 0 → rel),
-      ∀ e0 e1,
-        τ ⊧ A0 ∋ e0 ∼ e1
-        → R e0 = R e1
-          ∧ τ ((B0 ⫽ Sub.inst0 e0)%tm, R e0)
-          ∧ τ ((B1 ⫽ Sub.inst0 e1)%tm, R e0)
-          ∧ τ ((B0 ⫽ Sub.inst0 e1)%tm, R e0)
-          ∧ τ ((B1 ⫽ Sub.inst0 e0)%tm, R e0).
+    → ∃ (R : Prog.t 0 → rel),
+      ∀ M0 M1,
+        τ ⊧ A0 ∋ M0 ∼ M1
+        → R M0 = R M1
+          ∧ τ ((B0 ⫽ Sub.inst0 M0)%prog, R M0)
+          ∧ τ ((B1 ⫽ Sub.inst0 M1)%prog, R M0)
+          ∧ τ ((B0 ⫽ Sub.inst0 M1)%prog, R M0)
+          ∧ τ ((B1 ⫽ Sub.inst0 M0)%prog, R M0).
   Proof.
     move=> 𝒟 ℰ.
-    set R := (fun e =>
+    set R := (fun M =>
          fun es =>
-           τ ⊧ A0 ∋ e ∼ e
-           → τ ⊧ B0 ⫽ Sub.inst0 e ∋ (π₁ es) ∼ (π₂ es)).
+           τ ⊧ A0 ∋ M ∼ M
+           → τ ⊧ B0 ⫽ Sub.inst0 M ∋ (π₁ es) ∼ (π₂ es)).
 
     exists R.
 
-    move=> e0 e1 ℱ.
-    destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e0)) as [Rℰ [ℰ0 ℰ1]]; eauto.
-    destruct (ℰ (Sub.inst0 e0) (Sub.inst0 e0)) as [Rℰ' [ℰ0' ℰ1']]; eauto.
+    move=> M0 M1 ℱ.
+    destruct (ℰ (Sub.inst0 M1) (Sub.inst0 M0)) as [Rℰ [ℰ0 ℰ1]]; eauto.
+    destruct (ℰ (Sub.inst0 M0) (Sub.inst0 M0)) as [Rℰ' [ℰ0' ℰ1']]; eauto.
 
-    suff: R e0 = R e1.
+    suff: R M0 = R M1.
     - move=> Q; repeat split; auto.
       + T.use ℰ0'; repeat f_equal.
-        T.eqcd; case => e'0 e'1 //=.
+        T.eqcd; case => M'0 M'1 //=.
         apply: propositional_extensionality; split.
-        * move=> e'0e'1 e0e0 //=.
+        * move=> M'0M'1 M0M0 //=.
           eexists; split; eauto.
         * move=> //= 𝒢.
           destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
           replace Rℰ' with R𝒢; eauto.
           apply: TS.is_extensional; eauto.
 
-      + destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+      + destruct (ℰ (Sub.inst0 M1) (Sub.inst0 M1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
         T.use ℰ1''; repeat f_equal.
         rewrite Q.
-        T.eqcd; case => e'0 e'1 //=.
+        T.eqcd; case => M'0 M'1 //=.
         apply: propositional_extensionality; split.
-        * move=> e'0e'1 e1e1 //=.
+        * move=> M'0M'1 M1M1 //=.
           eexists; split; eauto.
         * move=> //= 𝒢.
           destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
           replace Rℰ'' with R𝒢; eauto.
           apply: TS.is_extensional; eauto.
-      +  destruct (ℰ (Sub.inst0 e1) (Sub.inst0 e1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
+      +  destruct (ℰ (Sub.inst0 M1) (Sub.inst0 M1)) as [Rℰ'' [ℰ0'' ℰ1'']]; eauto.
          T.use ℰ0''; repeat f_equal.
          rewrite Q.
-         T.eqcd; case => e'0 e'1 //=.
+         T.eqcd; case => M'0 M'1 //=.
          apply: propositional_extensionality; split.
-         * move=> e'0e'1 e1e1 //=.
+         * move=> M'0M'1 M1M1 //=.
            exists Rℰ''; split; auto.
          * move=> //= 𝒢.
            destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
@@ -609,17 +609,17 @@ Module Fam.
            apply: TS.is_extensional; eauto.
 
       + T.use ℰ1'; repeat f_equal.
-        T.eqcd; case => e'0 e'1 //=.
+        T.eqcd; case => M'0 M'1 //=.
         apply: propositional_extensionality; split.
 
-        * move=> e'0e'1 e1e1 //=.
+        * move=> M'0M'1 M1M1 //=.
           eexists; split; eauto.
         * move=> //= 𝒢.
           destruct 𝒢 as [R𝒢 [𝒢0 𝒢1]]; eauto.
           replace Rℰ' with R𝒢; eauto.
           apply: TS.is_extensional; eauto.
 
-    - T.eqcd; case => e'0 e'1 //=.
+    - T.eqcd; case => M'0 M'1 //=.
       apply: propositional_extensionality; split => 𝒢 ℋ.
       + case: 𝒢 => [|S [𝒢1 𝒢2]]; eauto.
         eexists; split; eauto.
@@ -649,13 +649,13 @@ Module Arr.
     eexists; split; Tac.tower_intro;
     (apply: Sig.conn; first by eauto);
     (econstructor; first by eauto).
-    - move=> e0 e1 e0e1;
-      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+    - move=> M0 M1 M0M1;
+      (case: (Rℰsp M0 M1); first by [exists R𝒟]).
       move=> Q [? [? [? ?]]];
       repeat split; eauto;
       rewrite -Q; eauto.
-    - move=> e0 e1 e0e1;
-      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+    - move=> M0 M1 M0M1;
+      (case: (Rℰsp M0 M1); first by [exists R𝒟]).
       move=> Q [? [? [? ?]]];
       repeat split; eauto; by rewrite -Q.
   Qed.
@@ -684,28 +684,28 @@ Module Arr.
     - Tac.tower_intro.
       apply: Sig.conn; first by auto.
       econstructor; eauto.
-      move=> e0 e1 e0e1.
-      case: (ℱsp e0 e1); auto.
+      move=> M0 M1 M0M1.
+      case: (ℱsp M0 M1); auto.
       + eexists; eauto.
       + move=> Q [? [? [? ?]]].
         repeat T.split; eauto;
         by rewrite -Q.
-    - econstructor=> e0 e1 e0e1.
-      suff ? : is_cper (Rℱ e0).
+    - econstructor=> M0 M1 M0M1.
+      suff ? : is_cper (Rℱ M0).
       + apply: crel.
-        * destruct (ℱsp e0 e1); auto.
+        * destruct (ℱsp M0 M1); auto.
           by exists Rℰ.
         * by apply: OpSem.app_lam.
         * apply: symmetric.
           ** by apply: per.
           ** apply: crel; first by auto.
              *** by apply: OpSem.app_lam.
-             *** edestruct (𝒟 (Sub.inst0 e0) (Sub.inst0 e1)) as [R𝒟 [𝒟0 𝒟1]]; eauto.
+             *** edestruct (𝒟 (Sub.inst0 M0) (Sub.inst0 M1)) as [R𝒟 [𝒟0 𝒟1]]; eauto.
                  **** simpl; split; auto.
-                      Term.simplify_subst.
+                      simplify_subst.
                       exists Rℰ; split; eauto.
                       eexists; eauto.
-                 **** replace (Rℱ e0) with R𝒟.
+                 **** replace (Rℱ M0) with R𝒟.
                       ***** apply: symmetric; auto.
                             apply: per; apply: TS.is_cper_valued; eauto.
                       ***** edestruct ℱsp; first by [exists Rℰ; eauto].
@@ -719,23 +719,23 @@ Module Arr.
           eexists; eauto.
   Qed.
 
-  Theorem elim {i A B f0 f1 e0 e1} :
+  Theorem elim {i A B f0 f1 M0 M1} :
     τ[i] ⊧ A ∼ A
     → τ[i] ⊧ ⋄ ∙ A ≫ B ∼ B
     → τω ⊧ (A ⇒ B) ∋ f0 ∼ f1
-    → τω ⊧ A ∋ e0 ∼ e1
-    → τω ⊧ (B ⫽ Sub.inst0 e0) ∋ (f0 ⋅ e0) ∼ (f1 ⋅ e1).
+    → τω ⊧ A ∋ M0 ∼ M1
+    → τω ⊧ (B ⫽ Sub.inst0 M0) ∋ (f0 ⋅ M0) ∼ (f1 ⋅ M1).
   Proof.
     move=> 𝒟 /(Fam.family_choice 𝒟) [Rℰ Rℰsp] /Level.eq_mem_to_level [nℱ ℱ] /Level.eq_mem_to_level [n𝒢 𝒢].
     case: ℱ => Rℱ [ℱ0 ℱ1].
-    case: (Rℰsp e0 e1).
+    case: (Rℰsp M0 M1).
     - apply: Level.mem_eq_at_lvl_of_typehood; eauto.
     - Tower.destruct_tower.
       dependent destruction ℱ1.
       move=> Q [ℰ0 [ℰ1 [ℰ2 ℰ3]]].
       eexists; split.
       + eexists; eauto.
-      + replace (Rℰ e0) with (R1 e0).
+      + replace (Rℰ M0) with (R1 M0).
         * apply: H; eauto.
           case: 𝒢 => R𝒢 [𝒢0 𝒢1].
           replace R0 with R𝒢; auto.
@@ -751,7 +751,7 @@ End Arr.
 
 
 Module Prod.
-  Local Hint Extern 40 => Term.simplify_subst.
+  Local Hint Extern 40 => simplify_subst.
   Local Hint Resolve General.mem_eq_refl_left General.mem_eq_symm.
 
 
@@ -766,13 +766,13 @@ Module Prod.
     eexists; split; Tac.tower_intro;
     (apply: Sig.conn; first by eauto);
     (econstructor; first by eauto).
-    - move=> e0 e1 e0e1;
-      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+    - move=> M0 M1 M0M1;
+      (case: (Rℰsp M0 M1); first by [exists R𝒟]).
       move=> Q [? [? [? ?]]];
       repeat split; eauto;
       rewrite -Q; eauto.
-    - move=> e0 e1 e0e1;
-      (case: (Rℰsp e0 e1); first by [exists R𝒟]).
+    - move=> M0 M1 M0M1;
+      (case: (Rℰsp M0 M1); first by [exists R𝒟]).
       move=> Q [? [? [? ?]]];
       repeat split; eauto; by rewrite -Q.
   Qed.
@@ -789,12 +789,12 @@ Module Prod.
   Qed.
 
 
-  Theorem intro i {A B e00 e01 e10 e11} :
-    τω ⊧ A ∋ e00 ∼ e10
-    → τω ⊧ B ⫽ Sub.inst0 e00 ∋ e01 ∼ e11
+  Theorem intro i {A B M00 M01 M10 M11} :
+    τω ⊧ A ∋ M00 ∼ M10
+    → τω ⊧ B ⫽ Sub.inst0 M00 ∋ M01 ∼ M11
     → τ[i] ⊧ A ∼ A
     → τ[i] ⊧ ⋄∙A ≫ B ∼ B
-    → τω ⊧ (A × B) ∋ ⟨e00, e01⟩ ∼ ⟨e10, e11⟩.
+    → τω ⊧ (A × B) ∋ ⟨M00, M01⟩ ∼ ⟨M10, M11⟩.
   Proof.
     move=>
      /Level.eq_mem_to_level [n1 𝒟]
@@ -810,9 +810,9 @@ Module Prod.
       + Tac.tower_intro; apply: Sig.conn; auto.
         constructor; eauto.
         * Tac.tower_mono.
-        * move=> e0 e1 p.
-          specialize (𝒢 e0 e1).
-          suff ℋ: τ[i] ⊧ A ∋ e0 ∼ e1.
+        * move=> M0 M1 p.
+          specialize (𝒢 M0 M1).
+          suff ℋ: τ[i] ⊧ A ∋ M0 ∼ M1.
           ** case: (𝒢 ℋ) => Q [? [? [? ?]]].
              repeat split; auto; (rewrite -Q; Tac.tower_mono) || Tac.tower_mono.
           ** apply: Level.mem_eq_at_lvl_of_typehood; eauto.
@@ -828,7 +828,7 @@ Module Prod.
              *** apply: symmetric; auto.
                  apply: per; apply: TS.is_cper_valued; eexists; eauto.
         * case: ℰ => Rℰ [ℰ0 ℰ1].
-          replace (R𝒢 (⟨e00,e01⟩.1)%tm) with Rℰ; auto.
+          replace (R𝒢 (⟨M00, M01⟩.1)%prog) with Rℰ; auto.
           ** apply: crel.
              *** apply: TS.is_cper_valued; eexists; eauto.
              *** apply: OpSem.snd_pair.
@@ -838,12 +838,12 @@ Module Prod.
                  **** apply: OpSem.snd_pair.
                  **** apply: symmetric; auto.
                       apply: per; apply: TS.is_cper_valued; eexists; eauto.
-          ** edestruct (𝒢 e00(⟨e10,e11⟩.1)%tm).
+          ** edestruct (𝒢 M00(⟨M10, M11⟩.1)%prog).
              *** apply: General.mem_eq_conv_both.
                  **** auto.
                  **** apply: OpSem.fst_pair.
                  **** apply: Level.mem_eq_at_lvl_of_typehood; first (exists R𝒟); eauto.
-             *** edestruct (𝒢 (⟨e00,e01⟩.1)%tm (⟨e10,e11⟩.1)%tm).
+             *** edestruct (𝒢 (⟨M00, M01⟩.1)%prog (⟨M10, M11⟩.1)%prog).
                  **** apply: General.mem_eq_conv_both.
                       ***** apply: OpSem.fst_pair.
                       ***** apply: OpSem.fst_pair.
@@ -859,7 +859,7 @@ Module Prod.
 End Prod.
 
 Module TowerChoice.
-  Lemma ty_eq {n : nat} {A1 A2 : 𝕂 → Tm.t 0} :
+  Lemma ty_eq {n : nat} {A1 A2 : 𝕂 → Prog.t 0} :
     (∀ κ, ∃ Rκ, τ[n] (A1 κ, Rκ) ∧ τ[n] (A2 κ, Rκ))
     → ∃ S, ∀ κ, τ[n] (A1 κ, S κ) ∧ τ[n] (A2 κ, S κ).
   Proof.
@@ -871,12 +871,12 @@ Module TowerChoice.
     T.destruct_conjs; eauto.
   Qed.
 
-  Lemma mem_eq {n : nat} {A : 𝕂 → Tm.t 0} {e0 e1} :
-    (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (e0, e1))
-    → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (e0, e1).
+  Lemma mem_eq {n : nat} {A : 𝕂 → Prog.t 0} {M0 M1} :
+    (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (M0, M1))
+    → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (M0, M1).
   Proof.
     move=> X.
-    apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (e0, e1))) => κ.
+    apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (M0, M1))) => κ.
     case: (X κ) => S T.
     eexists; split; eauto => S' T';
     apply: TS.is_extensional; eexists;
@@ -897,9 +897,9 @@ Module Isect.
     T.destruct_conjs; eauto.
   Qed.
 
-  Theorem intro_at_lvl {n A e0 e1} :
-    (∀ κ, τ[n] ⊧ (A κ) ∋ e0 ∼ e1)
-    → τ[n] ⊧ ⋂ A ∋ e0 ∼ e1.
+  Theorem intro_at_lvl {n A M0 M1} :
+    (∀ κ, τ[n] ⊧ (A κ) ∋ M0 ∼ M1)
+    → τ[n] ⊧ ⋂ A ∋ M0 ∼ M1.
   Proof.
     move=> 𝒟.
     case: (TowerChoice.mem_eq 𝒟) => S ℰ.
@@ -914,10 +914,10 @@ Module Isect.
   Qed.
 
   (* NOTE that the type equality premise is necessary for this rule to be true! *)
-  Theorem intro {A e0 e1} :
+  Theorem intro {A M0 M1} :
     τω ⊧ (⋂ A) ∼ (⋂ A)
-    → (∀ κ, τω ⊧ (A κ) ∋ e0 ∼ e1)
-    → τω ⊧ ⋂ A ∋ e0 ∼ e1.
+    → (∀ κ, τω ⊧ (A κ) ∋ M0 ∼ M1)
+    → τω ⊧ ⋂ A ∋ M0 ∼ M1.
   Proof.
     move=> /Level.eq_ty_to_level [n𝒟 𝒟] ℰ.
     apply: (Level.eq_mem_from_level n𝒟).
@@ -947,7 +947,7 @@ Module Isect.
       apply: Sig.conn; auto.
       apply: (@Connective.has_prod _ _ _ _ (fun _ => _)).
       + eauto.
-      + move=> ? ? ?; repeat T.split; Term.simplify_subst; eauto.
+      + move=> ? ? ?; repeat T.split; Program.simplify_subst; eauto.
 
     - Tac.ts_flex_rel.
       + Tac.tower_intro.
@@ -958,13 +958,13 @@ Module Isect.
           apply: Sig.conn; auto.
           apply: Connective.has_isect => κ.
           T.specialize_hyps; T.destruct_conjs; Tac.prove.
-        * move=> e0 e1 //= e0e1;
+        * move=> M0 M1 //= M0M1;
           repeat T.split; auto;
-          Tac.tower_intro; Term.simplify_subst;
+          Tac.tower_intro; Program.simplify_subst;
           Tac.prove; T.specialize_hyps;
-          T.destruct_conjs; Term.simplify_subst; eauto.
+          T.destruct_conjs; Program.simplify_subst; eauto.
 
-      + T.eqcd; case => e0 e1.
+      + T.eqcd; case => M0 M1.
         apply: propositional_extensionality; (split => H; first constructor) => κ;
         T.specialize_hyps; by dependent destruction H.
   Qed.
@@ -977,7 +977,7 @@ Module Isect.
 
     match goal with
     | |- Connective.has _ _ (_, ?R) =>
-      replace R with (fun e0e1 => ∀ κ:𝕂, R e0e1)
+      replace R with (fun M0M1 => ∀ κ:𝕂, R M0M1)
     end.
 
     + Tac.prove.
@@ -1050,19 +1050,19 @@ Module Later.
     Tac.tower_mono.
   Qed.
 
-  Lemma level_commute_eq_mem {A e0 e1} :
-    τω ⊧ A ∋ e0 ∼ e1
-    → ∃ n, τ[n] ⊧ A ∋ e0 ∼ e1.
+  Lemma level_commute_eq_mem {A M0 M1} :
+    τω ⊧ A ∋ M0 ∼ M1
+    → ∃ n, τ[n] ⊧ A ∋ M0 ∼ M1.
   Proof.
-    case => R [[n AR] e0e1].
+    case => R [[n AR] M0M1].
     exists n; exists R; auto.
   Qed.
 
 
 
-  Theorem intro {κ} {A e1 e2} :
-    ▷[κ] (τω ⊧ A ∋ e1 ∼ e2)
-    → τω ⊧ ▶[κ] A ∋ e1 ∼ e2.
+  Theorem intro {κ} {A M1 M2} :
+    ▷[κ] (τω ⊧ A ∋ M1 ∼ M2)
+    → τω ⊧ ▶[κ] A ∋ M1 ∼ M2.
   Proof.
     move=> /(Later.map level_commute_eq_mem).
     move=> /Later.yank_existential; case; auto => n 𝒟.
@@ -1073,12 +1073,12 @@ Module Later.
       + rewrite /Tower.t -Clo.roll.
         apply: Sig.conn; eauto.
         apply: Connective.has_later.
-        Later.gather; case => [R' [AR' e0e1]].
-        replace R' with R in AR', e0e1; eauto.
+        Later.gather; case => [R' [AR' M0M1]].
+        replace R' with R in AR', M0M1; eauto.
         apply: Pick_lemma; eexists; eauto.
       + auto.
     - Later.gather.
-      case => [R' [AR' e0e1]].
+      case => [R' [AR' M0M1]].
       replace R with R'; eauto.
       symmetry.
       apply: Pick_lemma.
@@ -1116,7 +1116,7 @@ Module Later.
         by rewrite -E in H5.
       + apply: (Later.map (functional_extensionality R R0)).
         apply: Later.push_universal.
-        move=> e0e1.
+        move=> M0M1.
         apply: Later.commute_eq.
         by apply: (equal_f x).
   Qed.
@@ -1170,7 +1170,7 @@ Module Later.
     move=> [R [𝒟 _]].
     exists R; T.split; auto.
     Tower.destruct_tower.
-    replace (fun e0e1 => ∀ κ, S κ e0e1) with (fun e0e1 => ∀ κ, ▷[κ] (S κ e0e1)).
+    replace (fun M0M1 => ∀ κ, S κ M0M1) with (fun M0M1 => ∀ κ, ▷[κ] (S κ M0M1)).
     - Tac.prove.
       T.specialize_hyps.
       rewrite -Clo.roll.
@@ -1193,10 +1193,10 @@ Module Later.
   Qed.
 
 
-  Theorem loeb_induction_closed κ i {A B e0 e1} :
+  Theorem loeb_induction_closed κ i {A B M0 M1} :
     τ[i] ⊧ A ∼ B
-    → τω ⊧ ⋄ ∙ ▶[κ]A ≫ A.[^1] ∋ e0 ∼ e1
-    → τω ⊧ A ∋ 𝛍{ e0 } ∼ 𝛍{ e1 }.
+    → τω ⊧ ⋄ ∙ ▶[κ]A ≫ A.[^1] ∋ M0 ∼ M1
+    → τω ⊧ A ∋ 𝛍{ M0 } ∼ 𝛍{ M1 }.
   Proof.
     move=> [R [AR _]] ℰ.
     apply: (@Later.loeb κ).
@@ -1204,16 +1204,16 @@ Module Later.
     move=> ℱ.
     T.efwd ℰ.
     - apply: General.mem_eq_conv_both.
-      + move=> v; case: (fix_unfold e0 v) => _; apply.
-      + move=> v; case: (fix_unfold e1 v) => _; apply.
-      + T.use ℰ; f_equal; by Term.simplify_subst.
+      + move=> V; case: (fix_unfold M0 V) => _; apply.
+      + move=> V; case: (fix_unfold M1 V) => _; apply.
+      + T.use ℰ; f_equal; by Program.simplify_subst.
     - simpl; split; auto.
-      exists (fun e0e1 => ▷[κ] (R e0e1)); split.
+      exists (fun M0M1 => ▷[κ] (R M0M1)); split.
       + exists i.
         Tac.prove.
         Later.gather.
         move=> [? ?].
-          by rewrite Tm.subst_ret.
+          by rewrite Prog.subst_ret.
       + Later.gather; case => R' [AR' mue0mue1].
         replace R with R'; auto.
         apply: TS.is_extensional.
@@ -1222,15 +1222,15 @@ Module Later.
   Qed.
 
   Lemma fun_ty_inversion {i A B R} :
-    τ[i] ((A ⇒ B)%tm, R)
-    → ∃ (RA : rel) (RB : Tm.t 0 → rel),
+    τ[i] ((A ⇒ B)%prog, R)
+    → ∃ (RA : rel) (RB : Prog.t 0 → rel),
       τ[i] (A, RA)
-      ∧ (∀ e0 e1 : Tm.t 0,
-            RA (e0, e1)
-            → τ[i] ((B ⫽ Sub.inst0 e0)%tm, RB e0)
-              ∧ τ[i] ((B ⫽ Sub.inst0 e0)%tm, RB e1)
-              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%tm, RB e1)
-              ∧ τ[i] ((B ⫽ Sub.inst0 e1)%tm, RB e0))
+      ∧ (∀ M0 M1 : Prog.t 0,
+            RA (M0, M1)
+            → τ[i] ((B ⫽ Sub.inst0 M0)%prog, RB M0)
+              ∧ τ[i] ((B ⫽ Sub.inst0 M0)%prog, RB M1)
+              ∧ τ[i] ((B ⫽ Sub.inst0 M1)%prog, RB M1)
+              ∧ τ[i] ((B ⫽ Sub.inst0 M1)%prog, RB M0))
       ∧ R = Connective.fun_el RA RB.
   Proof.
     move=> 𝒟.
@@ -1247,7 +1247,7 @@ Module Later.
     Tower.destruct_tower.
 
     pose RA := Pick τ[n𝒟] A.
-    pose RB : Tm.t 0 → rel := fun (e : Tm.t 0) => Pick τ[n𝒟] (B ⫽ @Sub.inst0 _ Tm.syn_struct_term _ e)%tm.
+    pose RB : Prog.t 0 → rel := fun (M : Prog.t 0) => Pick τ[n𝒟] (B ⫽ @Sub.inst0 _ Prog.syn_struct_term _ M)%prog.
 
     exists (Connective.fun_el (fun es => ▷[κ0] (RA es)) (fun x => fun es => ▷[κ0] (RB x es))).
     split.
@@ -1261,19 +1261,19 @@ Module Later.
           replace R0 with RA in H1; eauto.
           apply: Pick_lemma; auto.
         * simpl. match goal with
-          | |- ∀ e0 _ : Tm.t 0, _ → Clo.t (Spine.t n𝒟) (_, ?fuck _) ∧ _ ∧ _ ∧ _ =>
-            suff Q: fuck = (fun e es => ▷[κ0] (RB e es)); [ rewrite Q | reflexivity ]
+          | |- ∀ M0 _ : Prog.t 0, _ → Clo.t (Spine.t n𝒟) (_, ?fuck _) ∧ _ ∧ _ ∧ _ =>
+            suff Q: fuck = (fun M es => ▷[κ0] (RB M es)); [ rewrite Q | reflexivity ]
           end.
 
-          move=> e0 e1 e0e1; repeat split. replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟]; auto.
+          move=> M0 M1 M0M1; repeat split. replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟]; auto.
           Tac.ts_flex_rel.
           ** Tac.tower_intro; apply: Sig.conn; eauto.
              apply: Connective.has_later; eauto.
              Later.gather; case => X1 [X2 X3].
              replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
              Tower.destruct_tower.
-             specialize (H2 e0 e1).
-             replace (R1 e0) with (RB e0) in H2.
+             specialize (H2 M0 M1).
+             replace (R1 M0) with (RB M0) in H2.
              *** edestruct H2; eauto.
                  replace R0 with RA; eauto.
                  apply: Pick_lemma.
@@ -1289,8 +1289,8 @@ Module Later.
              Later.gather; case => X1 [X2 X3].
              replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
              Tower.destruct_tower.
-             specialize (H2 e0 e1).
-             replace (R1 e1) with (RB e1) in H2.
+             specialize (H2 M0 M1).
+             replace (R1 M1) with (RB M1) in H2.
              *** edestruct H2; eauto.
                  **** replace R0 with RA; eauto.
                       apply: Pick_lemma.
@@ -1309,8 +1309,8 @@ Module Later.
              Later.gather; case => X1 [X2 X3].
              replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
              Tower.destruct_tower.
-             specialize (H2 e0 e1).
-             replace (R1 e1) with (RB e1) in H2.
+             specialize (H2 M0 M1).
+             replace (R1 M1) with (RB M1) in H2.
              *** edestruct H2; eauto.
                  replace R0 with RA; eauto.
                  apply: Pick_lemma.
@@ -1328,8 +1328,8 @@ Module Later.
              Later.gather; case => X1 [X2 X3].
              replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
              Tower.destruct_tower.
-             specialize (H2 e0 e1).
-             replace (R1 e0) with (RB e0) in H2.
+             specialize (H2 M0 M1).
+             replace (R1 M0) with (RB M0) in H2.
              *** edestruct H2; eauto.
                  replace R0 with RA; eauto.
                  apply: Pick_lemma.
@@ -1342,11 +1342,11 @@ Module Later.
                  apply: Pick_lemma; eauto.
       + eauto.
 
-    - constructor => e0 e1 e0e1.
+    - constructor => M0 M1 M0M1.
       Later.gather; case => X1 [X2 X3].
       replace (Clo.t (Spine.t n𝒟)) with τ[n𝒟] in X2; auto.
       Tower.destruct_tower.
-      replace (RB e0) with (R1 e0).
+      replace (RB M0) with (R1 M0).
       + edestruct H2.
         * replace R0 with RA; eauto.
           apply: Pick_lemma; eauto.
@@ -1402,8 +1402,8 @@ Module Later.
              eexists; split; Tac.tower_intro;
              (apply: Sig.conn; first by [auto]);
              (constructor; first by [eassumption]);
-             move=> e0 e1 e0e1;
-             (case: (Rℰsp e0 e1); first by [eexists; split; eauto]);
+             move=> M0 M1 M0M1;
+             (case: (Rℰsp M0 M1); first by [eexists; split; eauto]);
              move=> Q' ?; T.destruct_conjs; repeat split; eauto; by rewrite -Q'.
         * OpSem.destruct_evals.
           dependent induction H1.
@@ -1425,7 +1425,7 @@ Module Later.
     move=> 𝒟 ℰ.
 
     pose RA := Pick τ[i] A0.
-    pose RB : Tm.t 0 → rel := fun (e : Tm.t 0) => Pick τ[i] (B0 ⫽ @Sub.inst0 _ Tm.syn_struct_term _ e)%tm.
+    pose RB : Prog.t 0 → rel := fun (M : Prog.t 0) => Pick τ[i] (B0 ⫽ @Sub.inst0 _ Prog.syn_struct_term _ M)%prog.
 
     exists (Connective.prod_el (fun es => ▷[κ] (RA es)) (fun x => fun es => ▷[κ] (RB x es))).
     split.
@@ -1442,27 +1442,27 @@ Module Later.
           repeat f_equal.
           replace RA' with RA; eauto.
           apply: Pick_lemma; eauto.
-        * move=> e0 e1 e0e1.
+        * move=> M0 M1 M0M1.
           match goal with
-          | |- Clo.t (Spine.t i) (_, ?R ?e) ∧ _ => replace (R e) with (RB e)
+          | |- Clo.t (Spine.t i) (_, ?R ?M) ∧ _ => replace (R M) with (RB M)
           end; eauto.
           specialize (H1 A1).
           destruct H1 as [RB' ?].
           ** exists RA'; auto.
-          ** specialize (H0 e0 e1).
+          ** specialize (H0 M0 M1).
              edestruct H0.
              *** eexists RA; split; auto.
                  replace RA with RA'; auto.
                  symmetry; apply: Pick_lemma; auto.
              *** T.destruct_conjs.
-                 replace (RB e0) with (RB' e0).
-                 **** replace (RB e1) with (RB' e1).
+                 replace (RB M0) with (RB' M0).
+                 **** replace (RB M1) with (RB' M1).
                       ***** repeat split; try (rewrite -H1); eauto.
                       ***** symmetry; apply: Pick_lemma.
                             rewrite -H1; eauto.
                  **** symmetry; apply: Pick_lemma.
                       eauto.
-      + T.eqcd; case => e0 e1.
+      + T.eqcd; case => M0 M1.
         apply: propositional_extensionality; split.
         * move=> X.
           dependent destruction X.
@@ -1470,7 +1470,7 @@ Module Later.
           move=> ?; T.destruct_conjs.
           constructor; eauto.
 
-        * move=> e0e1.
+        * move=> M0M1.
           constructor;
           Later.gather => X;
           T.destruct_conjs;
@@ -1491,13 +1491,13 @@ Module Later.
           move=> /Fam.family_choice => Fam.
           replace RA' with RA in 𝒟1; eauto.
           apply: Pick_lemma; eauto.
-        * move=> e0 e1 //= e0e1;
+        * move=> M0 M1 //= M0M1;
           repeat split; Tac.tower_intro; apply: Sig.conn; eauto;
           apply: Connective.has_later;
           Later.gather; case => [[RA' [𝒟0 𝒟1]]]; case;
-          move=> /Fam.family_choice => Fam; move=> e0e1; specialize (Fam A1);
+          move=> /Fam.family_choice => Fam; move=> M0M1; specialize (Fam A1);
           (destruct Fam as [RB' Fam]; first by [exists RA'; eauto]);
-          specialize (Fam e0 e1);
+          specialize (Fam M0 M1);
           (destruct Fam as [H Fam]; first by [exists RA; eauto; split; [replace RA with RA'; eauto; symmetry; apply: Pick_lemma; eauto|eauto]]);
           case: Fam => F1 [F2 [F3 F4]].
           ** T.use F4; eauto.
@@ -1513,7 +1513,7 @@ Module Later.
              rewrite /Tower.t; repeat f_equal.
              symmetry; apply: Pick_lemma; eauto.
 
-      + apply: binrel_extensionality => e0 e1; split.
+      + apply: binrel_extensionality => M0 M1; split.
         * move=> H.
           dependent destruction H.
           constructor; eauto.
@@ -1552,17 +1552,17 @@ End Later.
 
 
 Module Canonicity.
-  Definition quote_bool (b : bool) : Tm.t 0 :=
+  Definition quote_bool (b : bool) : Prog.t 0 :=
     match b with
-    | true => Tm.tt
-    | false => Tm.ff
+    | true => Prog.tt
+    | false => Prog.ff
     end.
 
   Notation "⌊ b ⌋𝔹" := (quote_bool b).
 
-  Theorem canonicity {e} :
-    τω ⊧ 𝟚 ∋ e ∼ e
-    → ∃ b : bool, e ⇓ ⌊b⌋𝔹.
+  Theorem canonicity {M} :
+    τω ⊧ 𝟚 ∋ M ∼ M
+    → ∃ b : bool, M ⇓ ⌊b⌋𝔹.
   Proof.
     move=> /Level.eq_mem_to_level [n [R [𝒟 ?]]].
     Tower.destruct_tower.

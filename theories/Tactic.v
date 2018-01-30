@@ -53,7 +53,7 @@ Ltac specialize_hyps :=
   repeat
     match goal with
     | H : ∀ κ : 𝕂, ?P, κ : 𝕂 |- _ => specialize (H κ)
-    | H : ?R (?e1, ?e2) -> ?P, H' : ?R (?e1, ?e2) |- _ => specialize (H H')
+    | H : ?R (?M1, ?M2) -> ?P, H' : ?R (?M1, ?M2) |- _ => specialize (H H')
     end.
 
 

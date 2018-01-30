@@ -108,15 +108,16 @@ VFILES:=theories/Notation.v\
   theories/TypeSystem.v\
   theories/OrderTheory.v\
   theories/Axioms.v\
-  theories/Term.v\
+  theories/Program.v\
   theories/OpSem.v\
   theories/Closure.v\
   theories/Tower.v\
   theories/Sequent.v\
-  theories/InternalRules.v\
-  theories/ExternalSyn.v\
-  theories/Interp.v\
-  theories/ExternalRules.v
+  theories/Theorems.v\
+  theories/Expression.v\
+  theories/Elaborate.v\
+  theories/Canonicity.v\
+  theories/Rules.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))

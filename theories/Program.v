@@ -8,10 +8,10 @@ Module T := Tactic.
 
 
 Set Implicit Arguments.
-Delimit Scope tm_scope with tm.
+Delimit Scope prog_scope with prog.
 Delimit Scope subst_scope with subst.
 
-Module Tm.
+Module Prog.
   Inductive t (Ψ : Ctx) :=
   | var : Var Ψ -> t Ψ
   | fst : t Ψ -> t Ψ
@@ -31,9 +31,6 @@ Module Tm.
   | univ : nat -> t Ψ
   | fix_ : t (S Ψ) → t Ψ.
 
-  Axiom tm_time_constant : ∀ Ψ, Later.TimeConstant (t Ψ).
-  Hint Resolve tm_time_constant.
-
   Arguments unit [Ψ].
   Arguments bool [Ψ].
   Arguments ax [Ψ].
@@ -43,33 +40,33 @@ Module Tm.
 
 
   Module Notations.
-    Notation "@0" := (Tm.var Fin.F1) : tm_scope.
-    Notation "@1" := (Tm.var (Fin.FS Fin.F1)) : tm_scope.
-    Notation "▶[ κ ] A" := (Tm.ltr κ A%tm) (at level 50) : tm_scope.
-    Notation "'𝟚'" := Tm.bool : tm_scope.
-    Notation "'𝟙'" := Tm.unit : tm_scope.
-    Notation "★" := Tm.ax : tm_scope.
-    Notation "e .1" := (Tm.fst e%tm) (at level 50) : tm_scope.
-    Notation "e .2" := (Tm.snd e%tm) (at level 50) : tm_scope.
-    Infix "×" := Tm.prod : tm_scope.
-    Infix "⇒" := Tm.arr (at level 30) : tm_scope.
-    Notation "⋂[ κ ] A" := (Tm.isect (fun κ => A%tm)) (at level 50) : tm_scope.
-    Notation "⋂ A" := (Tm.isect A) (at level 50) : tm_scope.
-    Notation "𝕌[ i ] " := (Tm.univ i%nat) : tm_scope.
-    Notation "⟨ e1 , e2 ⟩" := (Tm.pair e1%tm e2%tm) : tm_scope.
-    Notation "e1 ⋅ e2" := (Tm.app e1%tm e2%tm) (at level 50) : tm_scope.
-    Notation "'𝛌{' e }" := (Tm.lam e%tm) (at level 50) : tm_scope.
-    Notation "'𝛍{' e }" := (Tm.fix_ e%tm) (at level 50) : tm_scope.
+    Notation "@0" := (var Fin.F1) : prog_scope.
+    Notation "@1" := (var (Fin.FS Fin.F1)) : prog_scope.
+    Notation "▶[ κ ] A" := (ltr κ A%prog) (at level 50) : prog_scope.
+    Notation "'𝟚'" := bool : prog_scope.
+    Notation "'𝟙'" := unit : prog_scope.
+    Notation "★" := ax : prog_scope.
+    Notation "M .1" := (fst M%prog) (at level 50) : prog_scope.
+    Notation "M .2" := (snd M%prog) (at level 50) : prog_scope.
+    Infix "×" := prod : prog_scope.
+    Infix "⇒" := arr (at level 30) : prog_scope.
+    Notation "⋂[ κ ] A" := (isect (fun κ => A%prog)) (at level 50) : prog_scope.
+    Notation "⋂ A" := (isect A) (at level 50) : prog_scope.
+    Notation "𝕌[ i ] " := (univ i%nat) : prog_scope.
+    Notation "⟨ M1 , M2 ⟩" := (pair M1%prog M2%prog) : prog_scope.
+    Notation "M1 ⋅ M2" := (app M1%prog M2%prog) (at level 50) : prog_scope.
+    Notation "'𝛌{' M }" := (lam M%prog) (at level 50) : prog_scope.
+    Notation "'𝛍{' M }" := (fix_ M%prog) (at level 50) : prog_scope.
   End Notations.
 
   Import Notations.
 
-  Program Fixpoint map {Ψ1 Ψ2} (ρ : Ren.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
-    match e with
+  Program Fixpoint map {Ψ1 Ψ2} (ρ : Ren.t Ψ1 Ψ2) (M : t Ψ1) : t Ψ2 :=
+    match M with
     | var i => var (ρ i)
-    | fst e => fst (map ρ e)
-    | snd e => snd (map ρ e)
-    | app e1 e2 => app (map ρ e1) (map ρ e2)
+    | fst M => fst (map ρ M)
+    | snd M => snd (map ρ M)
+    | app M1 M2 => app (map ρ M1) (map ρ M2)
     | unit => unit
     | bool => bool
     | ax => ax
@@ -77,12 +74,12 @@ Module Tm.
     | ff => ff
     | prod A B => prod (map ρ A) (map (Ren.cong ρ) B)
     | arr A B => arr (map ρ A) (map (Ren.cong ρ) B)
-    | pair e1 e2 => pair (map ρ e1) (map ρ e2)
-    | lam e => lam (map (Ren.cong ρ) e)
+    | pair M1 M2 => pair (map ρ M1) (map ρ M2)
+    | lam M => lam (map (Ren.cong ρ) M)
     | ltr κ A => ltr κ (map ρ A)
     | isect A => isect (fun κ => map ρ (A κ))
     | univ i => univ i
-    | fix_ e => fix_ (map (Ren.cong ρ) e)
+    | fix_ M => fix_ (map (Ren.cong ρ) M)
     end.
 
 
@@ -95,9 +92,9 @@ Module Tm.
     T.rewrites_with rewrites_aux.
 
 
-  Theorem map_id {Ψ} (e : t Ψ) : map id e = e.
+  Theorem map_id {Ψ} (M : t Ψ) : map id M = M.
   Proof.
-    induction e; by rewrites.
+    induction M; by rewrites.
   Qed.
 
   Program Instance syn_struct_term : Sub.syn_struct t :=
@@ -108,17 +105,17 @@ Module Tm.
   Qed.
 
   Module RenNotation.
-    Notation "e .[ ρ ]" := (Tm.map ρ%ren e) (at level 50) : tm_scope.
+    Notation "M .[ ρ ]" := (map ρ%ren M) (at level 50) : prog_scope.
   End RenNotation.
 
   Import RenNotation.
 
-  Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (e : t Ψ1) : t Ψ2 :=
-    match e with
+  Program Fixpoint subst {Ψ1 Ψ2} (σ : Sub.t Ψ1 Ψ2) (M : t Ψ1) : t Ψ2 :=
+    match M with
     | var i => σ i
-    | fst e => fst (subst σ e)
-    | snd e => snd (subst σ e)
-    | app e1 e2 => app (subst σ e1) (subst σ e2)
+    | fst M => fst (subst σ M)
+    | snd M => snd (subst σ M)
+    | app M1 M2 => app (subst σ M1) (subst σ M2)
     | unit => unit
     | bool => bool
     | ax => ax
@@ -126,29 +123,29 @@ Module Tm.
     | ff => ff
     | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
     | arr A B => arr (subst σ A) (subst (Sub.cong σ) B)
-    | pair e1 e2 => pair (subst σ e1) (subst σ e2)
-    | lam e => lam (subst (Sub.cong σ) e)
+    | pair M1 M2 => pair (subst σ M1) (subst σ M2)
+    | lam M => lam (subst (Sub.cong σ) M)
     | ltr κ A => ltr κ (subst σ A)
     | isect A => isect (fun κ => subst σ (A κ))
     | univ i => univ i
-    | fix_ e => fix_ (subst (Sub.cong σ) e)
+    | fix_ M => fix_ (subst (Sub.cong σ) M)
     end.
 
   Module SubstNotation.
-    Notation "e ⫽ σ" := (Tm.subst σ%subst e%tm) (at level 20, left associativity) : tm_scope.
-    Notation "σ' ◎ σ" := (Tm.subst σ'%subst ∘ σ%subst) (at level 50) : subst_scope.
+    Notation "M ⫽ σ" := (subst σ%subst M%prog) (at level 20, left associativity) : prog_scope.
+    Notation "σ' ◎ σ" := (subst σ'%subst ∘ σ%subst) (at level 50) : subst_scope.
   End SubstNotation.
 
   Import SubstNotation.
 
   (* TODO: make this part of the syntax-structure type class *)
-  Theorem ren_coh {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) (e : t _) :
-    e.[ρ12].[ρ23]%tm
+  Theorem ren_coh {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) (M : t _) :
+    M.[ρ12].[ρ23]%prog
     =
-    e.[ρ23 ∘ ρ12]%tm.
+    M.[ρ23 ∘ ρ12]%prog.
   Proof.
     move: Ψ2 Ψ3 ρ12 ρ23.
-    induction e; rewrites;
+    induction M; rewrites;
     by dependent induction H.
   Qed.
 
@@ -163,37 +160,37 @@ Module Tm.
     T.rewrites_with ltac:(try rewrite ren_coh).
   Qed.
 
-  Local Open Scope tm_scope.
+  Local Open Scope prog_scope.
 
-  Theorem ren_subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) e :
-    (e ⫽ σ12).[ρ23]
+  Theorem ren_subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (ρ23 : Ren.t Ψ2 Ψ3) M :
+    (M ⫽ σ12).[ρ23]
     =
-    (e ⫽ (map ρ23 ∘ σ12)).
+    (M ⫽ (map ρ23 ∘ σ12)).
   Proof.
     move: Ψ2 Ψ3 σ12 ρ23.
-    induction e; rewrites;
+    induction M; rewrites;
     by rewrite -ren_subst_cong_coh.
   Qed.
 
-  Theorem subst_ren_coh {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) e :
-    e.[ρ12] ⫽ σ23
+  Theorem subst_ren_coh {Ψ1 Ψ2 Ψ3} (ρ12 : Ren.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) M :
+    M.[ρ12] ⫽ σ23
     =
-    e ⫽ (σ23 ∘ ρ12).
+    M ⫽ (σ23 ∘ ρ12).
   Proof.
     move: Ψ2 Ψ3 ρ12 σ23.
-    induction e; rewrites;
+    induction M; rewrites;
     f_equal; f_equal;
     by dependent destruction H.
   Qed.
 
-  Theorem subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (e : t _) :
-    e ⫽ σ12 ⫽ σ23
+  Theorem subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (M : t _) :
+    M ⫽ σ12 ⫽ σ23
     =
-    e ⫽ (subst σ23 ∘ σ12).
+    M ⫽ (subst σ23 ∘ σ12).
   Proof.
     move: Ψ2 Ψ3 σ12 σ23.
     rewrite /compose.
-    induction e; rewrites;
+    induction M; rewrites;
     dependent induction H; auto; simpl;
     by rewrite ren_subst_coh subst_ren_coh.
   Qed.
@@ -205,27 +202,27 @@ Module Tm.
     dependent destruction x; auto.
   Qed.
 
-  Theorem subst_ret {Ψ} e :
-    e ⫽ (@var Ψ) = e.
+  Theorem subst_ret {Ψ} M :
+    M ⫽ (@var Ψ) = M.
   Proof.
-    induction e; rewrites;
+    induction M; rewrites;
     by rewrite cong_id.
   Qed.
 
-  Theorem subst_closed (σ : Sub.t 0 0) (e : t 0) :
-    e ⫽ σ = e.
+  Theorem subst_closed (σ : Sub.t 0 0) (M : t 0) :
+    M ⫽ σ = M.
   Proof.
-    rewrite -{2}(subst_ret e).
+    rewrite -{2}(subst_ret M).
     f_equal.
     T.eqcd => x.
     dependent destruction x.
   Qed.
 
-End Tm.
+End Prog.
 
-Export Tm.Notations Tm.RenNotation Tm.SubstNotation.
+Export Prog.Notations Prog.RenNotation Prog.SubstNotation.
 
-Hint Rewrite @Tm.subst_ren_coh @Tm.ren_subst_coh @Tm.subst_coh @Tm.subst_closed : syn_db.
+Hint Rewrite @Prog.subst_ren_coh @Prog.ren_subst_coh @Prog.subst_coh @Prog.subst_closed : syn_db.
 Hint Unfold compose : syn_db.
 
 Ltac simplify_subst_step :=
