@@ -30,27 +30,25 @@ Local Hint Extern 20 => Th.Univ.tac.
 Local Hint Resolve Th.General.ty_eq_refl_left Th.General.ty_eq_trans Th.General.ty_eq_symm Th.General.mem_eq_trans Th.General.mem_eq_symm Th.General.env_eq_refl_left Th.General.env_eq_symm Th.General.open_mem_eq_refl_left Th.General.open_ty_eq_refl_left.
 
 Module Conversion.
-  Module Structural.
-    Theorem symm {Λ Ψ M1 M2} :
-      ⟦ Λ ∣ Ψ ⊢ M1 ≃ M2 ⟧
-      → ⟦ Λ ∣ Ψ ⊢ M2 ≃ M1 ⟧.
-    Proof.
-      move=> D κs γ V.
-      specialize (D κs γ V).
-      intuition.
-    Qed.
+  Theorem symm {Λ Ψ M1 M2} :
+    ⟦ Λ ∣ Ψ ⊢ M1 ≃ M2 ⟧
+    → ⟦ Λ ∣ Ψ ⊢ M2 ≃ M1 ⟧.
+  Proof.
+    move=> D κs γ V.
+    specialize (D κs γ V).
+    intuition.
+  Qed.
 
-    Theorem trans {Λ Ψ M1 M2 M3} :
-      ⟦ Λ ∣ Ψ ⊢ M1 ≃ M2 ⟧
-      → ⟦ Λ ∣ Ψ ⊢ M2 ≃ M3 ⟧
-      → ⟦ Λ ∣ Ψ ⊢ M1 ≃ M3 ⟧.
-    Proof.
-      move=> 𝒟 ℰ κs γ V.
-      specialize (𝒟 κs γ V).
-      specialize (ℰ κs γ V).
-      intuition.
-    Qed.
-  End Structural.
+  Theorem trans {Λ Ψ M1 M2 M3} :
+    ⟦ Λ ∣ Ψ ⊢ M1 ≃ M2 ⟧
+    → ⟦ Λ ∣ Ψ ⊢ M2 ≃ M3 ⟧
+    → ⟦ Λ ∣ Ψ ⊢ M1 ≃ M3 ⟧.
+  Proof.
+    move=> 𝒟 ℰ κs γ V.
+    specialize (𝒟 κs γ V).
+    specialize (ℰ κs γ V).
+    intuition.
+  Qed.
 
   Theorem fst_of_pair {Λ Ψ M1 M2} :
     ⟦ Λ ∣ Ψ ⊢ ⟨M1, M2⟩ .1 ≃ M1 ⟧.
