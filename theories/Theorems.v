@@ -12,6 +12,14 @@ Require Import Coq.omega.Omega.
 Open Scope program_scope.
 
 Module Tac.
+
+  Ltac prove_pick_eq :=
+    match goal with
+    | |- ?τ @ ?A = ?R => by [eapply TS.Pick_lemma; eauto]
+    | |- ?R = ?τ @ ?A => by [symmetry; eapply TS.Pick_lemma; eauto]
+    end.
+
+
   Ltac tower_intro :=
     rewrite /Tower.t -Clo.roll.
 
@@ -262,14 +270,12 @@ Module General.
     → τ ⊧ A ∋ M0 ∼ M1
     → τ ⊧ A ∋ M0 ∼ M2.
   Proof.
-    Tac.prove.
+    move=> [R1 [𝒟0 𝒟1]] [R2 [ℰ1 ℰ2]].
+    exists R2; T.split; auto.
     apply: transitive; eauto.
     - apply: per.
       apply: TS.is_cper_valued; eauto.
-    - match goal with
-      | H : ?R1 (M1, M2) |- ?R2 (M1, M2) =>
-        replace R2 with R1; auto
-      end.
+    - replace R2 with R1; eauto.
       apply: TS.is_extensional; eauto.
   Qed.
 
@@ -401,7 +407,8 @@ Module Univ.
   Lemma formation_S {n : nat} :
     τ[S n] ⊧ 𝕌[n] ∼ 𝕌[n].
   Proof.
-    Tac.prove.
+    eexists; split; Tac.tower_intro; apply: Sig.init; Spine.simplify;
+    eexists; split; eauto; split; eauto; split.
   Qed.
 
   Theorem formation_lvl {n i : nat} :
@@ -410,7 +417,8 @@ Module Univ.
   Proof.
     case => [| j q ].
     + apply: formation_S.
-    + Tac.prove.
+    + eexists; split; Tac.tower_intro; apply: Sig.init; Spine.simplify;
+      exists i; simpl; (eexists; first by omega); (split; first by auto); reflexivity.
   Qed.
 
   Theorem formation_ω {i} :
@@ -511,13 +519,15 @@ Module Unit.
   Theorem formation i :
     τ[i] ⊧ 𝟙 ∼ 𝟙.
   Proof.
-    unshelve Tac.prove; constructor.
+    eexists; split; Tac.tower_intro; apply: Sig.conn; eauto.
   Qed.
 
   Theorem ax_equality :
     τω ⊧ 𝟙 ∋ ★ ∼ ★.
   Proof.
-    unshelve Tac.prove; constructor.
+    eexists; split.
+    - exists 0; Tac.tower_intro; apply: Sig.conn; eauto.
+    - econstructor; eauto.
   Qed.
 End Unit.
 
@@ -525,19 +535,23 @@ Module Bool.
   Theorem tt_equality :
     τω ⊧ 𝟚 ∋ Prog.tt ∼ Prog.tt.
   Proof.
-    unshelve Tac.prove; constructor.
+    eexists; split.
+    - exists 0; Tac.tower_intro; apply: Sig.conn; eauto.
+    - econstructor; eauto.
   Qed.
 
   Theorem ff_equality :
     τω ⊧ 𝟚 ∋ Prog.ff ∼ Prog.ff.
   Proof.
-    unshelve Tac.prove; constructor.
+    eexists; split.
+    - exists 0; Tac.tower_intro; apply: Sig.conn; eauto.
+    - econstructor; eauto.
   Qed.
 
   Theorem formation i :
     τ[i] ⊧ 𝟚 ∼ 𝟚.
   Proof.
-    Tac.prove.
+    eexists; split; Tac.tower_intro; apply: Sig.conn; eauto.
   Qed.
 
   Ltac tac :=
@@ -896,28 +910,21 @@ Module Isect.
     (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
     → τ[n] ⊧ ⋂ B0 ∼ ⋂ B1.
   Proof.
-    move=> 𝒟.
-    case: (TowerChoice.ty_eq 𝒟) => S ℰ.
-    Tac.prove;
-    T.specialize_hyps;
-    rewrite /Tower.t in ℰ;
-    T.destruct_conjs; eauto.
+    case /TowerChoice.ty_eq => S 𝒟.
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by [eauto]);
+    constructor => κ; case: (𝒟 κ); eauto.
   Qed.
 
   Theorem intro_at_lvl {n A M0 M1} :
     (∀ κ, τ[n] ⊧ (A κ) ∋ M0 ∼ M1)
     → τ[n] ⊧ ⋂ A ∋ M0 ∼ M1.
   Proof.
-    move=> 𝒟.
-    case: (TowerChoice.mem_eq 𝒟) => S ℰ.
-    Tac.prove.
-    - T.specialize_hyps;
-      rewrite /Tower.t in ℰ;
-      T.destruct_conjs; eauto.
-    - move=> κ.
-      T.specialize_hyps.
-      case: ℰ => [_ ?].
-      eauto.
+    case /TowerChoice.mem_eq => S 𝒟.
+    eexists; split.
+    - Tac.tower_intro; (apply: Sig.conn; first by [eauto]);
+      constructor=> κ; case: (𝒟 κ); eauto.
+    - move=> κ; case: (𝒟 κ); eauto.
   Qed.
 
   (* NOTE that the type equality premise is necessary for this rule to be true! *)
@@ -939,41 +946,72 @@ Module Isect.
     eexists; split; T.specialize_hyps; eauto.
   Qed.
 
+  Hint Extern 5 => Tac.prove_pick_eq.
+
+  Theorem preserves_sigma {i A0 B0 A1 B1} :
+    (∀ κ, τ[i] ⊧ (A0 κ) ∼ (A1 κ))
+    → (∀ κ, τ[i] ⊧ ⋄ ∙ A0 κ ≫ (B0 κ) ∼ (B1 κ))
+    → τ[i] ⊧ (⋂[κ] (A0 κ × (B0 κ))) ∼ ((⋂ A1) × (⋂ B1)).
+  Proof.
+    move=> 𝒟 ℰ.
+
+    exists (fun Ms => ∀ κ, Connective.prod_el (τ[i] @ (A0 κ)) (fun x => τ[i] @ ((B0 κ) ⫽ Sub.inst0 x)%prog) Ms).
+    split.
+
+    - Tac.tower_intro; apply: Sig.conn; eauto.
+      rewrite !Clo.roll; constructor=> κ.
+      Tac.tower_intro; apply: Sig.conn; eauto.
+      rewrite !Clo.roll; constructor.
+      + case: (𝒟 κ) => ? [𝒟0 𝒟1].
+        T.use 𝒟0; rewrite /Tower.t; repeat f_equal; eauto.
+      + move=> M0 M1 M0M1.
+        case: (Fam.family_choice (𝒟 κ) (ℰ κ)) => RB /(_ M0 M1) ℱ.
+        case: ℱ.
+        * eexists; split; eauto.
+          case: (𝒟 κ) => ? [𝒟0 ?].
+          T.use 𝒟0; repeat f_equal; eauto.
+        * move=> ℱ0 [ℱ1 [ℱ2 [ℱ3 ℱ4]]].
+          repeat split; [T.use ℱ1 | T.use ℱ1 | T.use ℱ3 | T.use ℱ3];
+          rewrite /Tower.t; repeat f_equal; eauto.
+
+    - Tac.ts_choose_rel (Connective.prod_el (fun Ms => ∀ κ, τ[i] @ (A0 κ) Ms) (fun x Ms => ∀ κ, τ[i] @ (B0 κ ⫽ Sub.inst0 x)%prog Ms)).
+      + Tac.tower_intro; apply: Sig.conn; eauto.
+        rewrite Clo.roll; constructor.
+        * Tac.tower_intro; apply: Sig.conn; eauto.
+          rewrite Clo.roll; constructor=> κ.
+          case: (𝒟 κ) => ? [? 𝒟1].
+          T.use 𝒟1; rewrite /Tower.t; repeat f_equal.
+          apply: functional_extensionality => ?;
+          apply: equal_f; eauto.
+        * move=> M0 M1 M0M1; repeat split;
+          Tac.tower_intro; (apply: Sig.conn; first by [simpl; eauto]);
+          rewrite Clo.roll; constructor=> κ;
+          case: (Fam.family_choice (𝒟 κ) (ℰ κ)) => RB ℱ;
+          (case: (ℱ M0 M1);
+           first
+             by
+               [case: (𝒟 κ) => RD [𝒟0 𝒟1]; exists RD; split;
+                [eauto | T.use (M0M1 κ); apply: equal_f; eauto]]);
+          move=> ℱ0 [ℱ1 [ℱ2 [ℱ3 ℱ4]]];
+          [T.use ℱ4 | T.use ℱ4 | T.use ℱ2 | T.use ℱ2];
+          rewrite /Tower.t; repeat f_equal; eauto;
+          apply: functional_extensionality => ?; apply: equal_f; eauto.
+      + apply: binrel_extensionality => M0 M1; split.
+        * move=> H; split=> κ; specialize (H κ); dependent destruction H; auto.
+        * move=> H; dependent destruction H; auto.
+  Qed.
+
+
   Theorem cartesian {n A0 B0 A1 B1} :
     (∀ κ, τ[n] ⊧ (A0 κ) ∼ (A1 κ))
     → (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
     → τ[n] ⊧ (⋂[κ] (A0 κ × (B0 κ).[^1])) ∼ ((⋂ A1) × (⋂ B1).[^1]).
   Proof.
     move=> 𝒟 ℰ.
-    case: (TowerChoice.ty_eq 𝒟) => S𝒟 𝒟'.
-    case: (TowerChoice.ty_eq ℰ) => Sℰ ℰ'.
-    esplit; split.
-
-    - Tac.prove; T.specialize_hyps; T.destruct_conjs.
-      rewrite /Tower.t -Clo.roll.
-      apply: Sig.conn; auto.
-      apply: (@Connective.has_prod _ _ _ _ (fun _ => _)).
-      + eauto.
-      + move=> ? ? ?; repeat T.split; Program.simplify_subst; eauto.
-
-    - Tac.ts_flex_rel.
-      + Tac.tower_intro.
-        apply: Sig.conn; auto.
-        evar (R : rel).
-        apply: (@Connective.has_prod _ _ _ _ (fun _ => R)); rewrite /R; clear R.
-        * Tac.tower_intro.
-          apply: Sig.conn; auto.
-          apply: Connective.has_isect => κ.
-          T.specialize_hyps; T.destruct_conjs; Tac.prove.
-        * move=> M0 M1 //= M0M1;
-          repeat T.split; auto;
-          Tac.tower_intro; Program.simplify_subst;
-          Tac.prove; T.specialize_hyps;
-          T.destruct_conjs; Program.simplify_subst; eauto.
-
-      + T.eqcd; case => M0 M1.
-        apply: propositional_extensionality; (split => H; first constructor) => κ;
-        T.specialize_hyps; by dependent destruction H.
+    apply: preserves_sigma; simplify_subst; eauto.
+    move=> ? ? ?.
+    simplify_subst.
+    eauto.
   Qed.
 
   Theorem irrelevance {i A B}:
@@ -996,13 +1034,8 @@ Module Isect.
 End Isect.
 
 Module Later.
-  Ltac prove_pick_eq :=
-    match goal with
-    | |- ?τ @ ?A = ?R => by [eapply TS.Pick_lemma; eauto]
-    | |- ?R = ?τ @ ?A => by [symmetry; eapply TS.Pick_lemma; eauto]
-    end.
 
-  Hint Extern 5 => prove_pick_eq.
+  Local Hint Extern 5 => Tac.prove_pick_eq.
 
   Theorem formation {κ n} {A B} :
     ▷[κ] (τ[n] ⊧ A ∼ B)
