@@ -1,3 +1,6 @@
+This is the Coq formalization of Sterling and Harper's "Guarded Computational
+Type Theory".
+
 # Hacking
 
 To build this Coq development, ensure that you have Coq 8.7 installed. I
