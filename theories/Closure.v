@@ -1,6 +1,6 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality Classes.Morphisms Coq.omega.Omega.
-From gctt Require Import Notation OrderTheory Axioms Var Program OpSem TypeSystem.
-From gctt Require Tactic.
+From ctt Require Import Notation OrderTheory Axioms Var Program OpSem TypeSystem.
+From ctt Require Tactic.
 Module T := Tactic.
 
 Require Import ssreflect.

@@ -1,7 +1,7 @@
 Require Import Unicode.Utf8 ssreflect Program.Equality.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Program OpSem Axioms.
+From ctt Require Import Notation Program OpSem Axioms.
 
 (* candidate relation *)
 Definition rel := Prog.t 0 × Prog.t 0 → Ω.

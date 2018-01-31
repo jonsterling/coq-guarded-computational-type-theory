@@ -2,8 +2,8 @@ Require Import Unicode.Utf8 Program.
 Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Axioms Program Var.
-From gctt Require Tactic.
+From ctt Require Import Notation Axioms Program Var.
+From ctt Require Tactic.
 Module T := Tactic.
 
 

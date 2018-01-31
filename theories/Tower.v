@@ -3,8 +3,8 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Setoids.Setoid omeg
 Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import OrderTheory Axioms Program OpSem Closure TypeSystem.
-From gctt Require Tactic.
+From ctt Require Import OrderTheory Axioms Program OpSem Closure TypeSystem.
+From ctt Require Tactic.
 
 Module T := Tactic.
 

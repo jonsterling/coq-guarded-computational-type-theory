@@ -55,11 +55,11 @@ vo_to_obj = $(addsuffix .o,\
 ##########################
 
 COQLIBS?=\
-  -Q "theories" gctt
+  -Q "theories" ctt
 COQCHKLIBS?=\
-  -R "theories" gctt
+  -R "theories" ctt
 COQDOCLIBS?=\
-  -R "theories" gctt
+  -R "theories" ctt
 
 ##########################
 #                        #
@@ -209,22 +209,22 @@ userinstall:
 
 install:
 	cd "theories" && for i in $(NATIVEFILES0) $(GLOBFILES0) $(VFILES0) $(VOFILES0); do \
-	 install -d "`dirname "$(DSTROOT)"$(COQLIBINSTALL)/gctt/$$i`"; \
-	 install -m 0644 $$i "$(DSTROOT)"$(COQLIBINSTALL)/gctt/$$i; \
+	 install -d "`dirname "$(DSTROOT)"$(COQLIBINSTALL)/ctt/$$i`"; \
+	 install -m 0644 $$i "$(DSTROOT)"$(COQLIBINSTALL)/ctt/$$i; \
 	done
 
 install-doc:
-	install -d "$(DSTROOT)"$(COQDOCINSTALL)/gctt/html
+	install -d "$(DSTROOT)"$(COQDOCINSTALL)/ctt/html
 	for i in html/*; do \
-	 install -m 0644 $$i "$(DSTROOT)"$(COQDOCINSTALL)/gctt/$$i;\
+	 install -m 0644 $$i "$(DSTROOT)"$(COQDOCINSTALL)/ctt/$$i;\
 	done
 
 uninstall_me.sh: Makefile
 	echo '#!/bin/sh' > $@
-	printf 'cd "$${DSTROOT}"$(COQLIBINSTALL)/gctt && rm -f $(NATIVEFILES0) $(GLOBFILES0) $(VFILES0) $(VOFILES0) && find . -type d -and -empty -delete\ncd "$${DSTROOT}"$(COQLIBINSTALL) && find "gctt" -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
-	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL)/gctt \\\n' >> "$@"
+	printf 'cd "$${DSTROOT}"$(COQLIBINSTALL)/ctt && rm -f $(NATIVEFILES0) $(GLOBFILES0) $(VFILES0) $(VOFILES0) && find . -type d -and -empty -delete\ncd "$${DSTROOT}"$(COQLIBINSTALL) && find "ctt" -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
+	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL)/ctt \\\n' >> "$@"
 	printf '&& rm -f $(shell find "html" -maxdepth 1 -and -type f -print)\n' >> "$@"
-	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL) && find gctt/html -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
+	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL) && find ctt/html -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
 	chmod +x $@
 
 uninstall: uninstall_me.sh

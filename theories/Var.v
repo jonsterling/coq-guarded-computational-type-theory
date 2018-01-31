@@ -3,7 +3,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 
 Require Import Unicode.Utf8 Vectors.Fin Program.Equality Program.Basics.
-From gctt Require Tactic.
+From ctt Require Tactic.
 Module T := Tactic.
 
 Set Implicit Arguments.

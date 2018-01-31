@@ -3,8 +3,8 @@ Require Import Unicode.Utf8 Program.Tactics Program.Equality Program.Basics Logi
 Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Var OrderTheory Axioms Program OpSem Closure Tower Sequent TypeSystem.
-From gctt Require Tactic.
+From ctt Require Import Notation Var OrderTheory Axioms Program OpSem Closure Tower Sequent TypeSystem.
+From ctt Require Tactic.
 
 Module T := Tactic.
 

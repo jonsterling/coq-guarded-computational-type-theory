@@ -1,4 +1,4 @@
--Q theories gctt
+-Q theories ctt
 -arg -w -arg -notation-overridden,-redundant-canonical-projection,-several-object-files
 theories/Notation.v
 theories/Tactic.v

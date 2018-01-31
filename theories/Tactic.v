@@ -1,7 +1,7 @@
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality.
 
 Require Import ssreflect.
-From gctt Require Import Notation Axioms.
+From ctt Require Import Notation Axioms.
 
 Local Ltac mysplit :=
   simpl;

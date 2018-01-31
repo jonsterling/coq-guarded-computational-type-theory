@@ -2,8 +2,8 @@ Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
 Require Import Unicode.Utf8 Program.Equality Logic.FunctionalExtensionality.
-From gctt Require Import Var Program Expression Elaborate Sequent Tower.
-From gctt Require Theorems.
+From ctt Require Import Var Program Expression Elaborate Sequent Tower.
+From ctt Require Theorems.
 Module Th := Theorems.
 
 Definition quote_bool (b : bool) {Λ} : Expr.t Λ 0 :=

@@ -3,8 +3,8 @@ Require Import Unicode.Utf8 Program.Equality Program.Tactics Program.Basics Vect
 Require Import ssreflect.
 Set Bullet Behavior "Strict Subproofs".
 
-From gctt Require Import Notation Program Axioms Var Sequent Tower Expression.
-From gctt Require Tactic.
+From ctt Require Import Notation Program Axioms Var Sequent Tower Expression.
+From ctt Require Tactic.
 Module T := Tactic.
 
 Generalizable All Variables.

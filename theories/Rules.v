@@ -4,9 +4,9 @@ Set Bullet Behavior "Strict Subproofs".
 Generalizable All Variables.
 
 Require Import Unicode.Utf8 Program.Equality Program.Basics omega.Omega Logic.FunctionalExtensionality.
-From gctt Require Import Axioms Var Program Expression Elaborate Tower Closure Sequent.
+From ctt Require Import Axioms Var Program Expression Elaborate Tower Closure Sequent.
 
-From gctt Require Theorems.
+From ctt Require Theorems.
 Module Th := Theorems.
 
 Open Scope program_scope.
