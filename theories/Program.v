@@ -191,7 +191,7 @@ Module Prog.
   Theorem subst_coh {Ψ1 Ψ2 Ψ3} (σ12 : Sub.t Ψ1 Ψ2) (σ23 : Sub.t Ψ2 Ψ3) (M : t _) :
     M ⫽ σ12 ⫽ σ23
     =
-    M ⫽ (subst σ23 ∘ σ12).
+    M ⫽ (σ23 ◎ σ12).
   Proof.
     move: Ψ2 Ψ3 σ12 σ23.
     rewrite /compose.
