@@ -455,31 +455,39 @@ Module Isect.
     - simplify_subst; eauto.
   Qed.
 
-  Theorem cartesian `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
+  Theorem preserves_pi `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
     ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
-    → ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
-    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (⋂ (A0 × B0.[^1])) ≐ ((⋂ A1) × (⋂ B1.[^1])) ⟧.
+    → ⟦ S Λ ∣ Γ.⦃^1⦄ ∙ A0 ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (⋂ (A0 × B0)) ≐ ((⋂ A1) × (⋂ B1)) ⟧.
   Proof.
     move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01 //=.
     apply: Th.Univ.intro.
     simplify_subst.
-    have R :=
-      @Th.Isect.cartesian
-        i
-        (fun κ => (∥A0∥ κ ∷ κs) ⫽ γ0)%prog
-        (fun κ => (∥B0∥ κ ∷ κs) ⫽ γ0)%prog
-        (fun κ => (∥A1∥ κ ∷ κs) ⫽ γ1)%prog
-        (fun κ => (∥B1∥ κ ∷ κs) ⫽ γ1)%prog.
-    T.efwd R.
-    - T.use R; repeat f_equal; eauto.
+    apply: Th.Isect.preserves_sigma.
+    - move=> κ.
+      Th.Univ.tac.
+      apply: 𝒟; eauto.
+    - move=> κ γ0' γ1' γ01'.
+      Th.Univ.tac.
       simplify_subst.
-      by dependent induction x0.
-    - move=> κ.
-      Th.Univ.tac.
-      apply: ℰ; auto.
-    - move=> κ.
-      Th.Univ.tac.
-      apply: 𝒟; auto.
+      apply: ℰ.
+      + split; auto.
+        move=> ? ? ?.
+        suff:  ⟦ (S Λ) ∣ Γ .⦃ ^ 1 ⦄ ≫ 𝕌[ i] ∋ A0 ≐ A0 ⟧.
+        * move=> H; Th.Univ.tac; apply: H; eauto.
+        * move=> ? ? ? ? ? ?; simplify_subst.
+          apply: Th.General.mem_eq_trans.
+          ** apply: Th.General.mem_eq_symm; eauto.
+             apply: 𝒟; eauto.
+             apply: Th.General.env_eq_symm; eauto.
+          ** apply: 𝒟; eauto.
+             apply: Th.General.env_eq_refl_left; eauto.
+      + eauto.
+      + split; simpl; simplify_subst.
+        ** T.use γ01; eauto.
+        ** case: γ01' => //= ? ℋ; simpl.
+           apply: (Th.Level.eq_mem_from_level i).
+           T.use ℋ; eauto.
   Qed.
 End Isect.
 
@@ -742,8 +750,7 @@ Module Examples.
           apply: Bool.univ_eq.
         * apply: Later.force.
           apply: BitSeq_wf.
-      + replace _ with (((⋂ ▶[#0] BitStream #0).[^1])%etm : Expr.t Λ (S Ψ)); auto.
-        apply: Isect.cartesian.
+      + apply: Isect.preserves_pi.
         * apply: Bool.univ_eq.
         * apply: Later.univ_eq.
           apply: Later.intro.
