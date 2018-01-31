@@ -584,9 +584,9 @@ Module Fam.
   Proof.
     move=> 𝒟 ℰ.
     set R := (fun M =>
-         fun es =>
+         fun Ms =>
            τ ⊧ A0 ∋ M ∼ M
-           → τ ⊧ B0 ⫽ Sub.inst0 M ∋ (π₁ es) ∼ (π₂ es)).
+           → τ ⊧ B0 ⫽ Sub.inst0 M ∋ (π₁ Ms) ∼ (π₂ Ms)).
 
     exists R.
 
@@ -1043,7 +1043,7 @@ Module Later.
   Proof.
     move => 𝒟.
     unfold atomic_eq_ty in 𝒟.
-    exists (fun es => ▷[κ] (τ[n] @ A es)); split.
+    exists (fun Ms => ▷[κ] (τ[n] @ A Ms)); split.
     - Tac.tower_intro; apply: Sig.conn; eauto.
       apply: Connective.has_later.
       Later.gather; case=> R' [AR' BR'].
@@ -1081,7 +1081,7 @@ Module Later.
   Proof.
     move=> /(Later.map level_commute_eq_mem).
     move=> /Later.yank_existential; case; auto => n 𝒟.
-    exists (fun es => ▷[κ] (τ[n] @ A es)).
+    exists (fun Ms => ▷[κ] (τ[n] @ A Ms)).
     split.
     - exists n; Tac.tower_intro.
       apply: Sig.conn; eauto.
@@ -1152,7 +1152,7 @@ Module Later.
         Spine.simplify; by [contradiction].
       + move {IHn}; suff: ▷[κ0] (τ[i] ⊧ A0 ∼ A1).
         * move=> 𝒟.
-          exists (fun es => ▷[κ0] (τ[i] @ A0 es)); split; simpl.
+          exists (fun Ms => ▷[κ0] (τ[i] @ A0 Ms)); split; simpl.
           ** Tac.tower_intro; apply: Sig.conn; eauto.
              apply: Connective.has_later.
              rewrite Clo.roll.
@@ -1252,7 +1252,7 @@ Module Later.
     apply: (Level.eq_mem_from_level n𝒟).
     Tower.destruct_tower.
 
-    exists (Connective.fun_el (fun es => ▷[κ0] (τ[n𝒟] @ A es)) (fun x => fun es => ▷[κ0] (τ[n𝒟] @ (B ⫽ Sub.inst0 x)%prog es))).
+    exists (Connective.fun_el (fun Ms => ▷[κ0] (τ[n𝒟] @ A Ms)) (fun x => fun Ms => ▷[κ0] (τ[n𝒟] @ (B ⫽ Sub.inst0 x)%prog Ms))).
     split.
     - Tac.tower_intro; apply: Sig.conn; eauto.
       apply: Connective.has_arr.
@@ -1412,7 +1412,7 @@ Module Later.
     move=> 𝒟 ℰ.
     apply: General.ty_eq_symm.
 
-    exists (Connective.prod_el (fun es => ▷[κ] (τ[i] @ A1 es)) (fun x => fun es => ▷[κ] (τ[i] @ (B1 ⫽ Sub.inst0 x)%prog es))).
+    exists (Connective.prod_el (fun Ms => ▷[κ] (τ[i] @ A1 Ms)) (fun x => fun Ms => ▷[κ] (τ[i] @ (B1 ⫽ Sub.inst0 x)%prog Ms))).
     split.
 
     - Tac.tower_intro; apply: Sig.conn; eauto.

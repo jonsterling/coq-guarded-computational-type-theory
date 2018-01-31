@@ -76,8 +76,8 @@ Module TS.
             → type_computational_at (A, R) }.
   End Law.
 
-  Inductive Pick (τ : cts) A es : Prop :=
-  | pick : (∀ R, τ (A, R) → R es) → Pick τ A es.
+  Inductive Pick (τ : cts) A Ms : Prop :=
+  | pick : (∀ R, τ (A, R) → R Ms) → Pick τ A Ms.
 
   Module PickNotation.
     Notation "τ @ A" := (Pick τ A) (at level 10).

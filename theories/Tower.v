@@ -19,8 +19,8 @@ Module Spine.
       fun X =>
         ∃ (j : nat) (p : j ≤ n),
           fst X ⇓ Prog.univ j
-          ∧ snd X = fun es =>
-                      ∃ S, Clo.t (@t j _) (fst es, S) ∧ Clo.t (@t j _) (snd es, S)
+          ∧ snd X = fun Ms =>
+                      ∃ S, Clo.t (@t j _) (fst Ms, S) ∧ Clo.t (@t j _) (snd Ms, S)
     end.
 
   Theorem unfold_S :
@@ -30,8 +30,8 @@ Module Spine.
         ∃ (j : nat) (p : j ≤ n),
           fst X ⇓ Prog.univ j
           ∧ snd X =
-            fun es =>
-              ∃ S, Clo.t (t j) (fst es, S) ∧ Clo.t (t j) (snd es, S).
+            fun Ms =>
+              ∃ S, Clo.t (t j) (fst Ms, S) ∧ Clo.t (t j) (snd Ms, S).
   Proof.
     move=> n.
     T.eqcd => X.
