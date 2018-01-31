@@ -150,9 +150,9 @@ Module Clo.
   Proof.
     move=> σ.
     apply: binrel_extensionality => [A R].
-    T.split => [X | X]; [rewrite /t|];
-    edestruct (LFP.roll (Sig.t σ));
-    auto.
+    T.split => [X | X]; [rewrite /t|].
+    - rewrite -LFP.roll; eauto.
+    - rewrite LFP.roll; eauto.
   Qed.
 
   Lemma map_has {σ ρ ι A R} :
@@ -394,8 +394,9 @@ Module Clo.
     - move=> ι A' A'0 R' 𝒟' ℰ //=; split.
       + rewrite -roll.
         apply: Sig.conn; eauto.
-        apply: map_has; eauto.
+        apply: map_has; last by eauto.
         move=> ? [? ?] //=.
+
       + destruct_has; simpl in *; try by [constructor; eauto]; cleanup.
         * constructor.
           ** constructor.
