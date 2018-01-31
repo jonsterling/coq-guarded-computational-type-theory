@@ -92,7 +92,7 @@ Module Later.
     end.
 
   Axiom Total : Type → Ω.
-  Axiom nat_total : Total nat.
+
 
   Definition Inh (A : Type) : Ω := ∃ x : A, ⊤.
 
@@ -113,18 +113,14 @@ Module Later.
       (∀ x : A, t κ (P x))
       → t κ (∀ x : A, P x).
 
-  Theorem pow_inh : ∀ A, Inh (A → Ω).
-  Proof.
-    move=> A.
-    by exists (fun _ => ⊤).
-  Qed.
 
+  Axiom nat_total : Total nat.
   Theorem nat_inh : Inh nat.
   Proof.
-      by exists 0.
+    by exists 0.
   Qed.
 
-  Hint Resolve pow_inh nat_total nat_inh.
+  Hint Resolve nat_total nat_inh.
 
 
   Theorem commute_eq : ∀ κ (p q : Ω), (t κ p) = (t κ q) → t κ (p = q).
