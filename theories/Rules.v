@@ -455,7 +455,7 @@ Module Isect.
     - simplify_subst; eauto.
   Qed.
 
-  Theorem preserves_pi `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
+  Theorem preserves_sigma `{Γ : ECtx.t Λ Ψ} i {A0 B0 A1 B1} :
     ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
     → ⟦ S Λ ∣ Γ.⦃^1⦄ ∙ A0 ≫ 𝕌[i] ∋ B0 ≐ B1 ⟧
     → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (⋂ (A0 × B0)) ≐ ((⋂ A1) × (⋂ B1)) ⟧.
@@ -750,7 +750,7 @@ Module Examples.
           apply: Bool.univ_eq.
         * apply: Later.force.
           apply: BitSeq_wf.
-      + apply: Isect.preserves_pi.
+      + apply: Isect.preserves_sigma.
         * apply: Bool.univ_eq.
         * apply: Later.univ_eq.
           apply: Later.intro.
