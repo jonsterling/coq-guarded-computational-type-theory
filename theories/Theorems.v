@@ -893,17 +893,73 @@ Module TowerChoice.
   Qed.
 
   Lemma mem_eq {n : nat} {A : 𝕂 → Prog.t 0} {M0 M1} :
-    (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (M0, M1))
-    → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (M0, M1).
+    (∀ κ, ∃ Rκ, τ[n] (A κ, Rκ) ∧ Rκ (M0 κ, M1 κ))
+    → ∃ S, ∀ κ, τ[n] (A κ, S κ) ∧ S κ (M0 κ, M1 κ).
   Proof.
     move=> X.
-    apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (M0, M1))) => κ.
+    apply (@unique_choice _ _ (fun κ R => τ[n] (A κ, R) ∧ R (M0 κ, M1 κ))) => κ.
     case: (X κ) => S T.
     eexists; split; eauto => S' T';
     apply: TS.is_extensional; eexists;
     T.destruct_conjs; eauto.
   Qed.
 End TowerChoice.
+
+Module KArr.
+  Theorem formation {n B0 B1} :
+    (∀ κ, τ[n] ⊧ (B0 κ) ∼ (B1 κ))
+    → τ[n] ⊧ (Prog.karr B0) ∼ (Prog.karr B1).
+  Proof.
+    case /TowerChoice.ty_eq => S 𝒟.
+    eexists; split; Tac.tower_intro;
+    (apply: Sig.conn; first by [eauto]);
+    constructor => κ; case: (𝒟 κ); eauto.
+  Qed.
+
+
+  Theorem intro_at_lvl {n A M0 M1} :
+    (∀ κ, τ[n] ⊧ (A κ) ∋ (M0 κ) ∼ (M1 κ))
+    → τ[n] ⊧ Prog.karr A ∋ (Prog.klam M0) ∼ (Prog.klam M1).
+  Proof.
+    case /TowerChoice.mem_eq => S 𝒟.
+    eexists; split.
+    - Tac.tower_intro; (apply: Sig.conn; first by [eauto]);
+      constructor=> κ; case: (𝒟 κ); eauto.
+    - constructor=> κ.
+      suff H : is_cper (S κ).
+      + eapply (crel _ H (M0 κ) (Prog.kapp (Prog.klam M0) κ)).
+        * move=> ? ?; by apply: OpSem.kapp_eval.
+        * apply: symmetric; first by (apply: per).
+          eapply (crel _ H (M1 κ) (Prog.kapp (Prog.klam M1) κ)).
+          ** move=> ? ?; by apply: OpSem.kapp_eval.
+          ** apply: symmetric; first by (apply: per).
+             T.specialize_hyps.
+             by T.destruct_conjs.
+      + apply: TS.is_cper_valued.
+        T.specialize_hyps; T.destruct_conjs.
+        eexists; eauto.
+  Qed.
+
+
+  Theorem intro {A M0 M1} :
+    τω ⊧ (Prog.karr A) ∼ (Prog.karr A)
+    → (∀ κ, τω ⊧ (A κ) ∋ (M0 κ) ∼ (M1 κ))
+    → τω ⊧ Prog.karr A ∋ (Prog.klam M0) ∼ (Prog.klam M1).
+  Proof.
+    move=> /Level.eq_ty_to_level [n𝒟 𝒟] ℰ.
+    apply: (Level.eq_mem_from_level n𝒟).
+    apply: intro_at_lvl => κ.
+    T.specialize_hyps.
+
+    case: {ℰ} (Level.eq_mem_to_level ℰ) => nℰ ℰ.
+    apply: Level.mem_eq_at_lvl_of_typehood; first by eassumption.
+
+    case: 𝒟 => R [𝒟 _].
+    Tower.destruct_tower.
+    eexists; split; T.specialize_hyps; eauto.
+  Qed.
+
+End KArr.
 
 Module Isect.
   Theorem formation {n B0 B1} :
