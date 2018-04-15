@@ -959,6 +959,21 @@ Module KArr.
     eexists; split; T.specialize_hyps; eauto.
   Qed.
 
+  Theorem elim {i B f0 f1 κ} :
+    (∀ κ, τ[i] ⊧ (B κ) ∼ (B κ))
+    → τω ⊧ Prog.karr B ∋ f0 ∼ f1
+    → τω ⊧ (B κ) ∋ (Prog.kapp f0 κ) ∼ (Prog.kapp f1 κ).
+  Proof.
+    case /TowerChoice.ty_eq => S 𝒟.
+    move=> /(Level.eq_mem_to_level) [nℰ ℰ].
+    case: ℰ => Rℰ [ℰ0 ℰ1].
+    T.specialize_hyps.
+    Tower.destruct_tower.
+    dependent destruction ℰ1.
+    T.specialize_hyps.
+    eexists; split; eauto.
+    eexists; eauto.
+  Qed.
 End KArr.
 
 Module Isect.
