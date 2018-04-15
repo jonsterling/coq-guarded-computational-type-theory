@@ -38,13 +38,16 @@ Fixpoint elab_tm `(M : Expr.t Λ Ψ) (κs : Env.t Λ) : Prog.t Ψ :=
   | Expr.ff => Prog.ff
   | Expr.prod A B => ∥A∥ κs × ∥B∥ κs
   | Expr.arr A B => (∥A∥ κs) ⇒ ∥B∥ κs
+  | Expr.karr A => Prog.karr (fun κ => ∥A∥ κ ∷ κs)
   | Expr.pair A B => ⟨∥A∥ κs, ∥B∥ κs⟩
-  | Expr.ltr r A => ▶[κs r] ∥A∥ κs
+  | Expr.ltr k A => ▶[κs k] ∥A∥ κs
   | Expr.isect A => ⋂[κ] ∥A∥ κ ∷ κs
   | Expr.univ i => 𝕌[i]
   | Expr.fix_ M => 𝛍{∥M∥ κs}
   | Expr.lam M => 𝛌{∥M∥ κs}
+  | Expr.klam M => Prog.klam (fun κ => ∥M∥ κ ∷ κs)
   | Expr.app M1 M2 => ∥M1∥ κs ⋅ ∥M2∥ κs
+  | Expr.kapp M k => Prog.kapp (∥M∥ κs) (κs k)
   end
 where "∥ M ∥ κs" := (elab_tm M%etm κs) : prog_scope.
 
@@ -87,15 +90,15 @@ Theorem elab_tm_clk_naturality {Λ1 Λ2 Ψ} (M : Expr.t Λ1 Ψ) (ρ : Ren.t Λ1 
   ∥ M ∥ κs ∘ ρ = ∥ M.⦃ρ⦄ ∥ κs.
 Proof.
   move: Λ2 ρ κs; elim M => *;
-  T.rewrites_with ltac:(try rewrite Ren.cong_id).
+  T.rewrites_with ltac:(try rewrite Ren.cong_id);
 
-  repeat f_equal; T.eqcd => *.
+  repeat f_equal; T.eqcd => *;
   match goal with
   | x : _ |- _ => rewrite -x
-  end.
+  end;
 
-  f_equal.
-  T.eqcd => x.
+  f_equal;
+  T.eqcd => x;
   by dependent induction x.
 Qed.
 
@@ -169,7 +172,7 @@ Proof.
           try rewrite elab_subst_cong_coh;
           simplify_subst;
           try rewrite -elab_tm_clk_naturality;
-          try rewrite -Sub.cong_coh_ptwise).
+          try rewrite -Sub.cong_coh_ptwise);
 
   by dependent induction x0.
 Qed.
