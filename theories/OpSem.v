@@ -19,6 +19,7 @@ Inductive is_val : Prog.t 0 → Ω :=
 | val_unit : 𝟙 val
 | val_prod : ∀ {M1 M2}, (M1 × M2) val
 | val_arr : ∀ {M1 M2}, (M1 ⇒ M2) val
+| val_karr : ∀ {M}, Prog.karr M val
 | val_ltr : ∀ {κ M}, ▶[κ] M val
 | val_isect : ∀ {M}, ⋂ M val
 | val_univ : ∀ {i}, 𝕌[i] val
@@ -27,6 +28,7 @@ Inductive is_val : Prog.t 0 → Ω :=
 | val_ff : Prog.ff val
 | val_pair : ∀ {M1 M2}, ⟨M1, M2⟩ val
 | val_lam : ∀ {M}, 𝛌{ M } val
+| val_klam : ∀ {M}, Prog.klam M val
 where "V 'val'" := (is_val V%prog).
 
 Inductive step : Prog.t 0 → Prog.t 0 → Ω :=
@@ -45,9 +47,15 @@ Inductive step : Prog.t 0 → Prog.t 0 → Ω :=
       M1 ↦ M1'
       → (M1 ⋅ M2) ↦ (M1' ⋅ M2)
 
+| step_kapp_cong :
+    ∀ {M M' κ},
+      M ↦ M'
+      → (Prog.kapp M κ) ↦ (Prog.kapp M' κ)
+
 | step_fst_pair : ∀ {M1 M2}, ⟨M1,M2⟩.1 ↦ M1
 | step_snd_pair : ∀ {M1 M2}, ⟨M1,M2⟩.2 ↦ M2
 | step_app_lam : ∀ {M1 M2}, 𝛌{M1} ⋅ M2 ↦ (M1 ⫽ Sub.inst0 M2)
+| step_kapp_klam : ∀ {M κ}, Prog.kapp (Prog.klam M) κ ↦ M κ
 | step_fix : ∀ M, 𝛍{M} ↦ (M ⫽ Sub.inst0 (𝛍{M}))
 where "M ↦ M'" := (step M%prog M'%prog).
 
