@@ -17,6 +17,7 @@ Module Prog.
   | fst : t Ψ -> t Ψ
   | snd : t Ψ → t Ψ
   | app : t Ψ → t Ψ → t Ψ
+  | kapp : t Ψ → 𝕂 → t Ψ
   | void : t Ψ
   | unit : t Ψ
   | bool : t Ψ
@@ -27,8 +28,10 @@ Module Prog.
   | arr : t Ψ -> t (S Ψ) -> t Ψ
   | pair : t Ψ -> t Ψ -> t Ψ
   | lam : t (S Ψ) → t Ψ
+  | klam : (𝕂 → t Ψ) → t Ψ
   | ltr : 𝕂 -> t Ψ -> t Ψ
   | isect : (𝕂 → t Ψ) → t Ψ
+  | karr : (𝕂 → t Ψ) → t Ψ
   | univ : nat -> t Ψ
   | fix_ : t (S Ψ) → t Ψ.
 
@@ -70,6 +73,7 @@ Module Prog.
     | fst M => fst (map ρ M)
     | snd M => snd (map ρ M)
     | app M1 M2 => app (map ρ M1) (map ρ M2)
+    | kapp M κ => kapp (map ρ M) κ
     | unit => unit
     | void => void
     | bool => bool
@@ -80,8 +84,10 @@ Module Prog.
     | arr A B => arr (map ρ A) (map (Ren.cong ρ) B)
     | pair M1 M2 => pair (map ρ M1) (map ρ M2)
     | lam M => lam (map (Ren.cong ρ) M)
+    | klam M => klam (fun κ => map ρ (M κ))
     | ltr κ A => ltr κ (map ρ A)
     | isect A => isect (fun κ => map ρ (A κ))
+    | karr A => karr (fun κ => map ρ (A κ))
     | univ i => univ i
     | fix_ M => fix_ (map (Ren.cong ρ) M)
     end.
@@ -120,6 +126,7 @@ Module Prog.
     | fst M => fst (subst σ M)
     | snd M => snd (subst σ M)
     | app M1 M2 => app (subst σ M1) (subst σ M2)
+    | kapp M κ => kapp (subst σ M) κ
     | void => void
     | unit => unit
     | bool => bool
@@ -130,8 +137,10 @@ Module Prog.
     | arr A B => arr (subst σ A) (subst (Sub.cong σ) B)
     | pair M1 M2 => pair (subst σ M1) (subst σ M2)
     | lam M => lam (subst (Sub.cong σ) M)
+    | klam M => klam (fun κ => subst σ (M κ))
     | ltr κ A => ltr κ (subst σ A)
     | isect A => isect (fun κ => subst σ (A κ))
+    | karr A => karr (fun κ => subst σ (A κ))
     | univ i => univ i
     | fix_ M => fix_ (subst (Sub.cong σ) M)
     end.

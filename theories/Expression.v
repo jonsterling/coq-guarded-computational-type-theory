@@ -29,13 +29,16 @@ Module Expr.
   | ff : t Λ Ψ
   | prod : t Λ Ψ -> t Λ (S Ψ) -> t Λ Ψ
   | arr : t Λ Ψ -> t Λ (S Ψ) -> t Λ Ψ
+  | karr : t (S Λ) Ψ → t Λ Ψ
   | pair : t Λ Ψ -> t Λ Ψ -> t Λ Ψ
   | ltr : Var Λ → t Λ Ψ -> t Λ Ψ
   | isect : t (S Λ) Ψ -> t Λ Ψ
   | univ : nat -> t Λ Ψ
   | lam : t Λ (S Ψ) → t Λ Ψ
+  | klam : t (S Λ) Ψ → t Λ Ψ
   | fix_ : t Λ (S Ψ) → t Λ Ψ
-  | app : t Λ Ψ → t Λ Ψ → t Λ Ψ.
+  | app : t Λ Ψ → t Λ Ψ → t Λ Ψ
+  | kapp : t Λ Ψ → Var Λ → t Λ Ψ.
 
   Arguments void [Λ Ψ].
   Arguments unit [Λ Ψ].
@@ -84,13 +87,16 @@ Module Expr.
     | ff => ff
     | prod A B => prod (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
     | arr A B => arr (map ρΛ ρΨ A) (map ρΛ (Ren.cong ρΨ) B)
+    | karr A => karr (map (Ren.cong ρΛ) ρΨ A)
     | pair M1 M2 => pair (map ρΛ ρΨ M1) (map ρΛ ρΨ M2)
     | ltr k A => ltr (ρΛ k) (map ρΛ ρΨ A)
     | isect A => isect (map (Ren.cong ρΛ) ρΨ A)
     | univ i => univ i
     | fix_ M => fix_ (map ρΛ (Ren.cong ρΨ) M)
     | lam M => lam (map ρΛ (Ren.cong ρΨ) M)
+    | klam M => klam (map (Ren.cong ρΛ) ρΨ M)
     | app M1 M2 => app (map ρΛ ρΨ M1) (map ρΛ ρΨ M2)
+    | kapp M k => kapp (map ρΛ ρΨ M) (ρΛ k)
     end.
 
   Definition mapv {Λ} `(ρΨ : Ren.t Ψ1 Ψ2) : t Λ Ψ1 → t Λ Ψ2 :=
@@ -137,13 +143,16 @@ Module Expr.
     | ff => ff
     | prod A B => prod (subst σ A) (subst (Sub.cong σ) B)
     | arr A B => arr (subst σ A) (subst (Sub.cong σ) B)
+    | karr A => karr (subst (wk_sub σ) A)
     | pair M1 M2 => pair (subst σ M1) (subst σ M2)
     | ltr k A => ltr k (subst σ A)
     | isect A => isect (subst (wk_sub σ) A)
     | univ i => univ i
     | fix_ M => fix_ (subst (Sub.cong σ) M)
     | lam M => lam (subst (Sub.cong σ) M)
+    | klam M => klam (subst (wk_sub σ) M)
     | app M1 M2 => app (subst σ M1) (subst σ M2)
+    | kapp M k => kapp (subst σ M) k
     end.
 
   Module SubstNotation.
