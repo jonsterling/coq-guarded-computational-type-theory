@@ -34,6 +34,13 @@ Module Ren.
     | S n => fun x => weak n (Fin.FS x)
     end.
 
+  Program Definition inst0 {Ψ} (z : Var Ψ) : t (S Ψ) Ψ :=
+    fun x =>
+      match x with
+      | Fin.F1 => z
+      | Fin.FS y => y
+      end.
+
 End Ren.
 
 Module Sub.

@@ -409,6 +409,65 @@ Module Prod.
 End Prod.
 
 
+Module KArr.
+
+  Theorem univ_eq `{Γ : ECtx.t Λ Ψ} i {A0 A1} :
+    ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A0 ≐ A1 ⟧
+    → ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (Expr.karr A0) ≐ (Expr.karr A1) ⟧.
+  Proof.
+    move=> 𝒟 κs Γctx ℰ γ0 γ1 γ01 //=.
+    apply: Th.Univ.intro.
+    apply: Th.KArr.formation => κ.
+    T.efwd 𝒟; eauto;
+    autorewrite with core;
+    eauto.
+  Qed.
+
+  Theorem intro `{Γ : ECtx.t Λ Ψ} i {A M0 M1} :
+    ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ A ∋ M0 ≐ M1 ⟧
+    → ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ A ≐ A ⟧
+    → ⟦ Λ ∣ Γ ≫ Expr.karr A ∋ (Expr.klam M0) ≐ (Expr.klam M1) ⟧.
+  Proof.
+    move=> 𝒟 ℱ κs ? ℰ ? ? ? //=.
+    apply: Th.KArr.intro.
+    - Th.Univ.tac.
+      apply: univ_eq; eauto.
+      apply: Th.General.env_eq_refl_left; eauto.
+    - move=> κ.
+      T.efwd 𝒟.
+      + T.use 𝒟; eauto.
+      + eauto.
+      + Th.Univ.tac.
+        apply: ℱ; eauto.
+      + eauto.
+  Qed.
+
+
+  Theorem elim `{Γ : ECtx.t Λ Ψ} {i B f0 f1 k} :
+    ⟦ S Λ ∣ Γ.⦃^1⦄ ≫ 𝕌[i] ∋ B ≐ B ⟧
+    → ⟦ Λ ∣ Γ ≫ Expr.karr B ∋ f0 ≐ f1 ⟧
+    → ⟦ Λ ∣ Γ ≫ B.⦃Ren.inst0 k⦄ ∋ (Expr.kapp f0 k) ≐ (Expr.kapp f1 k) ⟧.
+  Proof.
+    move=> 𝒟 ℰ κs ℱ 𝒢 γ0 γ1 γ01.
+    autorewrite with syn_db; simpl.
+    replace (κs ∘ Ren.inst0 k) with (κs k ∷ κs).
+    - eapply (@Th.KArr.elim i (fun κ => ((∥ B ∥ κ ∷ κs) ⫽ γ0)%prog)).
+      + move=> κ.
+        apply: Th.Univ.inversion.
+        apply: 𝒟; eauto.
+        apply: Th.General.env_eq_refl_left; eauto.
+      + apply: ℰ; eauto.
+        move=> γ0' γ1' γ01'.
+        apply: (Th.Level.eq_ty_from_level i).
+        simpl.
+        apply: Th.KArr.formation => κ.
+        apply: Th.Univ.inversion.
+        apply: 𝒟; eauto.
+    - T.eqcd => x; dependent destruction x; eauto.
+  Qed.
+End KArr.
+
+
 Module Isect.
 
   Theorem univ_eq `{Γ : ECtx.t Λ Ψ} i {A0 A1} :
