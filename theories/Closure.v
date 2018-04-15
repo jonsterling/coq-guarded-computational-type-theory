@@ -8,7 +8,7 @@ Set Bullet Behavior "Strict Subproofs".
 Set Implicit Arguments.
 
 Module Connective.
-  Inductive ctor := void | unit | bool | prod | arr | later | isect.
+  Inductive ctor := void | unit | bool | prod | arr | later | isect | karr.
 
   Inductive void_el : rel :=.
 
@@ -34,6 +34,12 @@ Module Connective.
             R0 (M0, M1)
             → R1 M0 ((f0 ⋅ M0)%prog, (f1 ⋅ M1)%prog))
         → fun_el R0 R1 (f0, f1).
+
+  Inductive kfun_el (R : 𝕂 → rel) : rel :=
+  | kapp :
+      ∀ f0 f1,
+        (∀ κ, R κ (Prog.kapp f0 κ, Prog.kapp f1 κ))
+        → kfun_el R (f0, f1).
 
   Inductive cext (R : rel) : rel :=
   | mk_cext :
@@ -81,7 +87,11 @@ Module Connective.
   | has_isect :
       ∀ B S,
         (∀ κ, τ (B κ, S κ))
-        → has τ isect (Prog.isect B, fun M0M1 => ∀ κ, S κ M0M1).
+        → has τ isect (Prog.isect B, fun M0M1 => ∀ κ, S κ M0M1)
+  | has_karr :
+      ∀ B S,
+        (∀ κ, τ (B κ, S κ))
+        → has τ karr (Prog.karr B, kfun_el S).
 
   Hint Constructors has cext prod_el bool_val unit_val.
 
@@ -326,6 +336,10 @@ Module Clo.
       + do ? (T.eqcd; moves).
         T.specialize_hyps.
         rewrite_functionality_ih; eauto.
+      + replace S0 with S; auto.
+        T.eqcd => κ.
+        T.specialize_hyps.
+        apply: H; auto.
   Qed.
 
   Theorem cext_per {R} :
@@ -526,6 +540,31 @@ Module Clo.
              T.specialize_hyps.
              T.destruct_conjs.
              apply: crel; eauto.
+
+        * constructor.
+          ** constructor.
+             *** move=> M0 M1 H1.
+                 dependent destruction H1.
+                 constructor => κ.
+                 T.specialize_hyps.
+                 T.destruct_conjs.
+                 apply: symmetric; eauto.
+                 apply: per; eauto.
+             *** move=> M0 M1 M2 H1 H2.
+                 dependent destruction H1.
+                 dependent destruction H2.
+                 constructor => κ.
+                 T.specialize_hyps.
+                 T.destruct_conjs.
+                 apply: transitive; first (apply: per); eauto.
+          ** constructor => κ.
+             dependent destruction H1.
+             T.specialize_hyps.
+             T.destruct_conjs.
+             apply: crel.
+             *** auto.
+             *** apply: OpSem.kapp_cong_approx; eauto.
+             *** auto.
   Qed.
 
   Instance type_computational {σ} :
@@ -550,6 +589,10 @@ Module Clo.
         repeat split; eauto.
       + constructor.
         Later.gather.
+        eauto.
+      + constructor.
+        move=> κ.
+        T.specialize_hyps.
         eauto.
       + constructor.
         move=> κ.

@@ -230,6 +230,28 @@ Proof.
     * edestruct IHeval_steps0; eauto.
 Qed.
 
+Theorem kapp_eval :
+  ∀ N N' κ V,
+    (N ⇓ Prog.klam N')
+    → N' κ ⇓ V
+    → Prog.kapp N κ ⇓ V.
+Proof.
+  move=> N N' κ V H0 H1.
+  dependent induction H0.
+  dependent induction eval_steps0.
+  - constructor.
+    + econstructor.
+      * by apply: step_kapp_klam.
+      * by dependent induction H1.
+    + by destruct H1.
+  - dependent destruction H1.
+    constructor; auto.
+    econstructor.
+    * apply: step_kapp_cong; eauto.
+    * edestruct IHeval_steps0; eauto.
+Qed.
+
+
 Theorem snd_eval :
   ∀ M M0 M1 V,
     M ⇓ ⟨M0,M1⟩
@@ -311,6 +333,28 @@ Proof.
     + by exists M1.
 Qed.
 
+Theorem kapp_eval_inv :
+  ∀ N κ V,
+    Prog.kapp N κ ⇓ V
+    → ∃ N', (N ⇓ Prog.klam N') ∧ (N' κ) ⇓ V.
+Proof.
+  move=> N κ V H.
+  dependent induction H.
+  dependent induction eval_steps0.
+  - dependent induction eval_val0.
+  - dependent induction H.
+    + edestruct IHeval_steps0; eauto.
+      destruct H0.
+      exists x; split.
+      * constructor; auto.
+        econstructor; eauto.
+        by dependent induction H0.
+      * auto.
+    + by exists M.
+Qed.
+
+
+
 
 Theorem fst_cong_approx :
   ∀ M0 M1,
@@ -343,4 +387,15 @@ Proof.
   have := app_eval_inv ℰ.
   move=> [N' [? ?]].
   apply: app_eval; eauto.
+Qed.
+
+Theorem kapp_cong_approx :
+  ∀ f0 f1 κ,
+    f0 ≼₀ f1
+    → Prog.kapp f0 κ ≼₀ Prog.kapp f1 κ.
+Proof.
+  move=> N0 N1 κ N01 V ℰ.
+  have := kapp_eval_inv ℰ.
+  move=> [N' [? ?]].
+  apply: kapp_eval; eauto.
 Qed.
