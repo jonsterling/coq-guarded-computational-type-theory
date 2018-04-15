@@ -30,6 +30,13 @@ Local Hint Extern 20 => Th.Univ.tac.
 Local Hint Resolve Th.General.ty_eq_refl_left Th.General.ty_eq_trans Th.General.ty_eq_symm Th.General.mem_eq_trans Th.General.mem_eq_symm Th.General.env_eq_refl_left Th.General.env_eq_symm Th.General.open_mem_eq_refl_left Th.General.open_ty_eq_refl_left.
 
 Module Conversion.
+  Theorem refl {Λ Ψ M} :
+    ⟦ Λ ∣ Ψ ⊢ M ≃ M ⟧.
+  Proof.
+    move=> κs γ V.
+    split; eauto.
+  Qed.
+
   Theorem symm {Λ Ψ M1 M2} :
     ⟦ Λ ∣ Ψ ⊢ M1 ≃ M2 ⟧
     → ⟦ Λ ∣ Ψ ⊢ M2 ≃ M1 ⟧.
@@ -65,6 +72,25 @@ Module Conversion.
       econstructor.
       + apply: OpSem.step_fst_pair.
       + auto.
+  Qed.
+
+  Theorem kapp_of_klam {Λ Ψ M k} :
+    ⟦ Λ ∣ Ψ ⊢ Expr.kapp (Expr.klam M) k ≃ (M.⦃Ren.inst0 k⦄) ⟧.
+  Proof.
+    move=> κs γ V.
+    split; move=> [𝒟1 𝒟2].
+    - split; auto.
+      dependent destruction 𝒟1.
+      + OpSem.destruct_evals.
+      + dependent destruction H.
+        * OpSem.destruct_evals.
+        * T.use 𝒟1; simplify_subst.
+          dependent destruction x; eauto.
+    - split; auto; simpl.
+      econstructor.
+      + apply: OpSem.step_kapp_klam.
+      + T.use 𝒟1; simplify_subst.
+        dependent destruction x; eauto.
   Qed.
 End Conversion.
 
@@ -714,24 +740,23 @@ End Later.
 Module Examples.
 
   (* Guarded stream of bits. *)
-  Example BitStream {Λ Ψ} (k : Var Λ) : Expr.t Λ Ψ :=
-    μ{ 𝟚 × ▶[k] @1 }%etm.
+  Example BitStream {Λ Ψ} : Expr.t Λ Ψ :=
+    Expr.klam (μ{ 𝟚 × ▶[#0] @1 }%etm).
 
-  Arguments BitStream [Λ Ψ] k%eclk.
+  Arguments BitStream [Λ Ψ].
 
   (* Coinductive sequence of bits. *)
   Example BitSeq {Λ Ψ} : Expr.t Λ Ψ :=
-    (⋂ (BitStream #0))%etm.
+    (⋂ (Expr.kapp BitStream #0%eclk))%etm.
 
-  Example BitStream_wf `{Γ : ECtx.t Λ Ψ} i {k} :
-    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (BitStream k) ≐ (BitStream k) ⟧.
+  Example BitStream_wf_aux `{Γ : ECtx.t Λ Ψ} i {k} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ μ{ 𝟚 × ▶[k] @1 } ≐  μ{ 𝟚 × ▶[k] @1 } ⟧.
   Proof.
     apply: (Later.induction k).
     - apply: General.univ_formation; eauto.
     - apply: Prod.univ_eq.
       + apply: Bool.univ_eq.
       + apply: Later.univ_eq.
-
         suff Q: @1%etm = (@0 .[^1])%etm; auto.
         rewrite !Q {Q}.
 
@@ -742,6 +767,18 @@ Module Examples.
         * apply: General.hypothesis.
         * apply: Later.univ_eq.
           apply: Later.intro; apply: General.univ_formation; auto.
+  Qed.
+
+
+
+  Example BitStream_wf `{Γ : ECtx.t Λ Ψ} i {k} :
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ (Expr.kapp BitStream k) ≐ (Expr.kapp BitStream k) ⟧.
+  Proof.
+    apply: General.mem_conv_all.
+    - apply: Conversion.refl.
+    - apply: Conversion.kapp_of_klam.
+    - apply: Conversion.kapp_of_klam.
+    - apply: BitStream_wf_aux.
   Qed.
 
   Example BitSeq_wf `{Γ : ECtx.t Λ Ψ} {i} :
@@ -756,21 +793,32 @@ Module Examples.
 
 
   Example BitStream_unfold `{Γ : ECtx.t Λ Ψ} {i k} :
-    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ BitStream k ≐ (𝟚 × ▶[k] BitStream k) ⟧.
+    ⟦ Λ ∣ Γ ≫ 𝕌[i] ∋ Expr.kapp BitStream k ≐ (𝟚 × ▶[k] Expr.kapp BitStream k) ⟧.
   Proof.
-    apply: (General.conv_mem (𝟚 × ▶[k] BitStream k)%etm).
-    - move=> ? ?; apply: OpSem.fix_unfold.
-    - apply: Prod.univ_eq.
-      + apply: Bool.univ_eq.
-      + apply: Later.univ_eq.
-        apply: Later.intro.
-        * apply: BitStream_wf.
-        * apply: (General.univ_formation i).
-          auto.
+    apply: General.mem_conv_all.
+    - apply: Conversion.refl.
+    - apply: Conversion.kapp_of_klam.
+    - apply: Conversion.refl.
+    - replace ((μ{ 𝟚 × ▶[ #0] @1}) .⦃ Ren.inst0 k ⦄)%etm with ((μ{ 𝟚 × ▶[ k ] @1})%etm : Expr.t Λ Ψ).
+      + apply: (General.conv_mem (𝟚 × ▶[k] μ{ 𝟚 × ▶[k] @1})%etm).
+        * move=> ? ?; apply: OpSem.fix_unfold.
+        * apply: Prod.univ_eq.
+          ** apply: Bool.univ_eq.
+          ** apply: Later.univ_eq.
+             apply: General.eq_symm.
+             apply: General.conv_mem.
+             *** apply: Conversion.kapp_of_klam.
+             *** replace (((μ{ 𝟚 × ▶[ #0] @1}) .⦃ Ren.inst0 k ⦄)%etm : Expr.t Λ (S Ψ)) with ((μ{ 𝟚 × ▶[ k ] @1})%etm : Expr.t Λ (S Ψ)).
+                 **** apply: Later.intro.
+                      ***** apply: BitStream_wf_aux.
+                      ***** apply: (General.univ_formation i (S i)); auto.
+                 **** dependent induction k; auto.
+      + dependent induction k; auto.
   Qed.
 
+
   Example Ones_wf_guarded `{Γ : ECtx.t Λ Ψ} {k} :
-    ⟦ Λ ∣ Γ ≫ BitStream k ∋ Ones ≐ Ones ⟧.
+    ⟦ Λ ∣ Γ ≫ Expr.kapp BitStream k ∋ Ones ≐ Ones ⟧.
   Proof.
     apply: (Later.induction k).
     - apply: BitStream_wf.
